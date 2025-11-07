@@ -1,0 +1,73 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { BRAND_COLORS } from '../../../theme/colors';
+import { MOCK_CATEGORIES } from '../../../../data/mockProducts';
+
+export function CategoryScroll() {
+  const router = useRouter();
+
+  const handleCategoryPress = (categoryId: string) => {
+    router.push({
+      pathname: '../(main)/search',
+      params: { categoryId },
+    });
+  };
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {MOCK_CATEGORIES.map((category) => (
+        <TouchableOpacity
+          key={category.id}
+          style={styles.categoryItem}
+          onPress={() => handleCategoryPress(category.id)}
+        >
+          <View style={styles.iconContainer}>
+            <Text style={styles.icon}>{category.icon}</Text>
+          </View>
+          <Text style={styles.label} numberOfLines={2}>
+            {category.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingRight: 16,
+    gap: 16,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    width: 80,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    backgroundColor: BRAND_COLORS.background.white,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  icon: {
+    fontSize: 32,
+  },
+  label: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.primary.xanhReu,
+    textAlign: 'center',
+  },
+});
