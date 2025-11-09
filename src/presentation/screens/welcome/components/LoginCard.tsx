@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_CONSTANTS } from '../constants';
 
@@ -8,7 +8,7 @@ export function LoginCard() {
   const router = useRouter();
 
   const handleLoginPress = () => {
-    router.push('../(main)/login');
+    router.push('/login');
   };
 
   const handleLoyaltyPress = () => {

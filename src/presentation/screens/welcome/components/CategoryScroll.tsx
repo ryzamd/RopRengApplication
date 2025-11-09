@@ -1,15 +1,15 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BRAND_COLORS } from '../../../theme/colors';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MOCK_CATEGORIES } from '../../../../data/mockProducts';
+import { BRAND_COLORS } from '../../../theme/colors';
 
 export function CategoryScroll() {
   const router = useRouter();
 
   const handleCategoryPress = (categoryId: string) => {
     router.push({
-      pathname: '../(main)/search',
+      pathname: '../(tabs)/search',
       params: { categoryId },
     });
   };

@@ -3,7 +3,20 @@ import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND_COLORS } from '../../src/presentation/theme/colors';
 
-export default function MainLayout() {
+/**
+ * Bottom Tabs Layout - 5 tabs chính
+ * 
+ * Chỉ 5 tabs hiển thị:
+ * 1. Trang chủ (index)
+ * 2. Đặt hàng (order)
+ * 3. Cửa hàng (stores)
+ * 4. Ưu đãi (deals)
+ * 5. Khác (more)
+ * 
+ * Routes phụ (welcome, search, login) dùng href: null để ẩn khỏi tab bar
+ * Tham chiếu: https://docs.expo.dev/router/advanced/tabs/#hiding-a-tab
+ */
+export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
   return (
@@ -20,6 +33,7 @@ export default function MainLayout() {
         tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
+      {/* 5 TABS CHÍNH */}
       <Tabs.Screen
         name="index"
         options={{
@@ -42,7 +56,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="deals"
         options={{
           title: 'Ưu đãi',
           tabBarIcon: ({ color }) => <TabIcon name="ticket" color={color} />,
@@ -53,6 +67,20 @@ export default function MainLayout() {
         options={{
           title: 'Khác',
           tabBarIcon: ({ color }) => <TabIcon name="menu" color={color} />,
+        }}
+      />
+
+      {/* ROUTES PHỤ - ẨN KHỎI TAB BAR */}
+      <Tabs.Screen
+        name="welcome"
+        options={{
+          href: null, // Ẩn khỏi tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          href: null, // Ẩn khỏi tab bar
         }}
       />
     </Tabs>

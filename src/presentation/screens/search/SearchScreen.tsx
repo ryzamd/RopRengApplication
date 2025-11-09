@@ -37,7 +37,7 @@ export default function SearchScreen() {
   };
 
   const handleAddPress = () => {
-    router.push('/(main)/login');
+    router.push('/login');
   };
 
   const renderItem = ({ item }: { item: Product }) => (

@@ -7,7 +7,7 @@ export function SearchBar() {
   const router = useRouter();
 
   const handleSearchPress = () => {
-    router.push('../(main)/search');
+    router.push('../(tabs)/search');
   };
 
   return (
