@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Text, View } from 'react-native';
 import { SPLASH_CONSTANTS } from './constants';
 import { splashStyles } from './styles';
 
@@ -9,7 +9,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/(main)/welcome');
+      router.replace('../(tabs)/welcome');
     }, SPLASH_CONSTANTS.DISPLAY_DURATION);
 
     return () => clearTimeout(timer);
