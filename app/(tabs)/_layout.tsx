@@ -71,12 +71,12 @@ export default function TabsLayout() {
       />
 
       {/* ROUTES PHỤ - ẨN KHỎI TAB BAR */}
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="welcome"
         options={{
           href: null, // Ẩn khỏi tab bar
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="search"
         options={{
