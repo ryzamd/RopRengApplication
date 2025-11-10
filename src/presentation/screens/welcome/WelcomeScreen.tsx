@@ -60,9 +60,6 @@ export default function WelcomeScreen() {
         <View style={styles.section}>
           <View style={styles.searchContainer}>
             <SearchBar />
-            <TouchableOpacity style={styles.favoriteButton}>
-              <Text style={styles.favoriteIcon}>🧡</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -149,19 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  favoriteButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: BRAND_COLORS.background.white,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
+
   favoriteIcon: {
     fontSize: 24,
   },

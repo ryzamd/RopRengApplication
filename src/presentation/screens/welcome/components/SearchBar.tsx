@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 24,
     paddingHorizontal: 16,
@@ -34,10 +35,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 14,
   },
   placeholder: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: '#999999',
   },

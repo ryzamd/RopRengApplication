@@ -48,8 +48,8 @@ const styles = StyleSheet.create({
     width: 80,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 32,
     justifyContent: 'center',
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   icon: {
-    fontSize: 32,
+    fontSize: 24,
   },
   label: {
     fontSize: 11,

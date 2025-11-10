@@ -63,8 +63,8 @@ export function PromoBanner() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    gap: 16,
-    paddingRight: 16,
+    paddingRight: 0,
+    paddingLeft: 0,
   },
   banner: {
     borderRadius: 16,

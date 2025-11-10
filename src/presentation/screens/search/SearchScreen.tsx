@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
     backgroundColor: BRAND_COLORS.background.default,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: '#F0F0F0',
   },
   searchBar: {
@@ -112,17 +112,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0F0F0',
-    borderRadius: 24,
+    borderRadius: 10,
     paddingHorizontal: 16,
-    paddingVertical: 10,
     gap: 8,
   },
   searchIcon: {
-    fontSize: 18,
+    fontSize: 14,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
@@ -130,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   cancelText: {
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.secondary.nauEspresso,
   },

@@ -95,7 +95,7 @@ function TabIcon({ name, color }: { name: string; color: string }) {
     ticket: '🎫',
     menu: '☰',
   };
-  return <Text style={{ fontSize: 24, color }}>{icons[name] || '•'}</Text>;
+  return <Text style={{ fontSize: 18, color }}>{icons[name] || '•'}</Text>;
 }
 
 const styles = StyleSheet.create({
@@ -103,10 +103,10 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_COLORS.background.white,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
-    paddingTop: 8,
+    paddingTop: 4,
   },
   tabBarLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'SpaceGrotesk-Medium',
   },
 });
