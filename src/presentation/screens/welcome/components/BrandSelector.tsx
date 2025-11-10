@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_CONSTANTS } from '../constants';
 
@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   brandCard: {
-    width: 140,
-    height: 140,
+    width: 80,
+    height: 80,
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 12,
     shadowColor: '#000',
