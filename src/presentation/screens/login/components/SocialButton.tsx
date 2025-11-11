@@ -43,21 +43,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   buttonFacebook: {
-    backgroundColor: '#1877F2',
-    borderColor: '#1877F2',
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
+    borderColor: BRAND_COLORS.primary.xanhReu,
   },
   facebookIcon: {
-    fontSize: 24,
+    fontSize: 18,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.background.white,
   },
   googleIcon: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Phudu-Bold',
-    color: '#4285F4',
+    color: '#f44242ff',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },

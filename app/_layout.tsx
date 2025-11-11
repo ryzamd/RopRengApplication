@@ -49,11 +49,13 @@ export default function RootLayout() {
           <DatabaseProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
-              <Stack.Screen 
-                name="login" 
+              <Stack.Screen
+                name="login"
                 options={{
                   presentation: 'modal', // iOS: modal từ dưới lên
                   animation: 'slide_from_bottom', // Android
+                  gestureEnabled: true,           // Cho phép swipe down để dismiss
+                  gestureDirection: 'vertical',   // Swipe vertical
                 }}
               />
               <Stack.Screen name="(tabs)" />

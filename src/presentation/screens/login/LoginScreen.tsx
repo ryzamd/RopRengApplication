@@ -1,9 +1,18 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppDispatch } from '../../../utils/hooks';
 import { login } from '../../../state/slices/auth';
+import { useAppDispatch } from '../../../utils/hooks';
+import { useModalFadeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { PhoneInput } from './components/PhoneInput';
 import { SocialButton } from './components/SocialButton';
@@ -14,86 +23,101 @@ export default function LoginScreen() {
   const dispatch = useAppDispatch();
   const [phoneNumber, setPhoneNumber] = useState('');
 
+  // Use FADE animation cho login
+  const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({
+    onExitComplete: () => router.back(),
+  });
+
   const isValidPhone = /^\d{10}$/.test(phoneNumber);
 
   const handleLogin = () => {
     if (isValidPhone) {
-      // TODO: Call real auth API
-      // Mock login
       dispatch(login({
         phoneNumber: `+84${phoneNumber}`,
         userId: `user_${Date.now()}`,
       }));
       
-      // Navigate to authenticated home
-      router.replace('/(tabs)');
+      dismiss();
+      setTimeout(() => router.replace('/(tabs)'), 200);
     }
   };
 
-  const handleFacebookLogin = () => {
-    console.log('Facebook login clicked');
-    // TODO: Implement Facebook OAuth
-    // On success: dispatch(login({...})) and router.replace
-  };
-
-  const handleGoogleLogin = () => {
-    console.log('Google login clicked');
-    // TODO: Implement Google OAuth
-    // On success: dispatch(login({...})) and router.replace
-  };
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Close button to go back to guest mode */}
-        <View style={styles.closeContainer}>
-          <Text 
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
-            ✕
-          </Text>
-        </View>
+    <View style={styles.container}>
+      {/* Backdrop */}
+      <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
+        <TouchableWithoutFeedback onPress={dismiss}>
+          <View style={styles.backdropTouchable} />
+        </TouchableWithoutFeedback>
+      </Animated.View>
 
-        {/* Hero Image Placeholder */}
-        <View style={styles.heroContainer}>
-          <Text style={styles.heroPlaceholder}>
-            {LOGIN_CONSTANTS.IMAGE_PLACEHOLDER}
-          </Text>
-        </View>
+      {/* Modal with FADE animation */}
+      <Animated.View style={[styles.modalWrapper, animatedModalStyle]}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style={styles.closeContainer}>
+              <TouchableOpacity
+                style={styles.closeButtonWrapper}
+                onPress={dismiss}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Login Form */}
-        <View style={styles.formContainer}>
-          <Text style={styles.welcomeText}>{LOGIN_CONSTANTS.WELCOME_TEXT}</Text>
-          <Text style={styles.brandName}>{LOGIN_CONSTANTS.BRAND_NAME}</Text>
+            <View style={styles.heroContainer}>
+              <Text style={styles.heroPlaceholder}>
+                {LOGIN_CONSTANTS.IMAGE_PLACEHOLDER}
+              </Text>
+            </View>
 
-          <PhoneInput
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            onSubmit={handleLogin}
-            isValid={isValidPhone}
-          />
+            <View style={styles.formContainer}>
+              <Text style={styles.welcomeText}>{LOGIN_CONSTANTS.WELCOME_TEXT}</Text>
+              <Text style={styles.brandName}>{LOGIN_CONSTANTS.BRAND_NAME}</Text>
 
-          <Text style={styles.divider}>{LOGIN_CONSTANTS.DIVIDER_TEXT}</Text>
+              <PhoneInput
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                onSubmit={handleLogin}
+                isValid={isValidPhone}
+              />
 
-          <SocialButton
-            provider="facebook"
-            label={LOGIN_CONSTANTS.FACEBOOK_LOGIN}
-            onPress={handleFacebookLogin}
-          />
-          <SocialButton
-            provider="google"
-            label={LOGIN_CONSTANTS.GOOGLE_LOGIN}
-            onPress={handleGoogleLogin}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+              <Text style={styles.divider}>{LOGIN_CONSTANTS.DIVIDER_TEXT}</Text>
+
+              <SocialButton
+                provider="facebook"
+                label={LOGIN_CONSTANTS.FACEBOOK_LOGIN}
+                onPress={() => console.log('Facebook')}
+              />
+              <SocialButton
+                provider="google"
+                label={LOGIN_CONSTANTS.GOOGLE_LOGIN}
+                onPress={() => console.log('Google')}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  backdropTouchable: {
+    flex: 1,
+  },
+  modalWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: BRAND_COLORS.background.white,
+  },
+  safeArea: {
     flex: 1,
     backgroundColor: BRAND_COLORS.background.white,
   },
@@ -106,8 +130,18 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 10,
   },
+  closeButtonWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginTop: 12,
+    backgroundColor: 'rgba(96, 106, 55, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   closeButton: {
-    fontSize: 24,
+    fontSize: 14,
+    marginBottom: 2,
     color: BRAND_COLORS.primary.xanhReu,
     fontFamily: 'SpaceGrotesk-Bold',
   },
@@ -140,14 +174,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
     letterSpacing: 1,
   },
   divider: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'SpaceGrotesk-Medium',
     color: '#999999',
     textAlign: 'center',
-    marginVertical: 24,
+    marginVertical: 20,
   },
 });

@@ -77,16 +77,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   flag: {
-    fontSize: 20,
+    fontSize: 14,
   },
   code: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_COLORS.secondary.nauEspresso,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Phudu-Bold',
     color: '#999999',
   },
