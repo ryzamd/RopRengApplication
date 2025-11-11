@@ -1,11 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-
-// Placeholder reducer - will add slices later
-const placeholderReducer = (state = {}) => state;
+import auth from './slices/auth';
 
 export const store = configureStore({
   reducer: {
-    placeholder: placeholderReducer,
+    auth,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
