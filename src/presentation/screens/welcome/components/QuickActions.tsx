@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { WELCOME_CONSTANTS } from '../constants';
+import { WELCOME_TEXT } from '../WelcomeConstants';
 
 export function QuickActions() {
   const handleActionPress = (actionId: string, label: string) => {
@@ -10,7 +10,7 @@ export function QuickActions() {
 
   return (
     <View style={styles.container}>
-      {WELCOME_CONSTANTS.QUICK_ACTIONS.map((action) => (
+      {WELCOME_TEXT.QUICK_ACTIONS.map((action) => (
         <TouchableOpacity
           key={action.id}
           style={styles.actionItem}
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     justifyContent: 'space-around',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   },
   actionItem: {
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   iconContainer: {
     width: 60,

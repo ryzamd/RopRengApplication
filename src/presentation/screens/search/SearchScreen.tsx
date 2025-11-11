@@ -1,9 +1,18 @@
+/**
+ * Search Screen - Refactored
+ * Purpose: Pure UI, delegates search logic to SearchService
+ */
+
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
 import { BRAND_COLORS } from '../../theme/colors';
+import { SearchFilterMode } from './SearchEnums';
+import { SEARCH_TEXT } from './SearchConstants';
+import { SEARCH_LAYOUT } from './SearchLayout';
+import { SearchUIService } from './SearchService';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -12,29 +21,41 @@ export default function SearchScreen() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  
+  const filterMode: SearchFilterMode = params.categoryId ? SearchFilterMode.CATEGORY : SearchFilterMode.ALL;
 
-  useEffect(() => {
-    if (params.categoryId) {
-      const filtered = MOCK_PRODUCTS.filter((p) => p.categoryId === params.categoryId);
-      setFilteredProducts(filtered);
-    }
-  }, [params.categoryId]);
+  // Debounced search handler
+  const debouncedSearch = useMemo(
+    () => SearchUIService.createDebounce(
+      (query: string) => {
+        const filtered = SearchUIService.applyFilters(
+          MOCK_PRODUCTS,
+          filterMode,
+          query,
+          params.categoryId as string | undefined
+        );
+        setFilteredProducts(filtered);
+      },
+      SEARCH_LAYOUT.SEARCH_DEBOUNCE_MS
+    ),
+    [filterMode, params.categoryId]
+  );
 
-  const handleSearch = (text: string) => {
+  const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
-    if (text.trim() === '') {
-      if (params.categoryId) {
-        setFilteredProducts(MOCK_PRODUCTS.filter((p) => p.categoryId === params.categoryId));
-      } else {
-        setFilteredProducts(MOCK_PRODUCTS);
-      }
-    } else {
-      const filtered = MOCK_PRODUCTS.filter((p) =>
-        p.name.toLowerCase().includes(text.toLowerCase())
+    debouncedSearch(text);
+  }, [debouncedSearch]);
+
+  // Initial filter by category
+  useEffect(() => {
+    if (filterMode === SearchFilterMode.CATEGORY && params.categoryId) {
+      const filtered = SearchUIService.filterByCategory(
+        MOCK_PRODUCTS,
+        params.categoryId as string
       );
       setFilteredProducts(filtered);
     }
-  };
+  }, [params.categoryId, filterMode]);
 
   const handleAddPress = () => {
     router.push('/login');
@@ -43,7 +64,7 @@ export default function SearchScreen() {
   const renderItem = ({ item }: { item: Product }) => (
     <View style={styles.productItem}>
       <View style={styles.productImage}>
-        <Text style={styles.imagePlaceholder}>IMG</Text>
+        <Text style={styles.imagePlaceholder}>{SEARCH_TEXT.IMAGE_PLACEHOLDER}</Text>
         {item.badge && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{item.badge}</Text>
@@ -65,10 +86,10 @@ export default function SearchScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchIcon}>{SEARCH_TEXT.SEARCH_ICON}</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm"
+            placeholder={SEARCH_TEXT.PLACEHOLDER}
             placeholderTextColor="#999999"
             value={searchQuery}
             onChangeText={handleSearch}
@@ -76,7 +97,7 @@ export default function SearchScreen() {
           />
         </View>
         <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Hủy</Text>
+          <Text style={styles.cancelText}>{SEARCH_TEXT.CANCEL_BUTTON}</Text>
         </TouchableOpacity>
       </View>
 
@@ -100,11 +121,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    paddingHorizontal: SEARCH_LAYOUT.HEADER_PADDING_HORIZONTAL,
+    paddingVertical: SEARCH_LAYOUT.HEADER_PADDING_VERTICAL,
+    gap: SEARCH_LAYOUT.HEADER_GAP,
     backgroundColor: BRAND_COLORS.background.default,
-    borderBottomWidth: 2,
+    borderBottomWidth: SEARCH_LAYOUT.HEADER_BORDER_BOTTOM_WIDTH,
     borderBottomColor: '#F0F0F0',
   },
   searchBar: {
@@ -112,38 +133,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0F0F0',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    gap: 8,
+    borderRadius: SEARCH_LAYOUT.SEARCH_BAR_BORDER_RADIUS,
+    paddingHorizontal: SEARCH_LAYOUT.SEARCH_BAR_PADDING_HORIZONTAL,
+    gap: SEARCH_LAYOUT.SEARCH_BAR_GAP,
   },
   searchIcon: {
-    fontSize: 14,
+    fontSize: SEARCH_LAYOUT.SEARCH_ICON_FONT_SIZE,
   },
   searchInput: {
     flex: 1,
-    fontSize: 12,
+    fontSize: SEARCH_LAYOUT.SEARCH_INPUT_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
+    paddingVertical: 8,
   },
   cancelButton: {
     paddingVertical: 8,
   },
   cancelText: {
-    fontSize: 12,
+    fontSize: SEARCH_LAYOUT.CANCEL_BUTTON_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.secondary.nauEspresso,
   },
   listContent: {
-    padding: 16,
+    padding: SEARCH_LAYOUT.LIST_PADDING,
   },
   productItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: BRAND_COLORS.background.white,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    gap: 12,
+    borderRadius: SEARCH_LAYOUT.ITEM_BORDER_RADIUS,
+    padding: SEARCH_LAYOUT.ITEM_PADDING,
+    marginBottom: SEARCH_LAYOUT.ITEM_MARGIN_BOTTOM,
+    gap: SEARCH_LAYOUT.ITEM_GAP,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -152,29 +174,29 @@ const styles = StyleSheet.create({
   },
   productImage: {
     position: 'relative',
-    width: 80,
-    height: 80,
+    width: SEARCH_LAYOUT.IMAGE_SIZE,
+    height: SEARCH_LAYOUT.IMAGE_SIZE,
     backgroundColor: BRAND_COLORS.primary.beSua,
-    borderRadius: 8,
+    borderRadius: SEARCH_LAYOUT.IMAGE_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
   },
   imagePlaceholder: {
-    fontSize: 12,
+    fontSize: SEARCH_LAYOUT.IMAGE_PLACEHOLDER_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
   },
   badge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: SEARCH_LAYOUT.BADGE_TOP,
+    right: SEARCH_LAYOUT.BADGE_RIGHT,
     backgroundColor: BRAND_COLORS.secondary.hongSua,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: SEARCH_LAYOUT.BADGE_BORDER_RADIUS,
+    paddingHorizontal: SEARCH_LAYOUT.BADGE_PADDING_HORIZONTAL,
+    paddingVertical: SEARCH_LAYOUT.BADGE_PADDING_VERTICAL,
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: SEARCH_LAYOUT.BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.background.white,
   },
@@ -182,26 +204,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontSize: 14,
+    fontSize: SEARCH_LAYOUT.PRODUCT_NAME_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     marginBottom: 4,
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: SEARCH_LAYOUT.PRODUCT_PRICE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
   },
   addButton: {
-    width: 36,
-    height: 36,
+    width: SEARCH_LAYOUT.ADD_BUTTON_SIZE,
+    height: SEARCH_LAYOUT.ADD_BUTTON_SIZE,
     backgroundColor: BRAND_COLORS.secondary.nauEspresso,
-    borderRadius: 18,
+    borderRadius: SEARCH_LAYOUT.ADD_BUTTON_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addIcon: {
-    fontSize: 24,
+    fontSize: SEARCH_LAYOUT.ADD_ICON_FONT_SIZE,
     color: BRAND_COLORS.background.white,
     fontWeight: 'bold',
   },

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { WELCOME_CONSTANTS } from '../constants';
+import { WELCOME_TEXT } from '../WelcomeConstants';
 
 const { width } = Dimensions.get('window');
 const BANNER_WIDTH = width - 32;
@@ -31,7 +31,7 @@ export function PromoBanner() {
         scrollEventThrottle={16}
         contentContainerStyle={styles.scrollContent}
       >
-        {WELCOME_CONSTANTS.PROMOS.map((promo) => (
+        {WELCOME_TEXT.PROMOS.map((promo) => (
           <TouchableOpacity
             key={promo.id}
             style={[styles.banner, { backgroundColor: promo.backgroundColor, width: BANNER_WIDTH }]}
@@ -47,7 +47,7 @@ export function PromoBanner() {
       </ScrollView>
       
       <View style={styles.pagination}>
-        {WELCOME_CONSTANTS.PROMOS.map((_, index) => (
+        {WELCOME_TEXT.PROMOS.map((_, index) => (
           <View
             key={index}
             style={[

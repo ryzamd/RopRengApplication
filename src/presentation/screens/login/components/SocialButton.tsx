@@ -1,15 +1,17 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
+import { LoginProvider } from '../LoginEnums';
+import { LOGIN_LAYOUT } from '../LoginLayout';
 
 interface SocialButtonProps {
-  provider: 'facebook' | 'google';
+  provider: LoginProvider;
   label: string;
   onPress: () => void;
 }
 
 export function SocialButton({ provider, label, onPress }: SocialButtonProps) {
-  const isFacebook = provider === 'facebook';
+  const isFacebook = provider === LoginProvider.FACEBOOK;
 
   return (
     <TouchableOpacity
@@ -35,29 +37,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: BRAND_COLORS.background.white,
-    borderWidth: 1,
+    borderWidth: LOGIN_LAYOUT.INPUT_BORDER_WIDTH,
     borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 12,
-    gap: 12,
+    borderRadius: LOGIN_LAYOUT.BUTTON_BORDER_RADIUS,
+    paddingVertical: LOGIN_LAYOUT.INPUT_PADDING_VERTICAL,
+    marginBottom: LOGIN_LAYOUT.SOCIAL_BUTTON_MARGIN_BOTTOM,
+    gap: LOGIN_LAYOUT.SOCIAL_BUTTON_GAP,
   },
   buttonFacebook: {
     backgroundColor: BRAND_COLORS.primary.xanhReu,
     borderColor: BRAND_COLORS.primary.xanhReu,
   },
   facebookIcon: {
-    fontSize: 18,
+    fontSize: LOGIN_LAYOUT.SOCIAL_ICON_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.background.white,
   },
   googleIcon: {
-    fontSize: 18,
+    fontSize: LOGIN_LAYOUT.SOCIAL_ICON_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: '#f44242ff',
   },
   label: {
-    fontSize: 14,
+    fontSize: LOGIN_LAYOUT.BUTTON_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },

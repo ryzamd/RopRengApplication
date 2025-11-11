@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { WELCOME_CONSTANTS } from '../constants';
+import { WELCOME_TEXT } from '../WelcomeConstants';
 
 export function BrandSelector() {
   const handleBrandPress = (brandId: string, brandName: string) => {
@@ -11,7 +11,7 @@ export function BrandSelector() {
   return (
     <View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {WELCOME_CONSTANTS.BRAND_SECTION.BRANDS.map((brand) => (
+        {WELCOME_TEXT.BRANDS.map((brand) => (
           <TouchableOpacity
             key={brand.id}
             style={styles.brandCard}
@@ -35,13 +35,15 @@ const styles = StyleSheet.create({
   brandCard: {
     width: 80,
     height: 80,
+    marginBottom: 5,
+    marginLeft: 5,
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   brandPlaceholder: {
     flex: 1,
