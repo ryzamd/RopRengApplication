@@ -10,7 +10,7 @@ import { ProductSection } from './components/ProductSection';
 import { PromoBanner } from './components/PromoBanner';
 import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
-import { WELCOME_CONSTANTS } from './constants';
+import { WELCOME_TEXT } from './WelcomeConstants';
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
       <View style={styles.header}>
         <View style={styles.greeting}>
           <Text style={styles.greetingIcon}>☀️</Text>
-          <Text style={styles.greetingText}>{WELCOME_CONSTANTS.HEADER.GREETING}</Text>
+          <Text style={styles.greetingText}>{WELCOME_TEXT.GREETING}</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
@@ -45,7 +45,7 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{WELCOME_CONSTANTS.BRAND_SECTION.TITLE}</Text>
+          <Text style={styles.sectionTitle}>{WELCOME_TEXT.BRAND_SECTION_TITLE}</Text>
           <BrandSelector />
         </View>
 

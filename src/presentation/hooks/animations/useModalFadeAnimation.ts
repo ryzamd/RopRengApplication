@@ -9,13 +9,13 @@ interface UseModalFadeAnimationOptions {
 
 /**
  * Hook cho Modal Fade Animation (pure fade in/out)
- * 
+ 
  * Features:
  * - Fade in on enter
  * - Fade out on exit
  * - Backdrop fade in/out
  * - Haptic feedback
- * 
+ 
  * Usage:
  * ```typescript
  * const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({

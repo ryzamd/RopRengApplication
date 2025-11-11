@@ -1,13 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login } from '../../../state/slices/auth';
@@ -16,30 +9,36 @@ import { useModalFadeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { PhoneInput } from './components/PhoneInput';
 import { SocialButton } from './components/SocialButton';
-import { LOGIN_CONSTANTS } from './constants';
+import { LOGIN_TEXT } from './LoginConstants';
+import { LoginProvider } from './LoginEnums';
+import { LOGIN_LAYOUT } from './LoginLayout';
+import { LoginUIService } from './LoginService';
 
 export default function LoginScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  // Use FADE animation cho login
   const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({
     onExitComplete: () => router.back(),
   });
 
-  const isValidPhone = /^\d{10}$/.test(phoneNumber);
+  const isValidPhone = LoginUIService.validatePhoneNumber(phoneNumber);
 
   const handleLogin = () => {
     if (isValidPhone) {
-      dispatch(login({
-        phoneNumber: `+84${phoneNumber}`,
-        userId: `user_${Date.now()}`,
-      }));
+      const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
+      const userId = LoginUIService.generateUserId();
+
+      dispatch(login({ phoneNumber: formattedPhone, userId }));
       
       dismiss();
       setTimeout(() => router.replace('/(tabs)'), 200);
     }
+  };
+
+  const handleSocialLogin = (provider: LoginProvider) => {
+    LoginUIService.handleSocialLogin(provider);
   };
 
   return (
@@ -51,7 +50,7 @@ export default function LoginScreen() {
         </TouchableWithoutFeedback>
       </Animated.View>
 
-      {/* Modal with FADE animation */}
+      {/* Modal */}
       <Animated.View style={[styles.modalWrapper, animatedModalStyle]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -61,38 +60,39 @@ export default function LoginScreen() {
                 onPress={dismiss}
                 activeOpacity={0.7}
               >
-                <Text style={styles.closeButton}>✕</Text>
+                <Text style={styles.closeButton}>{LOGIN_TEXT.CLOSE_BUTTON}</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.heroContainer}>
               <Text style={styles.heroPlaceholder}>
-                {LOGIN_CONSTANTS.IMAGE_PLACEHOLDER}
+                {LOGIN_TEXT.IMAGE_PLACEHOLDER}
               </Text>
             </View>
 
             <View style={styles.formContainer}>
-              <Text style={styles.welcomeText}>{LOGIN_CONSTANTS.WELCOME_TEXT}</Text>
-              <Text style={styles.brandName}>{LOGIN_CONSTANTS.BRAND_NAME}</Text>
+              <Text style={styles.welcomeText}>{LOGIN_TEXT.WELCOME_TEXT}</Text>
+              <Text style={styles.brandName}>{LOGIN_TEXT.BRAND_NAME}</Text>
 
               <PhoneInput
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 onSubmit={handleLogin}
                 isValid={isValidPhone}
+                autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
               />
 
-              <Text style={styles.divider}>{LOGIN_CONSTANTS.DIVIDER_TEXT}</Text>
+              <Text style={styles.divider}>{LOGIN_TEXT.DIVIDER_TEXT}</Text>
 
               <SocialButton
-                provider="facebook"
-                label={LOGIN_CONSTANTS.FACEBOOK_LOGIN}
-                onPress={() => console.log('Facebook')}
+                provider={LoginProvider.FACEBOOK}
+                label={LOGIN_TEXT.FACEBOOK_LOGIN}
+                onPress={() => handleSocialLogin(LoginProvider.FACEBOOK)}
               />
               <SocialButton
-                provider="google"
-                label={LOGIN_CONSTANTS.GOOGLE_LOGIN}
-                onPress={() => console.log('Google')}
+                provider={LoginProvider.GOOGLE}
+                label={LOGIN_TEXT.GOOGLE_LOGIN}
+                onPress={() => handleSocialLogin(LoginProvider.GOOGLE)}
               />
             </View>
           </ScrollView>
@@ -126,62 +126,62 @@ const styles = StyleSheet.create({
   },
   closeContainer: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: LOGIN_LAYOUT.CLOSE_BUTTON_TOP,
+    right: LOGIN_LAYOUT.CLOSE_BUTTON_RIGHT,
     zIndex: 10,
   },
   closeButtonWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: LOGIN_LAYOUT.CLOSE_BUTTON_SIZE,
+    height: LOGIN_LAYOUT.CLOSE_BUTTON_SIZE,
+    borderRadius: LOGIN_LAYOUT.CLOSE_BUTTON_BORDER_RADIUS,
     marginTop: 12,
     backgroundColor: 'rgba(96, 106, 55, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButton: {
-    fontSize: 14,
+    fontSize: LOGIN_LAYOUT.CLOSE_BUTTON_FONT_SIZE,
     marginBottom: 2,
     color: BRAND_COLORS.primary.xanhReu,
     fontFamily: 'SpaceGrotesk-Bold',
   },
   heroContainer: {
-    height: 280,
+    height: LOGIN_LAYOUT.HERO_HEIGHT,
     backgroundColor: BRAND_COLORS.primary.beSua,
     justifyContent: 'center',
     alignItems: 'center',
   },
   heroPlaceholder: {
-    fontSize: 16,
+    fontSize: LOGIN_LAYOUT.HERO_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
   },
   formContainer: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: LOGIN_LAYOUT.FORM_PADDING_HORIZONTAL,
+    paddingTop: LOGIN_LAYOUT.FORM_PADDING_TOP,
   },
   welcomeText: {
-    fontSize: 16,
+    fontSize: LOGIN_LAYOUT.WELCOME_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: LOGIN_LAYOUT.WELCOME_TEXT_MARGIN_BOTTOM,
   },
   brandName: {
-    fontSize: 28,
+    fontSize: LOGIN_LAYOUT.BRAND_NAME_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    marginBottom: 20,
-    letterSpacing: 1,
+    marginBottom: LOGIN_LAYOUT.BRAND_NAME_MARGIN_BOTTOM,
+    letterSpacing: LOGIN_LAYOUT.BRAND_NAME_LETTER_SPACING,
   },
   divider: {
-    fontSize: 12,
+    fontSize: LOGIN_LAYOUT.DIVIDER_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: '#999999',
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: LOGIN_LAYOUT.DIVIDER_MARGIN_VERTICAL,
   },
 });

@@ -2,7 +2,9 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { WELCOME_CONSTANTS } from '../constants';
+import { WELCOME_TEXT } from '../WelcomeConstants';
+import { WELCOME_LAYOUT } from '../WelcomeLayout';
+import { FONT_FAMILIES } from '@/src/presentation/theme/typography';
 
 export function LoginCard() {
   const router = useRouter();
@@ -17,15 +19,15 @@ export function LoginCard() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{WELCOME_CONSTANTS.LOGIN_CARD.TITLE}</Text>
-      <Text style={styles.subtitle}>{WELCOME_CONSTANTS.LOGIN_CARD.SUBTITLE}</Text>
+      <Text style={styles.title}>{WELCOME_TEXT.LOGIN_CARD.TITLE}</Text>
+      <Text style={styles.subtitle}>{WELCOME_TEXT.LOGIN_CARD.SUBTITLE}</Text>
       
       <TouchableOpacity style={styles.button} onPress={handleLoginPress}>
-        <Text style={styles.buttonText}>{WELCOME_CONSTANTS.LOGIN_CARD.BUTTON_TEXT}</Text>
+        <Text style={styles.buttonText}>{WELCOME_TEXT.LOGIN_CARD.BUTTON_TEXT_LOGIN}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.loyaltyRow} onPress={handleLoyaltyPress}>
-        <Text style={styles.loyaltyText}>{WELCOME_CONSTANTS.LOGIN_CARD.LOYALTY_TITLE}</Text>
+        <Text style={styles.loyaltyText}>{WELCOME_TEXT.LOGIN_CARD.LOYALTY_TITLE}</Text>
         <Text style={styles.arrow}>›</Text>
       </TouchableOpacity>
     </View>
@@ -35,52 +37,53 @@ export function LoginCard() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: BRAND_COLORS.background.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: WELCOME_LAYOUT.CARD_BORDER_RADIUS,
+    marginTop: WELCOME_LAYOUT.CARD_MARGIN_TOP,
+    padding: WELCOME_LAYOUT.CARD_PADDING,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: WELCOME_LAYOUT.CARD_SHADOW_OFFSET_WIDTH, height: WELCOME_LAYOUT.CARD_SHADOW_OFFSET_HEIGHT },
+    shadowOpacity: WELCOME_LAYOUT.CARD_SHADOW_OPACITY,
+    shadowRadius: WELCOME_LAYOUT.CARD_SHADOW_RADIUS,
+    elevation: WELCOME_LAYOUT.CARD_ELEVATION,
   },
   title: {
-    fontSize: 24,
-    fontFamily: 'Phudu-Bold',
+    fontSize: WELCOME_LAYOUT.LOGIN_TITLE_SIZE,
+    fontFamily: FONT_FAMILIES.phudu.bold,
     color: BRAND_COLORS.primary.xanhReu,
-    marginBottom: 8,
+    marginBottom: WELCOME_LAYOUT.LOGIN_TITLE_MARGIN_BOTTOM,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontSize: WELCOME_LAYOUT.LOGIN_SUBTITLE_SIZE,
+    fontFamily: FONT_FAMILIES.spaceGrotesk.medium,
     color: BRAND_COLORS.primary.xanhReu,
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: WELCOME_LAYOUT.LOGIN_SUBTITLE_LINE_HEIGHT,
+    marginBottom: WELCOME_LAYOUT.LOGIN_SUBTITLE_MARGIN_BOTTOM,
   },
   button: {
     backgroundColor: BRAND_COLORS.secondary.nauEspresso,
-    borderRadius: 24,
-    paddingVertical: 14,
+    borderRadius: WELCOME_LAYOUT.LOGIN_BUTTON_BORDER_RADIUS,
+    paddingVertical: WELCOME_LAYOUT.LOGIN_BUTTON_PADDING_VERTICAL,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: WELCOME_LAYOUT.LOGIN_BUTTON_MARGIN_BOTTOM,
   },
   buttonText: {
-    fontSize: 16,
-    fontFamily: 'Phudu-Bold',
+    fontSize: WELCOME_LAYOUT.LOGIN_BUTTON_TEXT_SIZE,
+    fontFamily: FONT_FAMILIES.phudu.bold,
     color: BRAND_COLORS.background.white,
   },
   loyaltyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: WELCOME_LAYOUT.LOYALTY_TEXT_PADDING_VERTICAL,
   },
   loyaltyText: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontSize: WELCOME_LAYOUT.LOYALTY_TEXT_FONT_SIZE,
+    fontFamily: FONT_FAMILIES.spaceGrotesk.medium,
     color: BRAND_COLORS.primary.xanhReu,
   },
   arrow: {
-    fontSize: 24,
+    fontSize: WELCOME_LAYOUT.LOGIN_BUTTON_ARROW_SIZE,
     color: BRAND_COLORS.primary.xanhReu,
   },
 });

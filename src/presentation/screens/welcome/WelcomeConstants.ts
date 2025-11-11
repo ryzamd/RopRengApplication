@@ -1,27 +1,21 @@
-export const WELCOME_CONSTANTS = {
-  HEADER: {
-    GREETING: 'Chào bạn mới 👋',
-  },
+export const WELCOME_TEXT = {
+  GREETING: 'Chào bạn mới 👋',
+  BRAND_SECTION_TITLE: 'Lựa chọn thương hiệu',
+  
   LOGIN_CARD: {
     TITLE: 'Đăng nhập',
     SUBTITLE: 'Sử dụng app để tích điểm và đổi những ưu đãi chỉ dành riêng cho thành viên bạn nhé!',
-    BUTTON_TEXT: 'Đăng nhập',
+    BUTTON_TEXT_LOGIN: 'Đăng nhập',
     LOYALTY_TITLE: 'Rốp Rẻng Loyalty',
   },
-  BRAND_SECTION: {
-    TITLE: 'Lựa chọn thương hiệu',
-    BRANDS: [
-      { id: 'ropreng', name: 'Rốp Rẻng' },
-      { id: 'ropreng1', name: 'Rốp Rẻng 1' },
-      { id: 'ropreng2', name: 'Rốp Rẻng 2' },
-    ],
-  },
+
   QUICK_ACTIONS: [
     { id: 'delivery', label: 'Giao hàng', icon: '🛵' },
     { id: 'takeaway', label: 'Mang đi', icon: '☕' },
     { id: 'dine-in', label: 'Tại chỗ', icon: '🍽️' },
     { id: 'beans', label: 'Đổi Bean', icon: '☕' },
   ],
+
   PROMOS: [
     {
       id: '1',
@@ -42,4 +36,10 @@ export const WELCOME_CONSTANTS = {
       backgroundColor: '#98FB98',
     },
   ],
-} as const;
+
+  BRANDS: [
+    { id: 'ropreng', name: 'Rốp Rẻng' },
+    { id: 'ropreng1', name: 'Rốp Rẻng 1' },
+    { id: 'ropreng2', name: 'Rốp Rẻng 2' },
+  ],
+};
