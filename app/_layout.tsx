@@ -58,6 +58,14 @@ export default function RootLayout() {
                   gestureDirection: 'vertical',   // Swipe vertical
                 }}
               />
+              <Stack.Screen 
+                name="otp-verification"
+                options={{
+                  presentation: 'transparentModal',
+                  animation: 'none',
+                  gestureEnabled: false,
+                }}
+              />
               <Stack.Screen name="(tabs)" />
             </Stack>
           </DatabaseProvider>

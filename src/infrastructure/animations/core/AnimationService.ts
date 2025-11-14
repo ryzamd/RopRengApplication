@@ -3,6 +3,7 @@ import { Dimensions } from 'react-native';
 import { SharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { MODAL_ANIMATION_PRESETS, PAGE_ANIMATION_PRESETS, SHARED_EASINGS } from '../presets';
+import { SHAKE_CONFIG } from '../presets/shake.presets';
 import { AnimationCallbacks, AnimationConfig } from './animation.types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -219,6 +220,45 @@ export class AnimationService {
   /* Trigger haptic feedback */
   public triggerHaptic(style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) {
     Haptics.impactAsync(style);
+  }
+
+  // ==================== SHAKE ANIMATIONS ====================
+
+  /**
+   * Shake animation for error feedback
+   */
+  public shake(translateX: SharedValue<number>, callbacks?: AnimationCallbacks) : void 
+  {
+    'worklet';
+    
+    if (callbacks?.onStart) {
+      scheduleOnRN(callbacks.onStart);
+    }
+
+    const { AMPLITUDE, ITERATIONS, DURATION } = SHAKE_CONFIG;
+    const singleShakeDuration = DURATION / (ITERATIONS * 2);
+
+    // Haptic feedback
+    scheduleOnRN(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Medium);
+
+    // Shake back and forth
+    for (let i = 0; i < ITERATIONS; i++) {
+      translateX.value = withTiming(
+        i % 2 === 0 ? AMPLITUDE : -AMPLITUDE,
+        { duration: singleShakeDuration, easing: SHARED_EASINGS.sharp }
+      );
+    }
+
+    // Return to center
+    translateX.value = withTiming(
+      0,
+      { duration: singleShakeDuration, easing: SHARED_EASINGS.sharp },
+      (finished) => {
+        if (finished && callbacks?.onComplete) {
+          scheduleOnRN(callbacks.onComplete);
+        }
+      }
+    );
   }
 }
 

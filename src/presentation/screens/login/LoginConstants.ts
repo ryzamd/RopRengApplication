@@ -7,12 +7,10 @@ export const LOGIN_TEXT = {
   DIVIDER_TEXT: 'HOẶC',
   FACEBOOK_LOGIN: 'Tiếp tục bằng Facebook',
   GOOGLE_LOGIN: 'Tiếp tục bằng Google',
-  
-  // Validation messages
   PHONE_INVALID: 'Số điện thoại không hợp lệ',
   PHONE_REQUIRED: 'Vui lòng nhập số điện thoại',
-
-  CLOSE_BUTTON:'×',
+  CLOSE_BUTTON: '✕',
+  SENDING_OTP: 'Đang gửi mã...',
 };
 
 export const LOGIN_PHONE_CONFIG = {

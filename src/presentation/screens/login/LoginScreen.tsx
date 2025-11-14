@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { login } from '../../../state/slices/auth';
 import { useAppDispatch } from '../../../utils/hooks';
 import { useModalFadeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -18,6 +17,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({
     onExitComplete: () => router.back(),
@@ -26,14 +26,20 @@ export default function LoginScreen() {
   const isValidPhone = LoginUIService.validatePhoneNumber(phoneNumber);
 
   const handleLogin = () => {
-    if (isValidPhone) {
-      const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
-      const userId = LoginUIService.generateUserId();
-
-      dispatch(login({ phoneNumber: formattedPhone, userId }));
+    if (isValidPhone && !isSendingOtp) {
+      setIsSendingOtp(true);
       
-      dismiss();
-      setTimeout(() => router.replace('/(tabs)'), 200);
+      // Simulate sending OTP (2 seconds)
+      setTimeout(() => {
+        setIsSendingOtp(false);
+        const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
+        
+        // Navigate to OTP verification screen
+        router.push({
+          pathname: '/otp-verification',
+          params: { phoneNumber: formattedPhone },
+        });
+      }, LOGIN_LAYOUT.OTP_SENDING_DURATION);
     }
   };
 
@@ -79,6 +85,7 @@ export default function LoginScreen() {
                 onChangeText={setPhoneNumber}
                 onSubmit={handleLogin}
                 isValid={isValidPhone}
+                isLoading={isSendingOtp}
                 autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
               />
 
