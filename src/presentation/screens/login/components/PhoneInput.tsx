@@ -1,22 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { LOGIN_PHONE_CONFIG, LOGIN_TEXT } from '../LoginConstants';
 import { LOGIN_LAYOUT } from '../LoginLayout';
-import { LoginUIService } from '../LoginService';
 
 interface PhoneInputProps {
   value: string;
   onChangeText: (text: string) => void;
   onSubmit: () => void;
   isValid: boolean;
-  autoFocusDelay?: number; // NEW: delayed focus for modal animation
+  autoFocusDelay?: number;
+  isLoading?: boolean;
 }
 
-export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDelay = 0}: PhoneInputProps) {
+export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDelay = 0, isLoading = false }: PhoneInputProps) {
   const inputRef = useRef<TextInput>(null);
 
-  // Fix: Delayed focus after modal animation completes
   useEffect(() => {
     if (autoFocusDelay > 0) {
       const timer = setTimeout(() => {
@@ -25,11 +24,6 @@ export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDe
       return () => clearTimeout(timer);
     }
   }, [autoFocusDelay]);
-
-  const handleTextChange = (text: string) => {
-    const formatted = LoginUIService.formatPhoneInput(text);
-    onChangeText(formatted);
-  };
 
   return (
     <View style={styles.container}>
@@ -44,23 +38,28 @@ export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDe
           placeholder={LOGIN_TEXT.PHONE_PLACEHOLDER}
           placeholderTextColor="#CCCCCC"
           value={value}
-          onChangeText={handleTextChange}
+          onChangeText={onChangeText}
           keyboardType="phone-pad"
           maxLength={LOGIN_PHONE_CONFIG.MAX_LENGTH}
           returnKeyType="done"
           onSubmitEditing={onSubmit}
+          editable={!isLoading}
         />
       </View>
 
       <TouchableOpacity
-        style={[styles.button, isValid && styles.buttonActive]}
+        style={[styles.button, isValid && !isLoading && styles.buttonActive]}
         onPress={onSubmit}
-        disabled={!isValid}
+        disabled={!isValid || isLoading}
         activeOpacity={0.8}
       >
-        <Text style={[styles.buttonText, isValid && styles.buttonTextActive]}>
-          {LOGIN_TEXT.LOGIN_BUTTON}
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color={BRAND_COLORS.background.white} />
+        ) : (
+          <Text style={[styles.buttonText, isValid && styles.buttonTextActive]}>
+            {LOGIN_TEXT.LOGIN_BUTTON}
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -68,7 +67,7 @@ export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDe
 
 const styles = StyleSheet.create({
   container: {
-    gap: LOGIN_LAYOUT.INPUT_GAP,
+    gap: LOGIN_LAYOUT.INPUT_BUTTON_GAP,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -87,16 +86,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   flag: {
-    fontSize: LOGIN_LAYOUT.FLAG_EMOJI_FONT_SIZE,
+    fontSize: 14,
   },
   code: {
-    fontSize: LOGIN_LAYOUT.PHONE_INPUT_FONT_SIZE,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
   input: {
     flex: 1,
-    fontSize: LOGIN_LAYOUT.PHONE_INPUT_FONT_SIZE,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
@@ -105,12 +104,14 @@ const styles = StyleSheet.create({
     borderRadius: LOGIN_LAYOUT.BUTTON_BORDER_RADIUS,
     paddingVertical: LOGIN_LAYOUT.BUTTON_PADDING_VERTICAL,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   buttonActive: {
     backgroundColor: BRAND_COLORS.secondary.nauEspresso,
   },
   buttonText: {
-    fontSize: LOGIN_LAYOUT.BUTTON_FONT_SIZE,
+    fontSize: 14,
     fontFamily: 'Phudu-Bold',
     color: '#999999',
   },
