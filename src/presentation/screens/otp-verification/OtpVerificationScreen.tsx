@@ -1,12 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login } from '../../../state/slices/auth';
@@ -29,7 +23,8 @@ export default function OtpVerificationScreen() {
   const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
   const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
-  const [retryCount, setRetryCount] = useState(0);
+  const [hasClickedResendThisCycle, setHasClickedResendThisCycle] = useState(false);
+  const [totalRetryCount, setTotalRetryCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Bottom sheet animation
@@ -62,15 +57,27 @@ export default function OtpVerificationScreen() {
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
     setState(OtpVerificationStateEnum.IDLE);
     setErrorMessage(null);
+    setHasClickedResendThisCycle(false); // Reset resend state for new cycle
   };
 
-  const handleRetry = () => {
-    if (!OtpVerificationService.canRetry(timeRemaining, retryCount)) {
+  const handleResendClick = () => {
+    if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) {
       return;
     }
     
-    const newRetryCount = retryCount + 1;
-    setRetryCount(newRetryCount);
+    setHasClickedResendThisCycle(true);
+    setTotalRetryCount((prev) => prev + 1);
+    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+    setState(OtpVerificationStateEnum.IDLE);
+    setErrorMessage(null);
+  };
+
+  const handleRetryIconClick = () => {
+    if (!OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount)) {
+      return;
+    }
+    
+    setTotalRetryCount((prev) => prev + 1);
     resetOtp();
   };
 
@@ -128,9 +135,10 @@ export default function OtpVerificationScreen() {
     dismiss();
   };
 
-  const canRetry = OtpVerificationService.canRetry(timeRemaining, retryCount);
+  const canClickResend = OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle);
+  const canShowRetryIcon = OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount);
   const isExpired = timeRemaining <= 0;
-  const showMaxRetriesError = !canRetry && isExpired;
+  const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && isExpired;
 
   return (
     <View style={styles.container}>
@@ -175,21 +183,21 @@ export default function OtpVerificationScreen() {
               disabled={state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError}
             />
 
-            {/* Timer */}
-            {!isExpired && (
+            {/* Timer - Always show when not at max retries */}
+            {!showMaxRetriesError && (
               <OtpTimer
                 timeRemaining={timeRemaining}
-                onRetry={handleRetry}
-                canRetry={canRetry}
+                onResend={handleResendClick}
+                canClickResend={canClickResend}
               />
             )}
 
             {/* Error message */}
-            {errorMessage && (
+            {errorMessage && !showMaxRetriesError && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errorMessage}</Text>
-                {isExpired && canRetry && !showMaxRetriesError && (
-                  <RetryButton onPress={handleRetry} />
+                {isExpired && canShowRetryIcon && (
+                  <RetryButton onPress={handleRetryIconClick} />
                 )}
               </View>
             )}

@@ -3,7 +3,7 @@ import { OtpErrorType, OtpUserType } from './OtpVerificationEnums';
 import { OtpTimerState, OtpVerificationResult } from './OtpVerificationInterfaces';
 
 export class OtpVerificationService {
-
+  
   static verifyOtpCode(code: string): OtpVerificationResult {
     if (code === OTP_CONFIG.VALID_CODE_EXISTING_USER) {
       return {
@@ -39,8 +39,12 @@ export class OtpVerificationService {
     };
   }
 
-  static canRetry(timeRemaining: number, retryCount: number): boolean {
-    return timeRemaining <= 0 && retryCount < OTP_CONFIG.MAX_RETRY_COUNT;
+  static canClickResend(timeRemaining: number, hasClickedResendThisCycle: boolean): boolean {
+    return timeRemaining > 0 && !hasClickedResendThisCycle;
+  }
+
+  static canShowRetryIcon(timeRemaining: number, totalRetryCount: number): boolean {
+    return timeRemaining <= 0 && totalRetryCount < OTP_CONFIG.MAX_RETRY_COUNT;
   }
 
   static isValidDigit(char: string): boolean {
@@ -58,7 +62,6 @@ export class OtpVerificationService {
   }
 
   static isOtpComplete(digits: string[]): boolean {
-    return digits.length === OTP_CONFIG.CODE_LENGTH && 
-           digits.every(d => this.isValidDigit(d));
+    return digits.length === OTP_CONFIG.CODE_LENGTH && digits.every(d => this.isValidDigit(d));
   }
 }

@@ -7,23 +7,21 @@ import { OtpVerificationService } from '../OtpVerificationService';
 
 interface OtpTimerProps {
   timeRemaining: number;
-  onRetry: () => void;
-  canRetry: boolean;
+  onResend: () => void;
+  canClickResend: boolean;
 }
 
-export function OtpTimer({ timeRemaining, onRetry, canRetry }: OtpTimerProps) {
-  const timerState = OtpVerificationService.getTimerState(timeRemaining);
+export function OtpTimer({ timeRemaining, onResend, canClickResend }: OtpTimerProps) {
   const formattedTime = OtpVerificationService.formatTimeRemaining(timeRemaining);
-
-  if (timerState.isExpired) {
-    return null; // Error message handled in main screen
-  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
         {OTP_TEXT.RESEND_PROMPT}{' '}
-        <Text style={styles.link} onPress={canRetry ? onRetry : undefined}>
+        <Text
+          style={[styles.link, !canClickResend && styles.linkDisabled]}
+          onPress={canClickResend ? onResend : undefined}
+        >
           {OTP_TEXT.RESEND_BUTTON}
         </Text>
         {' '}
@@ -47,6 +45,9 @@ const styles = StyleSheet.create({
   link: {
     color: BRAND_COLORS.secondary.nauEspresso,
     fontFamily: 'SpaceGrotesk-Bold',
+  },
+  linkDisabled: {
+    color: '#CCCCCC',
   },
   timer: {
     color: BRAND_COLORS.secondary.nauEspresso,
