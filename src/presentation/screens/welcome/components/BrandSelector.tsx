@@ -11,7 +11,7 @@ export function BrandSelector() {
   return (
     <View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {WELCOME_TEXT.BRANDS.map((brand) => (
+        {WELCOME_TEXT.BRAND_SECTION.BRANDS.map((brand) => (
           <TouchableOpacity
             key={brand.id}
             style={styles.brandCard}

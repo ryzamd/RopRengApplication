@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 
@@ -17,7 +18,7 @@ export function QuickActions() {
           onPress={() => handleActionPress(action.id, action.label)}
         >
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{action.icon}</Text>
+            <AppIcon name={action.icon} size="lg" />
           </View>
           <Text style={styles.label}>{action.label}</Text>
         </TouchableOpacity>
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
     justifyContent: 'space-around',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
   },
   actionItem: {
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
   iconContainer: {
     width: 60,
@@ -50,9 +51,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  icon: {
-    fontSize: 24,
   },
   label: {
     fontSize: 12,

@@ -2,7 +2,9 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
+import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
+import { HEADER_ICONS } from '../../theme/iconConstants';
 import { BrandSelector } from './components/BrandSelector';
 import { CategoryScroll } from './components/CategoryScroll';
 import { LoginCard } from './components/LoginCard';
@@ -25,15 +27,15 @@ export default function WelcomeScreen() {
       {/* Sticky Header */}
       <View style={styles.header}>
         <View style={styles.greeting}>
-          <Text style={styles.greetingIcon}>☀️</Text>
-          <Text style={styles.greetingText}>{WELCOME_TEXT.GREETING}</Text>
+          <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
+          <Text style={styles.greetingText}>{WELCOME_TEXT.HEADER.GREETING}</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconText}>🎫</Text>
+            <AppIcon name={HEADER_ICONS.VOUCHER} size="sm" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconText}>🔔</Text>
+            <AppIcon name={HEADER_ICONS.NOTIFICATION} size="sm" />
           </TouchableOpacity>
         </View>
       </View>
@@ -45,7 +47,7 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{WELCOME_TEXT.BRAND_SECTION_TITLE}</Text>
+          <Text style={styles.sectionTitle}>{WELCOME_TEXT.BRAND_SECTION.TITLE}</Text>
           <BrandSelector />
         </View>
 
@@ -98,9 +100,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  greetingIcon: {
-    fontSize: 24,
-  },
   greetingText: {
     fontSize: 18,
     fontFamily: 'Phudu-Bold',
@@ -123,9 +122,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  iconText: {
-    fontSize: 20,
-  },
   scrollView: {
     flex: 1,
   },
@@ -145,9 +141,5 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     gap: 12,
-  },
-
-  favoriteIcon: {
-    fontSize: 24,
   },
 });

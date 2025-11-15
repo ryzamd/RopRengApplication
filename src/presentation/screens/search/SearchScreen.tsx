@@ -1,16 +1,13 @@
-/**
- * Search Screen - Refactored
- * Purpose: Pure UI, delegates search logic to SearchService
- */
-
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
+import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
-import { SearchFilterMode } from './SearchEnums';
+import { HEADER_ICONS } from '../../theme/iconConstants';
 import { SEARCH_TEXT } from './SearchConstants';
+import { SearchFilterMode } from './SearchEnums';
 import { SEARCH_LAYOUT } from './SearchLayout';
 import { SearchUIService } from './SearchService';
 
@@ -86,7 +83,7 @@ export default function SearchScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>{SEARCH_TEXT.SEARCH_ICON}</Text>
+          <AppIcon name={HEADER_ICONS.SEARCH} size="sm" color="#999999" />
           <TextInput
             style={styles.searchInput}
             placeholder={SEARCH_TEXT.PLACEHOLDER}

@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
+import { HEADER_ICONS } from '../../../theme/iconConstants';
 
 export function SearchBar() {
   const router = useRouter();
@@ -12,7 +14,7 @@ export function SearchBar() {
 
   return (
     <TouchableOpacity style={styles.container} onPress={handleSearchPress} activeOpacity={0.8}>
-      <Text style={styles.icon}>🔍</Text>
+      <AppIcon name={HEADER_ICONS.SEARCH} size="sm" color="#999999" />
       <Text style={styles.placeholder}>Tìm kiếm</Text>
     </TouchableOpacity>
   );
@@ -33,9 +35,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-  },
-  icon: {
-    fontSize: 14,
   },
   placeholder: {
     fontSize: 14,

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MOCK_CATEGORIES } from '../../../../data/mockProducts';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 
 export function CategoryScroll() {
@@ -27,7 +28,7 @@ export function CategoryScroll() {
           onPress={() => handleCategoryPress(category.id)}
         >
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{category.icon}</Text>
+            <AppIcon name={category.icon} size="lg" />
           </View>
           <Text style={styles.label} numberOfLines={2}>
             {category.name}
@@ -50,8 +51,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 60,
     height: 60,
-    backgroundColor: BRAND_COLORS.background.white,
-    borderRadius: 32,
+    backgroundColor: BRAND_COLORS.primary.beSua,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -59,10 +60,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
-  icon: {
-    fontSize: 24,
   },
   label: {
     fontSize: 11,
