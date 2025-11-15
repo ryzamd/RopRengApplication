@@ -1,5 +1,7 @@
+import { SOCIAL_ICONS } from '@/src/presentation/theme/iconConstants';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { LoginProvider } from '../LoginEnums';
 import { LOGIN_LAYOUT } from '../LoginLayout';
@@ -20,9 +22,9 @@ export function SocialButton({ provider, label, onPress }: SocialButtonProps) {
       activeOpacity={0.8}
     >
       {isFacebook ? (
-        <Text style={styles.facebookIcon}>f</Text>
+        <AppIcon name={SOCIAL_ICONS.FACEBOOK} size="lg" style={styles.facebookIcon} />
       ) : (
-        <Text style={styles.googleIcon}>G</Text>
+        <AppIcon name={SOCIAL_ICONS.GOOGLE} size="lg" style={styles.googleIcon} />
       )}
       <Text style={[styles.label, isFacebook && styles.labelFacebook]}>
         {label}
@@ -56,7 +58,7 @@ const styles = StyleSheet.create({
   googleIcon: {
     fontSize: LOGIN_LAYOUT.SOCIAL_ICON_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: '#f44242ff',
+    // color: '#f44242ff',
   },
   label: {
     fontSize: LOGIN_LAYOUT.BUTTON_FONT_SIZE,

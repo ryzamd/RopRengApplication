@@ -1,10 +1,10 @@
+import { FONT_FAMILIES } from '@/src/presentation/theme/typography';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 import { WELCOME_LAYOUT } from '../WelcomeLayout';
-import { FONT_FAMILIES } from '@/src/presentation/theme/typography';
 
 export function LoginCard() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export function LoginCard() {
       <Text style={styles.subtitle}>{WELCOME_TEXT.LOGIN_CARD.SUBTITLE}</Text>
       
       <TouchableOpacity style={styles.button} onPress={handleLoginPress}>
-        <Text style={styles.buttonText}>{WELCOME_TEXT.LOGIN_CARD.BUTTON_TEXT_LOGIN}</Text>
+        <Text style={styles.buttonText}>{WELCOME_TEXT.LOGIN_CARD.TITLE}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.loyaltyRow} onPress={handleLoyaltyPress}>

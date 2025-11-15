@@ -1,7 +1,9 @@
+import { IoniconsName } from "../infrastructure/icons";
+
 export interface Category {
   id: string;
   name: string;
-  icon: string;
+  icon: IoniconsName;
 }
 
 export interface Product {
@@ -16,16 +18,16 @@ export interface Product {
 }
 
 export const MOCK_CATEGORIES: Category[] = [
-  { id: 'new', name: 'Món Mới Phải Thử', icon: '🆕' },
-  { id: 'espresso', name: 'Espresso', icon: '☕' },
-  { id: 'capphe', name: 'Cà Phê Phin', icon: '☕' },
-  { id: 'matcha', name: 'Matcha', icon: '🍵' },
-  { id: 'tra', name: 'Trà', icon: '🍵' },
-  { id: 'americano', name: 'Americano', icon: '☕' },
-  { id: 'latte', name: 'Latte', icon: '☕' },
-  { id: 'coldbrew', name: 'Cold Brew', icon: '🧊' },
-  { id: 'frappe', name: 'Frappe', icon: '🥤' },
-  { id: 'combo', name: 'Combo', icon: '🎁' },
+  { id: 'new', name: 'Món Mới Phải Thử', icon: 'sparkles-outline' as IoniconsName },
+  { id: 'espresso', name: 'Espresso', icon: 'cafe' as IoniconsName },
+  { id: 'capphe', name: 'Cà Phê Phin', icon: 'cafe-outline' as IoniconsName },
+  { id: 'matcha', name: 'Matcha', icon: 'leaf-outline' as IoniconsName },
+  { id: 'tra', name: 'Trà', icon: 'leaf' as IoniconsName },
+  { id: 'americano', name: 'Americano', icon: 'cafe' as IoniconsName },
+  { id: 'latte', name: 'Latte', icon: 'cafe-outline' as IoniconsName },
+  { id: 'coldbrew', name: 'Cold Brew', icon: 'snow-outline' as IoniconsName },
+  { id: 'frappe', name: 'Frappe', icon: 'wine-outline' as IoniconsName },
+  { id: 'combo', name: 'Combo', icon: 'gift-outline' as IoniconsName },
 ];
 
 export const MOCK_PRODUCTS: Product[] = [

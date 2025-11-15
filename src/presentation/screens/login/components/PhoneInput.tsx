@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: BRAND_COLORS.background.white,
     borderWidth: LOGIN_LAYOUT.INPUT_BORDER_WIDTH,
-    borderColor: '#E5E5E5',
+    borderColor: '#807878ff',
     borderRadius: LOGIN_LAYOUT.INPUT_BORDER_RADIUS,
     paddingHorizontal: LOGIN_LAYOUT.INPUT_PADDING_HORIZONTAL,
     paddingVertical: LOGIN_LAYOUT.INPUT_PADDING_VERTICAL,
