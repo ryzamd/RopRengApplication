@@ -37,8 +37,11 @@ export default function OtpVerificationScreen() {
       onExitComplete: () => {
         // Handle navigation based on intent
         if (navigationIntentRef.current === 'success') {
-          // Success flow: Navigation already handled in setTimeout (iOS fix)
-          // Just cleanup the ref
+          // Success flow: Tabs already mounted and visible
+          // Now cleanup login modal from stack underneath
+          // Stack is: [index, login (modal), tabs (current)]
+          // After dismissAll: [index, tabs (current)]
+          router.dismissAll(); // Dismisses all modals (login) but keeps tabs
           navigationIntentRef.current = null;
         } else if (navigationIntentRef.current === 'back') {
           // Normal dismiss: just go back
