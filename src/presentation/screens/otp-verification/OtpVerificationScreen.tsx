@@ -31,7 +31,12 @@ export default function OtpVerificationScreen() {
   const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
     useModalBottomSheetAnimation({
       heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
-      onExitComplete: () => router.back(),
+      onExitComplete: () => {
+        // Only back if still in navigation stack
+        if (router.canGoBack()) {
+          router.back();
+        }
+      },
     });
 
   // Shake animation for errors
@@ -105,13 +110,15 @@ export default function OtpVerificationScreen() {
         dismiss();
         setTimeout(() => {
           if (result.userType === 'existing') {
+            router.dismissAll();
             router.replace('/(tabs)');
           } else {
             // TODO: Navigate to create account screen
+            router.dismissAll();
             console.log('Navigate to create account (not implemented yet)');
             router.replace('/(tabs)');
           }
-        }, 300);
+        });
       } else {
         // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { BANNER_ANIMATION_PRESETS } from '../../../../infrastructure/animations/presets/banner.presets';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
@@ -45,51 +45,52 @@ export function PromoBanner() {
               <Text style={styles.bannerTitle}>{promo.title}</Text>
               <Text style={styles.bannerSubtitle}>{promo.subtitle}</Text>
             </View>
-
-            {/* Pagination Dots (INSIDE banner) */}
-            <View style={styles.pagination}>
-              {WELCOME_TEXT.PROMOS.map((_, index) => (
-                <PaginationDot key={index} isActive={index === activeIndex} index={index} />
-              ))}
-            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Fixed Overlay with Pagination Dots */}
+      <View style={styles.paginationOverlay}>
+        <View style={styles.pagination}>
+          {WELCOME_TEXT.PROMOS.map((_, index) => (
+            <PaginationDot key={index} isActive={index === activeIndex} />
+          ))}
+        </View>
+      </View>
     </View>
   );
 }
 
-function PaginationDot({ isActive }: { isActive: boolean; index: number }) {
-  const width = useSharedValue(WELCOME_LAYOUT.PROMO_DOT_INACTIVE_WIDTH);
+function PaginationDot({ isActive }: { isActive: boolean }) {
+  const progress = useSharedValue(0);
 
   React.useEffect(() => {
-    width.value = withTiming(
-      isActive ? WELCOME_LAYOUT.PROMO_DOT_ACTIVE_WIDTH : WELCOME_LAYOUT.PROMO_DOT_INACTIVE_WIDTH,
+    progress.value = withTiming(
+      isActive ? 1 : 0,
       {
-        duration: BANNER_ANIMATION_PRESETS.BANNER_DOT_EXPAND.duration,
-        easing: BANNER_ANIMATION_PRESETS.BANNER_DOT_EXPAND.easing,
+        duration: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.duration,
+        easing: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.easing,
       }
     );
   }, [isActive]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: width.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      progress.value,
+      [0, 1],
+      ['rgba(255, 255, 255, 0.5)', BRAND_COLORS.background.white]
+    );
 
-  return (
-    <Animated.View
-      style={[
-        styles.paginationDot,
-        isActive && styles.paginationDotActive,
-        animatedStyle,
-      ]}
-    />
-  );
+    return { backgroundColor };
+  });
+
+  return <Animated.View style={[styles.paginationDot, animatedStyle]} />;
 }
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    position: 'relative',
   },
   scrollContent: {
     paddingRight: 0,
@@ -100,11 +101,9 @@ const styles = StyleSheet.create({
     padding: WELCOME_LAYOUT.PROMO_BANNER_PADDING,
     minHeight: WELCOME_LAYOUT.PROMO_BANNER_MIN_HEIGHT,
     justifyContent: 'center',
-    position: 'relative',
   },
   bannerContent: {
     gap: WELCOME_LAYOUT.PROMO_BANNER_GAP,
-    marginBottom: 20,
   },
   bannerTitle: {
     fontSize: WELCOME_LAYOUT.PROMO_BANNER_TITLE_SIZE,
@@ -117,22 +116,27 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.primary.xanhReu,
     lineHeight: WELCOME_LAYOUT.PROMO_BANNER_SUBTITLE_LINE_HEIGHT,
   },
-  pagination: {
+  
+  // Fixed overlay layer
+  paginationOverlay: {
     position: 'absolute',
-    bottom: WELCOME_LAYOUT.PROMO_DOT_BOTTOM,
-    left: WELCOME_LAYOUT.PROMO_DOT_CONTAINER_PADDING_HORIZONTAL,
-    right: WELCOME_LAYOUT.PROMO_DOT_CONTAINER_PADDING_HORIZONTAL,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: WELCOME_LAYOUT.PROMO_BANNER_MIN_HEIGHT,
+    justifyContent: 'flex-end',
+    paddingBottom: WELCOME_LAYOUT.PROMO_DOT_BOTTOM,
+    pointerEvents: 'none',
+  },
+  pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: WELCOME_LAYOUT.PROMO_DOT_GAP,
   },
   paginationDot: {
+    width: WELCOME_LAYOUT.PROMO_DOT_INACTIVE_WIDTH,
     height: WELCOME_LAYOUT.PROMO_DOT_HEIGHT,
     borderRadius: WELCOME_LAYOUT.PROMO_DOT_BORDER_RADIUS,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  paginationDotActive: {
-    backgroundColor: BRAND_COLORS.background.white,
   },
 });
