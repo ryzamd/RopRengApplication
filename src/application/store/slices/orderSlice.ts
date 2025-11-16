@@ -9,7 +9,7 @@ import { OrderStatus } from '../../../domain/entities/order/OrderStatus';
 import { CreateOrderUseCase, CreateOrderInput } from '../../usecases/order/CreateOrderUseCase';
 import { GetOrdersUseCase } from '../../usecases/order/GetOrdersUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
-import { ServiceType } from '../../../core/di/types';
+import { TYPES } from '../../../core/di/types';
 
 // State interface
 export interface OrderState {
@@ -41,13 +41,13 @@ export const createOrder = createAsyncThunk(
   async (input: CreateOrderInput, { rejectWithValue }) => {
     try {
       const orderRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.OrderRepository
+        TYPES.OrderRepository
       );
       const productRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.ProductRepository
+        TYPES.ProductRepository
       );
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
 
       const useCase = new CreateOrderUseCase(
@@ -71,10 +71,10 @@ export const fetchOrders = createAsyncThunk(
   ) => {
     try {
       const orderRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.OrderRepository
+        TYPES.OrderRepository
       );
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
 
       const useCase = new GetOrdersUseCase(orderRepository, userRepository);
@@ -91,10 +91,10 @@ export const refreshOrders = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const orderRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.OrderRepository
+        TYPES.OrderRepository
       );
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
 
       const useCase = new GetOrdersUseCase(orderRepository, userRepository);

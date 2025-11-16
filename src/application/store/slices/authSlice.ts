@@ -10,7 +10,7 @@ import { VerifyOTPUseCase } from '../../usecases/auth/VerifyOTPUseCase';
 import { LogoutUseCase } from '../../usecases/auth/LogoutUseCase';
 import { GetCurrentUserUseCase } from '../../usecases/auth/GetCurrentUserUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
-import { ServiceType } from '../../../core/di/types';
+import { TYPES } from '../../../core/di/types';
 
 // State interface
 export interface AuthState {
@@ -56,7 +56,7 @@ export const verifyOTP = createAsyncThunk(
   ) => {
     try {
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
       const useCase = new VerifyOTPUseCase(userRepository);
       const result = await useCase.execute({ phone, otp });
@@ -72,7 +72,7 @@ export const logout = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
       const useCase = new LogoutUseCase(userRepository);
       await useCase.execute();
@@ -87,7 +87,7 @@ export const checkAuth = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const userRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.UserRepository
+        TYPES.UserRepository
       );
       const useCase = new GetCurrentUserUseCase(userRepository);
       const user = await useCase.execute();

@@ -12,6 +12,7 @@ export const TYPES = {
   // Repositories
   UserRepository: Symbol.for('UserRepository'),
   ProductRepository: Symbol.for('ProductRepository'),
+  CategoryRepository: Symbol.for('CategoryRepository'),
   OrderRepository: Symbol.for('OrderRepository'),
   PaymentRepository: Symbol.for('PaymentRepository'),
   LoyaltyRepository: Symbol.for('LoyaltyRepository'),

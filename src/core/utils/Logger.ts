@@ -45,6 +45,34 @@ export class Logger {
   }
 
   /**
+   * Static debug log
+   */
+  public static debug(message: string, data?: any, source?: string): void {
+    Logger.getInstance().debug(message, data, source);
+  }
+
+  /**
+   * Static info log
+   */
+  public static info(message: string, data?: any, source?: string): void {
+    Logger.getInstance().info(message, data, source);
+  }
+
+  /**
+   * Static warning log
+   */
+  public static warn(message: string, data?: any, source?: string): void {
+    Logger.getInstance().warn(message, data, source);
+  }
+
+  /**
+   * Static error log
+   */
+  public static error(message: string, error?: any, source?: string): void {
+    Logger.getInstance().error(message, error, source);
+  }
+
+  /**
    * Debug log
    */
   public debug(message: string, data?: any, source?: string): void {

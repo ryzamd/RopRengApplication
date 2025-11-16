@@ -9,7 +9,7 @@ import { Category } from '../../../domain/entities/product/Category';
 import { GetProductsUseCase } from '../../usecases/product/GetProductsUseCase';
 import { GetCategoriesUseCase } from '../../usecases/product/GetCategoriesUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
-import { ServiceType } from '../../../core/di/types';
+import { TYPES } from '../../../core/di/types';
 
 // State interface
 export interface ProductState {
@@ -50,7 +50,7 @@ export const fetchProducts = createAsyncThunk(
   ) => {
     try {
       const productRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.ProductRepository
+        TYPES.ProductRepository
       );
       const useCase = new GetProductsUseCase(productRepository);
       const result = await useCase.execute({
@@ -70,7 +70,7 @@ export const fetchCategories = createAsyncThunk(
   async (forceRefresh: boolean = false, { rejectWithValue }) => {
     try {
       const categoryRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.CategoryRepository
+        TYPES.CategoryRepository
       );
       const useCase = new GetCategoriesUseCase(categoryRepository);
       const result = await useCase.execute(forceRefresh);
@@ -89,7 +89,7 @@ export const refreshProducts = createAsyncThunk(
   ) => {
     try {
       const productRepository = ServiceContainer.getInstance().resolve(
-        ServiceType.ProductRepository
+        TYPES.ProductRepository
       );
       const useCase = new GetProductsUseCase(productRepository);
       const result = await useCase.execute({
