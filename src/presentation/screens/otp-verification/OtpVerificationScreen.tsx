@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { BackHandler, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { login } from '../../../state/slices/auth';
-import { useAppDispatch } from '../../../utils/hooks';
+import { useAuth } from '../../hooks/useAuth';
+import { useUI } from '../../hooks/useUI';
 import { useModalBottomSheetAnimation, useShakeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpInput } from './components/OtpInput';
@@ -17,8 +17,9 @@ import { OtpVerificationService } from './OtpVerificationService';
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const params = useLocalSearchParams<{ phoneNumber: string }>();
+  const { verifyOTP, sendOTP, isLoading, clearError } = useAuth();
+  const { showError } = useUI();
 
   const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
@@ -103,16 +104,28 @@ export default function OtpVerificationScreen() {
     setHasClickedResendThisCycle(false); // Reset resend state for new cycle
   };
 
-  const handleResendClick = () => {
+  const handleResendClick = async () => {
     if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) {
       return;
     }
-    
-    setHasClickedResendThisCycle(true);
-    setTotalRetryCount((prev) => prev + 1);
-    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
-    setState(OtpVerificationStateEnum.IDLE);
-    setErrorMessage(null);
+
+    try {
+      clearError();
+
+      // Extract raw phone number (remove formatting)
+      const rawPhone = (params.phoneNumber || '').replace(/\D/g, '');
+
+      // Resend OTP using new architecture
+      await sendOTP(rawPhone);
+
+      setHasClickedResendThisCycle(true);
+      setTotalRetryCount((prev) => prev + 1);
+      setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+      setState(OtpVerificationStateEnum.IDLE);
+      setErrorMessage(null);
+    } catch (error: any) {
+      showError(error.message || 'Không thể gửi lại OTP. Vui lòng thử lại.');
+    }
   };
 
   const handleRetryIconClick = () => {
@@ -124,52 +137,49 @@ export default function OtpVerificationScreen() {
     resetOtp();
   };
 
-  const handleOtpComplete = (code: string) => {
-    if (state !== OtpVerificationStateEnum.IDLE) {
+  const handleOtpComplete = async (code: string) => {
+    if (state !== OtpVerificationStateEnum.IDLE || isLoading) {
       return;
     }
 
     setState(OtpVerificationStateEnum.VERIFYING);
 
-    // Simulate verification delay
-    setTimeout(() => {
-      const result = OtpVerificationService.verifyOtpCode(code);
+    try {
+      clearError();
 
-      if (result.isValid && result.userType) {
-        setState(OtpVerificationStateEnum.SUCCESS);
+      // Extract raw phone number (remove formatting)
+      const rawPhone = (params.phoneNumber || '').replace(/\D/g, '');
 
-        // Dispatch login action
-        dispatch(login({
-          phoneNumber: params.phoneNumber || '',
-          userId: `user_${Date.now()}`,
-        }));
+      // Verify OTP using new architecture
+      await verifyOTP(rawPhone, code);
 
-        // Option 1: Navigate BEFORE dismiss animation
-        // Strategy: Mount tabs behind modal, then animate modal out
-        // This ensures tabs are ready when modal disappears - zero void state
+      setState(OtpVerificationStateEnum.SUCCESS);
 
-        // Step 1: Navigate immediately - tabs mount behind modal
-        router.replace('/(tabs)');
+      // Option 1: Navigate BEFORE dismiss animation
+      // Strategy: Mount tabs behind modal, then animate modal out
+      // This ensures tabs are ready when modal disappears - zero void state
 
-        // Step 2: Start dismiss animation - modal slides down over tabs
-        navigationIntentRef.current = 'success';
-        dismiss(); // 300ms slide-out animation
+      // Step 1: Navigate immediately - tabs mount behind modal
+      router.replace('/(tabs)');
 
-        // Result: When animation completes, tabs are already mounted and visible
-        // No setTimeout needed, no gap, no void state
-      } else {
-        // Invalid OTP
-        setState(OtpVerificationStateEnum.ERROR);
-        setErrorMessage(OTP_TEXT.ERROR_INVALID);
-        shake();
+      // Step 2: Start dismiss animation - modal slides down over tabs
+      navigationIntentRef.current = 'success';
+      dismiss(); // 300ms slide-out animation
 
-        // Clear input after shake
-        setTimeout(() => {
-          setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-          setState(OtpVerificationStateEnum.IDLE);
-        }, OTP_LAYOUT.SHAKE_DURATION);
-      }
-    }, 500);
+      // Result: When animation completes, tabs are already mounted and visible
+      // No setTimeout needed, no gap, no void state
+    } catch (error: any) {
+      // Invalid OTP or verification failed
+      setState(OtpVerificationStateEnum.ERROR);
+      setErrorMessage(error.message || OTP_TEXT.ERROR_INVALID);
+      shake();
+
+      // Clear input after shake
+      setTimeout(() => {
+        setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+        setState(OtpVerificationStateEnum.IDLE);
+      }, OTP_LAYOUT.SHAKE_DURATION);
+    }
   };
 
   const handleOkPress = () => {

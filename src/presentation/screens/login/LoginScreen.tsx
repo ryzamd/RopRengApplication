@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppDispatch } from '../../../utils/hooks';
+import { useAuth } from '../../hooks/useAuth';
+import { useUI } from '../../hooks/useUI';
 import { useModalFadeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { PhoneInput } from './components/PhoneInput';
@@ -15,9 +16,9 @@ import { LoginUIService } from './LoginService';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const { sendOTP, isLoading, formatPhone, clearError } = useAuth();
+  const { showError } = useUI();
 
   const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({
     onExitComplete: () => router.back(),
@@ -25,21 +26,24 @@ export default function LoginScreen() {
 
   const isValidPhone = LoginUIService.validatePhoneNumber(phoneNumber);
 
-  const handleLogin = () => {
-    if (isValidPhone && !isSendingOtp) {
-      setIsSendingOtp(true);
-      
-      // Simulate sending OTP (2 seconds)
-      setTimeout(() => {
-        setIsSendingOtp(false);
-        const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
-        
+  const handleLogin = async () => {
+    if (isValidPhone && !isLoading) {
+      try {
+        clearError();
+
+        // Send OTP using new architecture
+        await sendOTP(phoneNumber);
+
+        const formattedPhone = formatPhone(phoneNumber);
+
         // Navigate to OTP verification screen
         router.push({
           pathname: '/otp-verification',
           params: { phoneNumber: formattedPhone },
         });
-      }, LOGIN_LAYOUT.OTP_SENDING_DURATION);
+      } catch (error: any) {
+        showError(error.message || 'Không thể gửi OTP. Vui lòng thử lại.');
+      }
     }
   };
 
@@ -85,7 +89,7 @@ export default function LoginScreen() {
                 onChangeText={setPhoneNumber}
                 onSubmit={handleLogin}
                 isValid={isValidPhone}
-                isLoading={isSendingOtp}
+                isLoading={isLoading}
                 autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
               />
 
