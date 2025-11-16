@@ -6,6 +6,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Order } from '../../../domain/entities/order/Order';
 import { OrderStatus } from '../../../domain/entities/order/OrderStatus';
+import { IOrderRepository } from '../../../domain/repositories/IOrderRepository';
+import { IProductRepository } from '../../../domain/repositories/IProductRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { CreateOrderUseCase, CreateOrderInput } from '../../usecases/order/CreateOrderUseCase';
 import { GetOrdersUseCase } from '../../usecases/order/GetOrdersUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
@@ -40,13 +43,13 @@ export const createOrder = createAsyncThunk(
   'order/createOrder',
   async (input: CreateOrderInput, { rejectWithValue }) => {
     try {
-      const orderRepository = ServiceContainer.getInstance().resolve(
+      const orderRepository = ServiceContainer.getInstance().resolve<IOrderRepository>(
         TYPES.OrderRepository
       );
-      const productRepository = ServiceContainer.getInstance().resolve(
+      const productRepository = ServiceContainer.getInstance().resolve<IProductRepository>(
         TYPES.ProductRepository
       );
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
 
@@ -70,10 +73,10 @@ export const fetchOrders = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const orderRepository = ServiceContainer.getInstance().resolve(
+      const orderRepository = ServiceContainer.getInstance().resolve<IOrderRepository>(
         TYPES.OrderRepository
       );
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
 
@@ -90,10 +93,10 @@ export const refreshOrders = createAsyncThunk(
   'order/refreshOrders',
   async (_, { rejectWithValue }) => {
     try {
-      const orderRepository = ServiceContainer.getInstance().resolve(
+      const orderRepository = ServiceContainer.getInstance().resolve<IOrderRepository>(
         TYPES.OrderRepository
       );
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
 

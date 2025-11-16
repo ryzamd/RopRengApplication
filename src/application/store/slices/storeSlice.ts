@@ -5,6 +5,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Store } from '../../../domain/entities/store/Store';
+import { IStoreRepository } from '../../../domain/repositories/IStoreRepository';
 import { GetNearbyStoresUseCase } from '../../usecases/store/GetNearbyStoresUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
 import { TYPES } from '../../../core/di/types';
@@ -50,7 +51,7 @@ export const fetchNearbyStores = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const storeRepository = ServiceContainer.getInstance().resolve(
+      const storeRepository = ServiceContainer.getInstance().resolve<IStoreRepository>(
         TYPES.StoreRepository
       );
 
@@ -87,7 +88,7 @@ export const refreshStores = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const storeRepository = ServiceContainer.getInstance().resolve(
+      const storeRepository = ServiceContainer.getInstance().resolve<IStoreRepository>(
         TYPES.StoreRepository
       );
 

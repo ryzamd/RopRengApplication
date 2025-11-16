@@ -6,6 +6,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product } from '../../../domain/entities/product/Product';
 import { Category } from '../../../domain/entities/product/Category';
+import { IProductRepository } from '../../../domain/repositories/IProductRepository';
 import { GetProductsUseCase } from '../../usecases/product/GetProductsUseCase';
 import { GetCategoriesUseCase } from '../../usecases/product/GetCategoriesUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
@@ -49,7 +50,7 @@ export const fetchProducts = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const productRepository = ServiceContainer.getInstance().resolve(
+      const productRepository = ServiceContainer.getInstance().resolve<IProductRepository>(
         TYPES.ProductRepository
       );
       const useCase = new GetProductsUseCase(productRepository);
@@ -69,7 +70,7 @@ export const fetchCategories = createAsyncThunk(
   'product/fetchCategories',
   async (forceRefresh: boolean = false, { rejectWithValue }) => {
     try {
-      const categoryRepository = ServiceContainer.getInstance().resolve(
+      const categoryRepository = ServiceContainer.getInstance().resolve<IProductRepository>(
         TYPES.CategoryRepository
       );
       const useCase = new GetCategoriesUseCase(categoryRepository);
@@ -88,7 +89,7 @@ export const refreshProducts = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const productRepository = ServiceContainer.getInstance().resolve(
+      const productRepository = ServiceContainer.getInstance().resolve<IProductRepository>(
         TYPES.ProductRepository
       );
       const useCase = new GetProductsUseCase(productRepository);

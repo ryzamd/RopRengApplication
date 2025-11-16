@@ -5,6 +5,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../../../domain/entities/user/User';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { SendOTPUseCase } from '../../usecases/auth/SendOTPUseCase';
 import { VerifyOTPUseCase } from '../../usecases/auth/VerifyOTPUseCase';
 import { LogoutUseCase } from '../../usecases/auth/LogoutUseCase';
@@ -55,7 +56,7 @@ export const verifyOTP = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
       const useCase = new VerifyOTPUseCase(userRepository);
@@ -71,7 +72,7 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
       const useCase = new LogoutUseCase(userRepository);
@@ -86,7 +87,7 @@ export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      const userRepository = ServiceContainer.getInstance().resolve(
+      const userRepository = ServiceContainer.getInstance().resolve<IUserRepository>(
         TYPES.UserRepository
       );
       const useCase = new GetCurrentUserUseCase(userRepository);

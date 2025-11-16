@@ -5,11 +5,21 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from '../../../domain/entities/product/Product';
-import { Price } from '../../../domain/entities/product/Price';
 
-// Cart item interface
+// Serialized product data for cart (plain object, not domain entity)
+export interface CartProductData {
+  id: string;
+  name: string;
+  description?: string;
+  price: number; // Stored as number for simplicity
+  categoryId: string;
+  imageUrl?: string;
+  isAvailable: boolean;
+}
+
+// Cart item interface - uses plain objects instead of domain entities
 export interface CartItem {
-  product: Product;
+  product: CartProductData;
   quantity: number;
   selectedOptions?: Record<string, string>;
   optionsPriceModifier: number; // Total price modifier from selected options
@@ -33,11 +43,25 @@ const initialState: CartState = {
   total: 0,
 };
 
+// Helper function to serialize Product entity to plain object
+function serializeProduct(product: Product): CartProductData {
+  const productObj = product.toObject();
+  return {
+    id: productObj.id,
+    name: productObj.name,
+    description: productObj.description,
+    price: productObj.price.toValue(),
+    categoryId: productObj.categoryId,
+    imageUrl: productObj.imageUrl,
+    isAvailable: productObj.isAvailable,
+  };
+}
+
 // Helper function to calculate totals
 function calculateTotals(state: CartState) {
   // Calculate subtotal
   state.subtotal = state.items.reduce((sum, item) => {
-    const basePrice = item.product.toObject().price.toValue();
+    const basePrice = item.product.price;
     const itemPrice = basePrice + item.optionsPriceModifier;
     return sum + itemPrice * item.quantity;
   }, 0);
@@ -63,10 +87,13 @@ const cartSlice = createSlice({
       const { product, quantity, selectedOptions, optionsPriceModifier = 0 } =
         action.payload;
 
+      // Serialize product to plain object
+      const serializedProduct = serializeProduct(product);
+
       // Check if item already exists with same options
       const existingItemIndex = state.items.findIndex(
         (item) =>
-          item.product.id === product.id &&
+          item.product.id === serializedProduct.id &&
           JSON.stringify(item.selectedOptions) ===
             JSON.stringify(selectedOptions)
       );
@@ -75,9 +102,9 @@ const cartSlice = createSlice({
         // Update quantity
         state.items[existingItemIndex].quantity += quantity;
       } else {
-        // Add new item
+        // Add new item with serialized product
         state.items.push({
-          product,
+          product: serializedProduct,
           quantity,
           selectedOptions,
           optionsPriceModifier,
