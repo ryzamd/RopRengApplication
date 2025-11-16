@@ -30,9 +30,6 @@ export default function OtpVerificationScreen() {
   // Track navigation intent to prevent conflicting navigation commands
   const navigationIntentRef = React.useRef<'back' | 'success' | null>(null);
 
-  // Track navigation timeout for cleanup
-  const navigationTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
   // Bottom sheet animation
   const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
     useModalBottomSheetAnimation({
@@ -95,15 +92,6 @@ export default function OtpVerificationScreen() {
     return () => backHandler.remove();
   }, [state, showMaxRetriesError, dismiss]);
 
-  // Cleanup navigation timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const resetOtp = () => {
     setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
@@ -153,19 +141,19 @@ export default function OtpVerificationScreen() {
           userId: `user_${Date.now()}`,
         }));
 
-        // iOS-compatible navigation fix:
-        // Navigate WHILE the dismiss animation is in progress
-        // This provides visual continuity and prevents void state on iOS
-        navigationIntentRef.current = 'success';
-        dismiss(); // Start exit animation (300ms)
+        // Option 1: Navigate BEFORE dismiss animation
+        // Strategy: Mount tabs behind modal, then animate modal out
+        // This ensures tabs are ready when modal disappears - zero void state
 
-        // Navigate partway through animation to ensure tabs mount before modal fully dismisses
-        // This overlaps animation and mounting for seamless transition
-        navigationTimeoutRef.current = setTimeout(() => {
-          router.dismissAll();
-          router.replace('/(tabs)');
-          navigationTimeoutRef.current = null;
-        }, 150); // Navigate at 50% of animation (150ms of 300ms)
+        // Step 1: Navigate immediately - tabs mount behind modal
+        router.replace('/(tabs)');
+
+        // Step 2: Start dismiss animation - modal slides down over tabs
+        navigationIntentRef.current = 'success';
+        dismiss(); // 300ms slide-out animation
+
+        // Result: When animation completes, tabs are already mounted and visible
+        // No setTimeout needed, no gap, no void state
       } else {
         // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);
