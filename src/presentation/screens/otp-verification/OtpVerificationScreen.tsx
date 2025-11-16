@@ -30,6 +30,9 @@ export default function OtpVerificationScreen() {
   // Track navigation intent to prevent conflicting navigation commands
   const navigationIntentRef = React.useRef<'back' | 'success' | null>(null);
 
+  // Track navigation timeout for cleanup
+  const navigationTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
   // Bottom sheet animation
   const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
     useModalBottomSheetAnimation({
@@ -37,9 +40,8 @@ export default function OtpVerificationScreen() {
       onExitComplete: () => {
         // Handle navigation based on intent
         if (navigationIntentRef.current === 'success') {
-          // Success flow: navigate directly to tabs
-          router.dismissAll();
-          router.replace('/(tabs)');
+          // Success flow: Navigation already handled in setTimeout (iOS fix)
+          // Just cleanup the ref
           navigationIntentRef.current = null;
         } else if (navigationIntentRef.current === 'back') {
           // Normal dismiss: just go back
@@ -93,6 +95,15 @@ export default function OtpVerificationScreen() {
     return () => backHandler.remove();
   }, [state, showMaxRetriesError, dismiss]);
 
+  // Cleanup navigation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const resetOtp = () => {
     setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
@@ -142,13 +153,19 @@ export default function OtpVerificationScreen() {
           userId: `user_${Date.now()}`,
         }));
 
-        // Set navigation intent and dismiss with animation
-        // onExitComplete callback will handle the actual navigation
+        // iOS-compatible navigation fix:
+        // Navigate WHILE the dismiss animation is in progress
+        // This provides visual continuity and prevents void state on iOS
         navigationIntentRef.current = 'success';
-        dismiss();
+        dismiss(); // Start exit animation (300ms)
 
-        // Note: Navigation is now handled in onExitComplete callback
-        // This eliminates the race condition and void state
+        // Navigate partway through animation to ensure tabs mount before modal fully dismisses
+        // This overlaps animation and mounting for seamless transition
+        navigationTimeoutRef.current = setTimeout(() => {
+          router.dismissAll();
+          router.replace('/(tabs)');
+          navigationTimeoutRef.current = null;
+        }, 150); // Navigate at 50% of animation (150ms of 300ms)
       } else {
         // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);
