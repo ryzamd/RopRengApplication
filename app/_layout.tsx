@@ -1,12 +1,13 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import { TamaguiProvider } from 'tamagui';
-import { DatabaseProvider } from '../src/infrastructure/db/sqlite/provider';
-import { store } from '../src/state/store';
+import { store, persistor } from '../src/application/store';
+import { initializeApp } from '../src/App.init';
 import config from '../tamagui.config';
 
 // Prevent auto-hide splash screen
@@ -23,6 +24,7 @@ SplashScreen.preventAutoHideAsync();
  * - (tabs): Bottom Tabs Navigator (5 tabs chính)
  */
 export default function RootLayout() {
+  const [appReady, setAppReady] = useState(false);
   const [fontsLoaded] = useFonts({
     'Phudu-Bold': require('../assets/fonts/Phudu-Bold.ttf'),
     'Phudu-Medium': require('../assets/fonts/Phudu-Medium.ttf'),
@@ -32,21 +34,37 @@ export default function RootLayout() {
     'SpaceMono-Bold': require('../assets/fonts/SpaceMono-Bold.ttf'),
   });
 
+  // Initialize app (database, DI, sync)
   useEffect(() => {
-    if (fontsLoaded) {
+    async function prepare() {
+      try {
+        await initializeApp();
+        setAppReady(true);
+      } catch (error) {
+        console.error('App initialization failed:', error);
+        // Still set app ready to allow app to continue (graceful degradation)
+        setAppReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded && appReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, appReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !appReady) {
     return null;
   }
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <TamaguiProvider config={config}>
-          <DatabaseProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <TamaguiProvider config={config}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen
@@ -58,7 +76,7 @@ export default function RootLayout() {
                   gestureDirection: 'vertical',   // Swipe vertical
                 }}
               />
-              <Stack.Screen 
+              <Stack.Screen
                 name="otp-verification"
                 options={{
                   presentation: 'transparentModal',
@@ -68,9 +86,9 @@ export default function RootLayout() {
               />
               <Stack.Screen name="(tabs)" />
             </Stack>
-          </DatabaseProvider>
-        </TamaguiProvider>
-      </SafeAreaProvider>
+          </TamaguiProvider>
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 }
