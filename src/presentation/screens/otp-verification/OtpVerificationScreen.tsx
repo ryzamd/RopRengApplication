@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { BackHandler, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login } from '../../../state/slices/auth';
@@ -19,7 +19,7 @@ export default function OtpVerificationScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams<{ phoneNumber: string }>();
-  
+
   const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
   const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
@@ -27,14 +27,26 @@ export default function OtpVerificationScreen() {
   const [totalRetryCount, setTotalRetryCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Track navigation intent to prevent conflicting navigation commands
+  const navigationIntentRef = React.useRef<'back' | 'success' | null>(null);
+
   // Bottom sheet animation
   const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
     useModalBottomSheetAnimation({
       heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
       onExitComplete: () => {
-        // Only back if still in navigation stack
-        if (router.canGoBack()) {
-          router.back();
+        // Handle navigation based on intent
+        if (navigationIntentRef.current === 'success') {
+          // Success flow: navigate directly to tabs
+          router.dismissAll();
+          router.replace('/(tabs)');
+          navigationIntentRef.current = null;
+        } else if (navigationIntentRef.current === 'back') {
+          // Normal dismiss: just go back
+          if (router.canGoBack()) {
+            router.back();
+          }
+          navigationIntentRef.current = null;
         }
       },
     });
@@ -42,7 +54,13 @@ export default function OtpVerificationScreen() {
   // Shake animation for errors
   const { animatedStyle: shakeAnimatedStyle, shake } = useShakeAnimation();
 
-  // Countdown timer
+  // Calculate derived state values
+  const canClickResend = OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle);
+  const canShowRetryIcon = OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount);
+  const isExpired = timeRemaining <= 0;
+  const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && isExpired;
+
+  // Countdown timer with proper cleanup
   useEffect(() => {
     if (timeRemaining <= 0) {
       setState(OtpVerificationStateEnum.EXPIRED);
@@ -54,8 +72,26 @@ export default function OtpVerificationScreen() {
       setTimeRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
+    // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(interval);
   }, [timeRemaining]);
+
+  // Android back button handler
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Prevent back during verification or if max retries reached
+      if (state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError) {
+        return true; // Prevent default back behavior
+      }
+
+      // Handle back press with animation
+      navigationIntentRef.current = 'back';
+      dismiss();
+      return true; // Prevent default back behavior
+    });
+
+    return () => backHandler.remove();
+  }, [state, showMaxRetriesError, dismiss]);
 
   const resetOtp = () => {
     setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
@@ -99,32 +135,26 @@ export default function OtpVerificationScreen() {
 
       if (result.isValid && result.userType) {
         setState(OtpVerificationStateEnum.SUCCESS);
-        
+
         // Dispatch login action
         dispatch(login({
           phoneNumber: params.phoneNumber || '',
           userId: `user_${Date.now()}`,
         }));
 
-        // Navigate based on user type
+        // Set navigation intent and dismiss with animation
+        // onExitComplete callback will handle the actual navigation
+        navigationIntentRef.current = 'success';
         dismiss();
-        setTimeout(() => {
-          if (result.userType === 'existing') {
-            router.dismissAll();
-            router.replace('/(tabs)');
-          } else {
-            // TODO: Navigate to create account screen
-            router.dismissAll();
-            console.log('Navigate to create account (not implemented yet)');
-            router.replace('/(tabs)');
-          }
-        });
+
+        // Note: Navigation is now handled in onExitComplete callback
+        // This eliminates the race condition and void state
       } else {
         // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);
         setErrorMessage(OTP_TEXT.ERROR_INVALID);
         shake();
-        
+
         // Clear input after shake
         setTimeout(() => {
           setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
@@ -135,17 +165,14 @@ export default function OtpVerificationScreen() {
   };
 
   const handleOkPress = () => {
+    navigationIntentRef.current = 'back';
     dismiss();
   };
 
   const handleClose = () => {
+    navigationIntentRef.current = 'back';
     dismiss();
   };
-
-  const canClickResend = OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle);
-  const canShowRetryIcon = OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount);
-  const isExpired = timeRemaining <= 0;
-  const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && isExpired;
 
   return (
     <View style={styles.container}>
