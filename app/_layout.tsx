@@ -52,7 +52,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="login"
                 options={{
-                  presentation: 'modal', // iOS: modal từ dưới lên
+                  presentation: 'fullScreenModal', // iOS: modal từ dưới lên
                   animation: 'slide_from_bottom', // Android
                   gestureEnabled: true,           // Cho phép swipe down để dismiss
                   gestureDirection: 'vertical',   // Swipe vertical

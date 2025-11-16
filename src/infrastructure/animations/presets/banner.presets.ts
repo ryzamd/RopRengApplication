@@ -16,4 +16,12 @@ export const BANNER_ANIMATION_PRESETS = {
     duration: ANIMATION_DURATIONS.fast,
     easing: SHARED_EASINGS.standard,
   },
+
+  /**
+   * Pagination dot color transition animation (smooth fade)
+   */
+  BANNER_DOT_COLOR_TRANSITION: {
+    duration: ANIMATION_DURATIONS.fast,
+    easing: SHARED_EASINGS.standard,
+  },
 } as const;
