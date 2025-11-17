@@ -4,11 +4,11 @@
  */
 
 import { User } from '../../../domain/entities/user/User';
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { Logger } from '../../../core/utils/Logger';
 
 export class GetCurrentUserUseCase {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: IUserRepository) {}
 
   public async execute(): Promise<User | null> {
     try {

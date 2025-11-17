@@ -5,7 +5,7 @@
 
 import { Store } from '../../../domain/entities/store/Store';
 import { StoreLocation } from '../../../domain/entities/store/StoreLocation';
-import { StoreRepository } from '../../../infrastructure/repositories/StoreRepository';
+import { IStoreRepository } from '../../../domain/repositories/IStoreRepository';
 import { StoreApi } from '../../../infrastructure/api/endpoints/StoreApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
@@ -23,7 +23,7 @@ export interface GetNearbyStoresOutput {
 }
 
 export class GetNearbyStoresUseCase {
-  constructor(private storeRepository: StoreRepository) {}
+  constructor(private storeRepository: IStoreRepository) {}
 
   public async execute(input: GetNearbyStoresInput): Promise<GetNearbyStoresOutput> {
     try {

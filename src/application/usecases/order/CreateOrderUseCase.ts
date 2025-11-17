@@ -6,9 +6,9 @@
 import { Order } from '../../../domain/entities/order/Order';
 import { OrderItem } from '../../../domain/entities/order/OrderItem';
 import { Price } from '../../../domain/entities/product/Price';
-import { OrderRepository } from '../../../infrastructure/repositories/OrderRepository';
-import { ProductRepository } from '../../../infrastructure/repositories/ProductRepository';
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository';
+import { IOrderRepository } from '../../../domain/repositories/IOrderRepository';
+import { IProductRepository } from '../../../domain/repositories/IProductRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { OrderApi } from '../../../infrastructure/api/endpoints/OrderApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
@@ -49,9 +49,9 @@ export interface CreateOrderOutput {
 
 export class CreateOrderUseCase {
   constructor(
-    private orderRepository: OrderRepository,
-    private productRepository: ProductRepository,
-    private userRepository: UserRepository
+    private orderRepository: IOrderRepository,
+    private productRepository: IProductRepository,
+    private userRepository: IUserRepository
   ) {}
 
   public async execute(input: CreateOrderInput): Promise<CreateOrderOutput> {

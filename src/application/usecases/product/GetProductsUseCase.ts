@@ -4,7 +4,7 @@
  */
 
 import { Product } from '../../../domain/entities/product/Product';
-import { ProductRepository } from '../../../infrastructure/repositories/ProductRepository';
+import { IProductRepository } from '../../../domain/repositories/IProductRepository';
 import { ProductApi } from '../../../infrastructure/api/endpoints/ProductApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
@@ -23,7 +23,7 @@ export interface GetProductsOutput {
 }
 
 export class GetProductsUseCase {
-  constructor(private productRepository: ProductRepository) {}
+  constructor(private productRepository: IProductRepository) {}
 
   public async execute(input: GetProductsInput = {}): Promise<GetProductsOutput> {
     try {

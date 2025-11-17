@@ -3,14 +3,14 @@
  * Logs out the current user and clears session
  */
 
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { clearAuthToken } from '../../../infrastructure/api/interceptors/AuthInterceptor';
 import { Logger } from '../../../core/utils/Logger';
 import { EventBus } from '../../../core/events/EventBus';
 import { EventType } from '../../../core/events/DomainEvents';
 
 export class LogoutUseCase {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: IUserRepository) {}
 
   public async execute(): Promise<void> {
     try {

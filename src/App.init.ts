@@ -4,7 +4,7 @@
  */
 
 import { ServiceContainer } from './core/di/ServiceContainer';
-import { ServiceType } from './core/di/types';
+import { TYPES } from './core/di/types';
 import { Database } from './core/database/Database';
 import { DatabaseInitializer } from './core/database/DatabaseInitializer';
 import { UserRepository } from './infrastructure/repositories/UserRepository';
@@ -48,8 +48,7 @@ async function initializeDatabase(): Promise<void> {
   const database = Database.getInstance();
   await database.initialize();
 
-  const initializer = new DatabaseInitializer(database);
-  await initializer.initialize();
+  await DatabaseInitializer.initialize();
 
   Logger.info('Database initialized');
 }
@@ -63,12 +62,12 @@ function setupDependencyInjection(): void {
   const container = ServiceContainer.getInstance();
 
   // Register repositories
-  container.register(ServiceType.UserRepository, new UserRepository());
-  container.register(ServiceType.ProductRepository, new ProductRepository());
-  container.register(ServiceType.CategoryRepository, new CategoryRepository());
-  container.register(ServiceType.OrderRepository, new OrderRepository());
-  container.register(ServiceType.PaymentRepository, new PaymentRepository());
-  container.register(ServiceType.StoreRepository, new StoreRepository());
+  container.register(TYPES.UserRepository, new UserRepository());
+  container.register(TYPES.ProductRepository, new ProductRepository());
+  container.register(TYPES.CategoryRepository, new CategoryRepository());
+  container.register(TYPES.OrderRepository, new OrderRepository());
+  container.register(TYPES.PaymentRepository, new PaymentRepository());
+  container.register(TYPES.StoreRepository, new StoreRepository());
 
   Logger.info('Dependency injection configured');
 }

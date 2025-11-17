@@ -4,7 +4,7 @@
  */
 
 import { Category } from '../../../domain/entities/product/Category';
-import { CategoryRepository } from '../../../infrastructure/repositories/CategoryRepository';
+import { ICategoryRepository } from '../../../domain/repositories/ICategoryRepository';
 import { ProductApi } from '../../../infrastructure/api/endpoints/ProductApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
@@ -15,7 +15,7 @@ export interface GetCategoriesOutput {
 }
 
 export class GetCategoriesUseCase {
-  constructor(private categoryRepository: CategoryRepository) {}
+  constructor(private categoryRepository: ICategoryRepository) {}
 
   public async execute(forceRefresh: boolean = false): Promise<GetCategoriesOutput> {
     try {

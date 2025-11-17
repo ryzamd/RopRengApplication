@@ -5,7 +5,7 @@
 
 import { PhoneNumber } from '../../../domain/entities/user/PhoneNumber';
 import { User } from '../../../domain/entities/user/User';
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { UserApi } from '../../../infrastructure/api/endpoints/UserApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { saveAuthToken } from '../../../infrastructure/api/interceptors/AuthInterceptor';
@@ -26,7 +26,7 @@ export interface VerifyOTPOutput {
 }
 
 export class VerifyOTPUseCase {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: IUserRepository) {}
 
   public async execute(input: VerifyOTPInput): Promise<VerifyOTPOutput> {
     try {

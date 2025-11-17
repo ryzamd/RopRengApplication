@@ -5,8 +5,8 @@
 
 import { Order } from '../../../domain/entities/order/Order';
 import { OrderStatus } from '../../../domain/entities/order/OrderStatus';
-import { OrderRepository } from '../../../infrastructure/repositories/OrderRepository';
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository';
+import { IOrderRepository } from '../../../domain/repositories/IOrderRepository';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { OrderApi } from '../../../infrastructure/api/endpoints/OrderApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
@@ -26,8 +26,8 @@ export interface GetOrdersOutput {
 
 export class GetOrdersUseCase {
   constructor(
-    private orderRepository: OrderRepository,
-    private userRepository: UserRepository
+    private orderRepository: IOrderRepository,
+    private userRepository: IUserRepository
   ) {}
 
   public async execute(input: GetOrdersInput = {}): Promise<GetOrdersOutput> {

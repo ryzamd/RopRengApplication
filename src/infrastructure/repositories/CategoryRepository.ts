@@ -5,12 +5,12 @@
 
 import { database } from '../../core/database/Database';
 import { Category } from '../../domain/entities/product/Category';
-import { IRepository } from '../../domain/repositories/IRepository';
+import { ICategoryRepository } from '../../domain/repositories/ICategoryRepository';
 import { BaseRepository } from './base/BaseRepository';
 
 export class CategoryRepository
   extends BaseRepository<Category>
-  implements IRepository<Category>
+  implements ICategoryRepository
 {
   constructor() {
     super('categories');
