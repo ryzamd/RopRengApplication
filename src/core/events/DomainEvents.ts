@@ -37,6 +37,7 @@ export enum EventType {
   // Network events
   NETWORK_ONLINE = 'NETWORK_ONLINE',
   NETWORK_OFFLINE = 'NETWORK_OFFLINE',
+  NETWORK_STATUS_CHANGED = 'NETWORK_STATUS_CHANGED',
 }
 
 // Event payload types

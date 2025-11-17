@@ -111,6 +111,13 @@ export class NetworkMonitor {
   }
 
   /**
+   * Get current network state (alias for getState)
+   */
+  public getNetworkState(): NetworkState {
+    return this.getState();
+  }
+
+  /**
    * Check if online
    */
   public isOnline(): boolean {

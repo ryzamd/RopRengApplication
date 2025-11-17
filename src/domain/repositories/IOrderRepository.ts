@@ -29,5 +29,5 @@ export interface IOrderRepository extends IRepository<Order> {
   /**
    * Find recent orders
    */
-  findRecent(limit?: number): Promise<Order[]>;
+  findRecent(userId: string, limit?: number): Promise<Order[]>;
 }

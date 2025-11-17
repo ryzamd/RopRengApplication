@@ -200,4 +200,7 @@ const orderSlice = createSlice({
 export const { clearOrderError, clearCurrentOrder, setCurrentOrder } =
   orderSlice.actions;
 
+// Re-export CreateOrderInput for use in hooks
+export type { CreateOrderInput } from '../../usecases/order/CreateOrderUseCase';
+
 export default orderSlice.reducer;
