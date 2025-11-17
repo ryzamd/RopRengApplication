@@ -44,7 +44,7 @@ export function useProducts() {
   // Fetch categories
   const loadCategories = useCallback(
     async (forceRefresh?: boolean) => {
-      await dispatch(fetchCategories(forceRefresh)).unwrap();
+      await dispatch(fetchCategories(forceRefresh ?? false)).unwrap();
     },
     [dispatch]
   );

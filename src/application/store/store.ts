@@ -40,7 +40,7 @@ export const store = configureStore({
       },
     }).concat(
       // Add custom middleware for logging (development only)
-      (storeAPI) => (next) => (action) => {
+      () => (next: any) => (action: any) => {
         if (__DEV__) {
           Logger.debug('Redux Action', {
             type: action.type,

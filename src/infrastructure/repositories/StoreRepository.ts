@@ -131,10 +131,11 @@ export class StoreRepository
       return true; // If no hours specified, assume always open
     }
 
-    const [openHour, openMinute] = props.operatingHours.openTime
+    const hours = props.operatingHours as any;
+    const [openHour, openMinute] = hours.openTime
       .split(':')
       .map(Number);
-    const [closeHour, closeMinute] = props.operatingHours.closeTime
+    const [closeHour, closeMinute] = hours.closeTime
       .split(':')
       .map(Number);
 
@@ -169,14 +170,14 @@ export class StoreRepository
    */
   protected mapFromEntity(store: Store): any {
     const props = store.toObject();
-    const locationValue = props.location.toValue();
+    const locationValue = props.location?.toValue();
 
     return {
       id: props.id,
       name: props.name,
       address: props.address,
-      latitude: locationValue.latitude,
-      longitude: locationValue.longitude,
+      latitude: locationValue?.latitude,
+      longitude: locationValue?.longitude,
       phone: props.phone,
       is_active: props.isActive ? 1 : 0,
       operating_hours: props.operatingHours

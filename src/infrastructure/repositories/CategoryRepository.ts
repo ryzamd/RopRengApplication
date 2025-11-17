@@ -101,6 +101,7 @@ export class CategoryRepository
       description: row.description || undefined,
       imageUrl: row.image_url || undefined,
       isActive: row.is_active === 1,
+      orderIndex: row.display_order || 0,
       displayOrder: row.display_order || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

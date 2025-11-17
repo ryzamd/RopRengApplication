@@ -72,7 +72,7 @@ export class GetNearbyStoresUseCase {
           location: StoreLocation.create(dto.latitude, dto.longitude),
           phone: dto.phone,
           isActive: dto.isActive,
-          operatingHours: dto.operatingHours,
+          operatingHours: dto.operatingHours as any,
           createdAt: dto.createdAt,
           updatedAt: dto.updatedAt,
           syncedAt: Date.now(),

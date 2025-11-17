@@ -7,6 +7,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product } from '../../../domain/entities/product/Product';
 import { Category } from '../../../domain/entities/product/Category';
 import { IProductRepository } from '../../../domain/repositories/IProductRepository';
+import { ICategoryRepository } from '../../../domain/repositories/ICategoryRepository';
 import { GetProductsUseCase } from '../../usecases/product/GetProductsUseCase';
 import { GetCategoriesUseCase } from '../../usecases/product/GetCategoriesUseCase';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
@@ -70,7 +71,7 @@ export const fetchCategories = createAsyncThunk(
   'product/fetchCategories',
   async (forceRefresh: boolean = false, { rejectWithValue }) => {
     try {
-      const categoryRepository = ServiceContainer.getInstance().resolve<IProductRepository>(
+      const categoryRepository = ServiceContainer.getInstance().resolve<ICategoryRepository>(
         TYPES.CategoryRepository
       );
       const useCase = new GetCategoriesUseCase(categoryRepository);

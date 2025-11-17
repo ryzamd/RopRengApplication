@@ -187,8 +187,9 @@ export class OrderRepository
           productId: item.product_id,
           productName: item.product_name,
           quantity: item.quantity,
-          unitPrice: Price.create(item.unit_price),
-          subtotal: Price.create(item.subtotal),
+          price: Price.create(item.unit_price),
+          unitPrice: item.unit_price,
+          subtotal: item.subtotal,
           selectedOptions: item.selected_options
             ? JSON.parse(item.selected_options)
             : undefined,
@@ -250,8 +251,8 @@ export class OrderRepository
       product_id: item.productId,
       product_name: item.productName,
       quantity: item.quantity,
-      unit_price: item.unitPrice.toValue(),
-      subtotal: item.subtotal.toValue(),
+      unit_price: item.unitPrice,
+      subtotal: item.subtotal,
       selected_options: item.selectedOptions
         ? JSON.stringify(item.selectedOptions)
         : null,

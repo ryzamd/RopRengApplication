@@ -90,8 +90,7 @@ export function useStores() {
 
       const userLat = userLocation.latitude;
       const userLon = userLocation.longitude;
-      const storeLat = storeLocation.toValue().latitude;
-      const storeLon = storeLocation.toValue().longitude;
+      const { latitude: storeLat, longitude: storeLon } = storeLocation.toValue();
 
       // Haversine formula
       const toRad = (deg: number) => (deg * Math.PI) / 180;

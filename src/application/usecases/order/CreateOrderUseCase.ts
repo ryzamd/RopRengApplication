@@ -13,7 +13,7 @@ import { OrderApi } from '../../../infrastructure/api/endpoints/OrderApi';
 import { MockApiService } from '../../../infrastructure/mock/MockApiService';
 import { ENV } from '../../../config/env';
 import { Logger } from '../../../core/utils/Logger';
-import { SyncQueue } from '../../../core/sync/SyncQueue';
+import { syncQueue } from '../../../core/sync/SyncQueue';
 import { EntityType, SyncOperation, SyncPriority } from '../../../config/constants';
 import { EventBus } from '../../../core/events/EventBus';
 import { EventType } from '../../../core/events/DomainEvents';
@@ -78,26 +78,29 @@ export class CreateOrderUseCase {
           throw new Error(`Sản phẩm ${product.toObject().name} hiện không có sẵn`);
         }
 
-        const orderItem = OrderItem.create({
-          productId: item.productId,
-          productName: product.toObject().name,
-          quantity: item.quantity,
-          unitPrice: product.toObject().price,
-          selectedOptions: item.selectedOptions,
-        });
+        const orderItem = OrderItem.create(
+          item.productId,
+          product.toObject().name,
+          item.quantity,
+          Price.create(product.toObject().price),
+          {
+            options: item.selectedOptions,
+          }
+        );
 
         orderItems.push(orderItem);
       }
 
       // Create order locally first (optimistic update)
-      const order = Order.create({
-        userId: user.id,
-        storeId: input.storeId,
-        items: orderItems,
-        deliveryAddress: input.deliveryAddress,
-        deliveryTime: input.deliveryTime,
-        notes: input.notes,
-      });
+      const order = Order.create(
+        user.id,
+        input.storeId,
+        orderItems,
+        {
+          deliveryAddress: input.deliveryAddress,
+          notes: input.notes,
+        }
+      );
 
       // Save to local database
       await this.orderRepository.save(order);
@@ -141,7 +144,7 @@ export class CreateOrderUseCase {
         Logger.warn('Order sync failed, queued for later', error);
 
         // Add to sync queue for later
-        await SyncQueue.getInstance().enqueue(
+        await syncQueue.enqueue(
           EntityType.ORDER,
           order.id,
           SyncOperation.CREATE,

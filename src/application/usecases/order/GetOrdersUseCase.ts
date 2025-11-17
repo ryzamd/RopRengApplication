@@ -71,8 +71,9 @@ export class GetOrdersUseCase {
             productId: itemDto.productId,
             productName: itemDto.productName,
             quantity: itemDto.quantity,
-            unitPrice: Price.create(itemDto.unitPrice),
-            subtotal: Price.create(itemDto.subtotal),
+            price: Price.create(itemDto.unitPrice),
+            unitPrice: itemDto.unitPrice,
+            subtotal: itemDto.subtotal,
             selectedOptions: itemDto.selectedOptions,
             createdAt: dto.createdAt,
             updatedAt: dto.updatedAt,
@@ -89,7 +90,9 @@ export class GetOrdersUseCase {
           discount: Price.create(dto.discount),
           total: Price.create(dto.total),
           status: dto.status,
-          deliveryAddress: dto.deliveryAddress,
+          deliveryAddress: dto.deliveryAddress
+            ? `${dto.deliveryAddress.street}, ${dto.deliveryAddress.ward}, ${dto.deliveryAddress.district}, ${dto.deliveryAddress.city}`
+            : undefined,
           deliveryTime: dto.deliveryTime,
           notes: dto.notes,
           createdAt: dto.createdAt,

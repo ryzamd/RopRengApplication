@@ -79,7 +79,7 @@ export class Database {
     this.ensureInitialized();
     if (!this.db) throw new Error('Database not initialized');
 
-    return await this.db.getFirstAsync<T>(sql, params);
+    return await this.db.getFirstAsync<T>(sql, params || []);
   }
 
   /**
@@ -92,7 +92,7 @@ export class Database {
     this.ensureInitialized();
     if (!this.db) throw new Error('Database not initialized');
 
-    return await this.db.getAllAsync<T>(sql, params);
+    return await this.db.getAllAsync<T>(sql, params || []);
   }
 
   /**
@@ -105,7 +105,7 @@ export class Database {
     this.ensureInitialized();
     if (!this.db) throw new Error('Database not initialized');
 
-    return await this.db.runAsync(sql, params);
+    return await this.db.runAsync(sql, params || []);
   }
 
   /**
@@ -117,7 +117,7 @@ export class Database {
     this.ensureInitialized();
     if (!this.db) throw new Error('Database not initialized');
 
-    return await this.db.withTransactionAsync(task);
+    return await this.db.withTransactionAsync(task as any) as T;
   }
 
   /**
@@ -129,7 +129,7 @@ export class Database {
     this.ensureInitialized();
     if (!this.db) throw new Error('Database not initialized');
 
-    return await this.db.withExclusiveTransactionAsync(task);
+    return await this.db.withExclusiveTransactionAsync(task as any) as T;
   }
 
   /**

@@ -47,6 +47,7 @@ export class GetCategoriesUseCase {
           description: dto.description,
           imageUrl: dto.imageUrl,
           isActive: dto.isActive,
+          orderIndex: dto.displayOrder,
           displayOrder: dto.displayOrder,
           createdAt: dto.createdAt,
           updatedAt: dto.updatedAt,
