@@ -86,6 +86,8 @@ export function useStores() {
       if (!userLocation) return null;
 
       const storeLocation = store.toObject().location;
+      if (!storeLocation) return null;
+
       const userLat = userLocation.latitude;
       const userLon = userLocation.longitude;
       const storeLat = storeLocation.toValue().latitude;
