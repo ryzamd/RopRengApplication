@@ -17,6 +17,8 @@ export interface PaymentProps {
   transactionId?: string;
   vnpayData?: any;
   errorMessage?: string;
+  paidAt?: number;
+  refundedAt?: number;
   createdAt?: number;
   updatedAt?: number;
   syncedAt?: number;
@@ -30,6 +32,8 @@ export class Payment extends AggregateRoot<PaymentProps> {
   private _transactionId?: string;
   private _vnpayData?: any;
   private _errorMessage?: string;
+  private _paidAt?: number;
+  private _refundedAt?: number;
   private _syncedAt?: number;
 
   private constructor(props: PaymentProps) {
@@ -41,6 +45,8 @@ export class Payment extends AggregateRoot<PaymentProps> {
     this._transactionId = props.transactionId;
     this._vnpayData = props.vnpayData;
     this._errorMessage = props.errorMessage;
+    this._paidAt = props.paidAt;
+    this._refundedAt = props.refundedAt;
     this._syncedAt = props.syncedAt;
   }
 
@@ -109,6 +115,7 @@ export class Payment extends AggregateRoot<PaymentProps> {
 
     this._status = PaymentStatus.SUCCESS;
     this._transactionId = transactionId;
+    this._paidAt = Date.now();
     this.touch();
 
     this.addDomainEvent({
@@ -154,6 +161,7 @@ export class Payment extends AggregateRoot<PaymentProps> {
     }
 
     this._status = PaymentStatus.REFUNDED;
+    this._refundedAt = Date.now();
     this.touch();
 
     this.addDomainEvent({
@@ -209,6 +217,14 @@ export class Payment extends AggregateRoot<PaymentProps> {
     return this._errorMessage;
   }
 
+  public get paidAt(): number | undefined {
+    return this._paidAt;
+  }
+
+  public get refundedAt(): number | undefined {
+    return this._refundedAt;
+  }
+
   public get syncedAt(): number | undefined {
     return this._syncedAt;
   }
@@ -226,6 +242,8 @@ export class Payment extends AggregateRoot<PaymentProps> {
       transactionId: this._transactionId,
       vnpayData: this._vnpayData,
       errorMessage: this._errorMessage,
+      paidAt: this._paidAt,
+      refundedAt: this._refundedAt,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
       syncedAt: this._syncedAt,

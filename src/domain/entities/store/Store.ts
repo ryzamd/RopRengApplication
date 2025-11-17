@@ -21,6 +21,7 @@ export interface StoreProps {
   location?: StoreLocation;
   phone?: string;
   hours?: StoreHours;
+  operatingHours?: StoreHours; // Alias for hours (used in API/DB)
   isActive: boolean;
   createdAt?: number;
   updatedAt?: number;
@@ -42,7 +43,7 @@ export class Store extends Entity<StoreProps> {
     this._address = props.address;
     this._location = props.location;
     this._phone = props.phone;
-    this._hours = props.hours;
+    this._hours = props.operatingHours ?? props.hours;
     this._isActive = props.isActive;
     this._syncedAt = props.syncedAt;
   }
@@ -174,6 +175,10 @@ export class Store extends Entity<StoreProps> {
     return this._hours;
   }
 
+  public get operatingHours(): StoreHours | undefined {
+    return this._hours;
+  }
+
   public get isActive(): boolean {
     return this._isActive;
   }
@@ -193,6 +198,7 @@ export class Store extends Entity<StoreProps> {
       location: this._location,
       phone: this._phone,
       hours: this._hours,
+      operatingHours: this._hours,
       isActive: this._isActive,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,

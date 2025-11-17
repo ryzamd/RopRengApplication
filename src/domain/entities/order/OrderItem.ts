@@ -12,7 +12,10 @@ export interface OrderItemProps {
   productName: string;
   quantity: number;
   price: Price;
-  options?: Record<string, any>;
+  unitPrice?: number; // Price as number (for serialization)
+  subtotal?: number; // Calculated subtotal (for serialization)
+  selectedOptions?: Record<string, any>;
+  options?: Record<string, any>; // Alias for selectedOptions
   notes?: string;
   createdAt?: number;
 }
@@ -22,7 +25,7 @@ export class OrderItem extends Entity<OrderItemProps> {
   private _productName: string;
   private _quantity: number;
   private _price: Price;
-  private _options?: Record<string, any>;
+  private _selectedOptions?: Record<string, any>;
   private _notes?: string;
 
   private constructor(props: OrderItemProps) {
@@ -31,7 +34,7 @@ export class OrderItem extends Entity<OrderItemProps> {
     this._productName = props.productName;
     this._quantity = props.quantity;
     this._price = props.price;
-    this._options = props.options;
+    this._selectedOptions = props.selectedOptions ?? props.options;
     this._notes = props.notes;
   }
 
@@ -106,8 +109,21 @@ export class OrderItem extends Entity<OrderItemProps> {
     return this._price;
   }
 
+  public get selectedOptions(): Record<string, any> | undefined {
+    return this._selectedOptions;
+  }
+
   public get options(): Record<string, any> | undefined {
-    return this._options;
+    return this._selectedOptions;
+  }
+
+  // Getters for serialization
+  public get unitPrice(): number {
+    return this._price.toValue();
+  }
+
+  public get subtotal(): number {
+    return this.getSubtotal().toValue();
   }
 
   public get notes(): string | undefined {
@@ -124,7 +140,10 @@ export class OrderItem extends Entity<OrderItemProps> {
       productName: this._productName,
       quantity: this._quantity,
       price: this._price,
-      options: this._options,
+      unitPrice: this._price.toValue(),
+      subtotal: this.getSubtotal().toValue(),
+      selectedOptions: this._selectedOptions,
+      options: this._selectedOptions,
       notes: this._notes,
       createdAt: this._createdAt,
     };

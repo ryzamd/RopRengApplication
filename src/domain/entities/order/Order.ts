@@ -19,6 +19,7 @@ export interface OrderProps {
   discount: Price;
   total: Price;
   deliveryAddress?: string;
+  deliveryTime?: number;
   notes?: string;
   createdAt?: number;
   updatedAt?: number;
@@ -35,6 +36,7 @@ export class Order extends AggregateRoot<OrderProps> {
   private _discount: Price;
   private _total: Price;
   private _deliveryAddress?: string;
+  private _deliveryTime?: number;
   private _notes?: string;
   private _syncedAt?: number;
 
@@ -49,6 +51,7 @@ export class Order extends AggregateRoot<OrderProps> {
     this._discount = props.discount;
     this._total = props.total;
     this._deliveryAddress = props.deliveryAddress;
+    this._deliveryTime = props.deliveryTime;
     this._notes = props.notes;
     this._syncedAt = props.syncedAt;
   }
@@ -275,6 +278,10 @@ export class Order extends AggregateRoot<OrderProps> {
     return this._deliveryAddress;
   }
 
+  public get deliveryTime(): number | undefined {
+    return this._deliveryTime;
+  }
+
   public get notes(): string | undefined {
     return this._notes;
   }
@@ -298,6 +305,7 @@ export class Order extends AggregateRoot<OrderProps> {
       discount: this._discount,
       total: this._total,
       deliveryAddress: this._deliveryAddress,
+      deliveryTime: this._deliveryTime,
       notes: this._notes,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
