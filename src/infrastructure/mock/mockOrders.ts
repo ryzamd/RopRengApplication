@@ -56,7 +56,7 @@ export const MOCK_ORDERS: OrderDTO[] = [
     deliveryFee: 15000,
     discount: 0,
     total: MOCK_PRODUCTS[0].price * 2 + MOCK_PRODUCTS[3].price + 15000,
-    status: OrderStatus.DELIVERED,
+    status: OrderStatus.COMPLETED,
     deliveryAddress: MOCK_DELIVERY_ADDRESS,
     deliveryTime: Date.now() - 2 * 24 * 60 * 60 * 1000,
     notes: 'Giao hàng trước 10h sáng',
@@ -119,7 +119,7 @@ export const MOCK_ORDERS: OrderDTO[] = [
     deliveryFee: 20000,
     discount: 0,
     total: MOCK_PRODUCTS[6].price * 3 + 20000,
-    status: OrderStatus.OUT_FOR_DELIVERY,
+    status: OrderStatus.DELIVERING,
     deliveryAddress: MOCK_DELIVERY_ADDRESS,
     deliveryTime: Date.now() + 30 * 60 * 1000, // 30 minutes from now
     notes: 'Gọi trước khi đến',

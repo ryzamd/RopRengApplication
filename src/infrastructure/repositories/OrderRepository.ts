@@ -65,8 +65,8 @@ export class OrderRepository
       OrderStatus.PENDING,
       OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
-      OrderStatus.READY_FOR_PICKUP,
-      OrderStatus.OUT_FOR_DELIVERY,
+      OrderStatus.READY,
+      OrderStatus.DELIVERING,
     ];
 
     const placeholders = activeStatuses.map(() => '?').join(', ');
