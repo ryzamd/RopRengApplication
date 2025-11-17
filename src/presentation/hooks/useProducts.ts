@@ -4,22 +4,22 @@
  */
 
 import { useCallback, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../application/store/hooks';
 import {
-  fetchProducts,
-  fetchCategories,
-  refreshProducts,
-  setSelectedCategory,
-  setSearchQuery,
   clearProductError,
-  selectProducts,
+  fetchCategories,
+  fetchProducts,
+  refreshProducts,
   selectCategories,
-  selectSelectedCategory,
-  selectSearchQuery,
+  selectFilteredProducts,
+  selectProducts,
   selectProductsLoading,
   selectProductsRefreshing,
-  selectFilteredProducts,
+  selectSearchQuery,
+  selectSelectedCategory,
+  setSearchQuery,
+  setSelectedCategory,
 } from '../../application/store';
+import { useAppDispatch, useAppSelector } from '../../application/store/hooks';
 
 export function useProducts() {
   const dispatch = useAppDispatch();
@@ -99,7 +99,7 @@ export function useProducts() {
     if (products.length === 0) {
       loadProducts();
     }
-  }, []); // Only run once on mount
+  }, [loadCategories, loadProducts, categories.length, products.length]); // Only run once on mount
 
   return {
     // State

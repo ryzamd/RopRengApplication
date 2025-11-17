@@ -97,7 +97,19 @@ export class CreateOrderUseCase {
         input.storeId,
         orderItems,
         {
-          deliveryAddress: input.deliveryAddress,
+          deliveryAddress: input.deliveryAddress ? {
+              street: input.deliveryAddress.street,
+              ward: input.deliveryAddress.ward,
+              district: input.deliveryAddress.district,
+              city: input.deliveryAddress.city,
+              coordinates: input.deliveryAddress.coordinates
+                ? {
+                    latitude: input.deliveryAddress.coordinates.latitude,
+                    longitude: input.deliveryAddress.coordinates.longitude,
+                  }
+                : undefined,
+            }
+          : undefined,
           notes: input.notes,
         }
       );
@@ -111,11 +123,26 @@ export class CreateOrderUseCase {
       let paymentUrl: string | undefined;
 
       try {
+        const deliveryAddressParam = input.deliveryAddress
+          ? {
+              street: input.deliveryAddress.street,
+              ward: input.deliveryAddress.ward,
+              district: input.deliveryAddress.district,
+              city: input.deliveryAddress.city,
+              coordinates: input.deliveryAddress.coordinates
+                ? {
+                    latitude: input.deliveryAddress.coordinates.latitude,
+                    longitude: input.deliveryAddress.coordinates.longitude,
+                  }
+                : undefined,
+            }
+          : undefined;
+
         const result = ENV.USE_MOCK_DATA
           ? await MockApiService.createOrder({
               storeId: input.storeId,
               items: input.items,
-              deliveryAddress: input.deliveryAddress,
+              deliveryAddress: deliveryAddressParam,
               deliveryTime: input.deliveryTime,
               notes: input.notes,
               voucherCode: input.voucherCode,
@@ -123,7 +150,7 @@ export class CreateOrderUseCase {
           : await OrderApi.createOrder({
               storeId: input.storeId,
               items: input.items,
-              deliveryAddress: input.deliveryAddress,
+              deliveryAddress: deliveryAddressParam,
               deliveryTime: input.deliveryTime,
               notes: input.notes,
               voucherCode: input.voucherCode,

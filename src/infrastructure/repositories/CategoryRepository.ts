@@ -62,7 +62,7 @@ export class CategoryRepository
   /**
    * Get categories with product count
    */
-  public async findWithProductCount(): Promise<Array<Category & { productCount: number }>> {
+  public async findWithProductCount(): Promise<(Category & { productCount: number })[]> {
     const rows = await database.getAllAsync<any>(
       `SELECT c.*, COUNT(p.id) as product_count
        FROM categories c
@@ -72,10 +72,11 @@ export class CategoryRepository
        ORDER BY c.display_order ASC, c.name ASC`
     );
 
-    return rows.map((row) => ({
-      ...this.mapToEntity(row),
-      productCount: row.product_count || 0,
-    }));
+    return rows.map((row) => {
+      const category = this.mapToEntity(row) as Category & { productCount: number };
+      category.productCount = row.product_count || 0;
+      return category;
+    });
   }
 
   /**

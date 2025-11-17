@@ -76,7 +76,6 @@ export class GetOrdersUseCase {
             subtotal: itemDto.subtotal,
             selectedOptions: itemDto.selectedOptions,
             createdAt: dto.createdAt,
-            updatedAt: dto.updatedAt,
           })
         );
 

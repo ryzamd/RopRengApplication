@@ -110,7 +110,7 @@ function PaginationDot({ isActive }: { isActive: boolean }) {
         easing: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.easing,
       }
     );
-  }, [isActive]);
+  }, [isActive, progress]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(

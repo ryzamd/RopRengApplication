@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useModalFadeAnimation } from '../../hooks/animations';
 import { useAuth } from '../../hooks/useAuth';
 import { useUI } from '../../hooks/useUI';
-import { useModalFadeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { PhoneInput } from './components/PhoneInput';
 import { SocialButton } from './components/SocialButton';

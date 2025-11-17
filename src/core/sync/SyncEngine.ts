@@ -10,12 +10,10 @@
  * - Resolve conflicts
  */
 
-import { syncQueue, SyncQueueItem } from './SyncQueue';
-import { networkMonitor, NetworkState } from './NetworkMonitor';
-import { SyncStrategy, SyncMode, SyncStrategyConfig } from './SyncStrategy';
-import { ConflictResolver, ConflictStrategy } from './ConflictResolver';
-import { database } from '../database/Database';
 import { ENV } from '../../config/env';
+import { networkMonitor, NetworkState } from './NetworkMonitor';
+import { syncQueue, SyncQueueItem } from './SyncQueue';
+import { SyncMode, SyncStrategy, SyncStrategyConfig } from './SyncStrategy';
 
 export interface SyncEngineConfig {
   enabled: boolean;
@@ -30,7 +28,7 @@ export class SyncEngine {
   private config: SyncEngineConfig;
   private strategy: SyncStrategy;
   private isSyncing: boolean = false;
-  private syncIntervalId: NodeJS.Timeout | null = null;
+  private syncIntervalId: ReturnType<typeof setInterval> | null = null;
   private networkUnsubscribe: (() => void) | null = null;
 
   private constructor(config?: Partial<SyncEngineConfig>) {
@@ -95,16 +93,7 @@ export class SyncEngine {
   public stop(): void {
     console.log('[SyncEngine] Stopping...');
 
-    // Unsubscribe from network
-    if (this.networkUnsubscribe) {
-      this.networkUnsubscribe();
-      this.networkUnsubscribe = null;
-    }
 
-    // Stop auto sync
-    this.stopAutoSync();
-
-    console.log('[SyncEngine] Stopped');
   }
 
   /**
@@ -204,10 +193,6 @@ export class SyncEngine {
   private handleNetworkChange(state: NetworkState): void {
     console.log('[SyncEngine] Network state changed:', state.status);
 
-    // Sync when coming back online
-    if (state.status === 'online' && this.config.strategy.mode === SyncMode.ON_CONNECT) {
-      this.sync();
-    }
   }
 
   /**
@@ -229,11 +214,6 @@ export class SyncEngine {
    * Stop auto sync interval
    */
   private stopAutoSync(): void {
-    if (this.syncIntervalId) {
-      clearInterval(this.syncIntervalId);
-      this.syncIntervalId = null;
-      console.log('[SyncEngine] Auto sync stopped');
-    }
   }
 
   /**
@@ -270,17 +250,6 @@ export class SyncEngine {
   public updateConfig(config: Partial<SyncEngineConfig>): void {
     this.config = { ...this.config, ...config };
 
-    if (config.strategy) {
-      this.strategy.updateConfig(config.strategy);
-
-      // Restart auto sync if mode changed
-      if (config.strategy.mode === SyncMode.AUTO) {
-        this.stopAutoSync();
-        this.startAutoSync();
-      } else {
-        this.stopAutoSync();
-      }
-    }
   }
 
   /**

@@ -25,7 +25,7 @@ export interface ICategoryRepository extends IRepository<Category> {
   /**
    * Find categories with product count
    */
-  findWithProductCount(): Promise<Array<Category & { productCount: number }>>;
+  findWithProductCount(): Promise<(Category & { productCount: number })[]>;
 
   /**
    * Update display order

@@ -4,21 +4,21 @@
  */
 
 import { useCallback, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../application/store/hooks';
 import {
+  clearCurrentOrder,
+  clearOrderError,
   createOrder,
+  CreateOrderInput,
   fetchOrders,
   refreshOrders,
-  clearOrderError,
-  clearCurrentOrder,
-  selectOrders,
   selectActiveOrders,
   selectCurrentOrder,
-  selectPaymentUrl,
-  selectOrdersLoading,
+  selectOrders,
   selectOrdersCreating,
-  CreateOrderInput,
+  selectOrdersLoading,
+  selectPaymentUrl,
 } from '../../application/store';
+import { useAppDispatch, useAppSelector } from '../../application/store/hooks';
 import { OrderStatus } from '../../domain/entities/order/OrderStatus';
 
 export function useOrders() {
@@ -67,7 +67,7 @@ export function useOrders() {
     if (orders.length === 0) {
       loadOrders();
     }
-  }, []); // Only run once on mount
+  }, [loadOrders, orders.length]); // Only run once on mount
 
   // Get order by status
   const getOrdersByStatus = useCallback(

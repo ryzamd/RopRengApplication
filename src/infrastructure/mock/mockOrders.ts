@@ -3,11 +3,11 @@
  * Sample orders for development and testing
  */
 
-import { OrderDTO, OrderItemDTO, DeliveryAddressDTO } from '../api/dto';
 import { OrderStatus } from '../../domain/entities/order/OrderStatus';
-import { CURRENT_MOCK_USER } from './mockUsers';
-import { DEFAULT_MOCK_STORE } from './mockStores';
+import { DeliveryAddressDTO, OrderDTO } from '../api/dto';
 import { MOCK_PRODUCTS } from './mockProducts';
+import { DEFAULT_MOCK_STORE } from './mockStores';
+import { CURRENT_MOCK_USER } from './mockUsers';
 
 const MOCK_DELIVERY_ADDRESS: DeliveryAddressDTO = {
   street: '123 Lê Lợi',

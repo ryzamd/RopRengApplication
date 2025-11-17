@@ -56,11 +56,11 @@ export interface OrderDTO {
  */
 export interface CreateOrderRequest {
   storeId: string;
-  items: Array<{
+  items: {
     productId: string;
     quantity: number;
     selectedOptions?: Record<string, string>;
-  }>;
+  }[];
   deliveryAddress?: DeliveryAddressDTO;
   deliveryTime?: number;
   notes?: string;

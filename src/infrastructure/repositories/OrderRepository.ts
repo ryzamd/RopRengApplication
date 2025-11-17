@@ -194,7 +194,6 @@ export class OrderRepository
             ? JSON.parse(item.selected_options)
             : undefined,
           createdAt: item.created_at,
-          updatedAt: item.updated_at,
         })
       ) || [];
 

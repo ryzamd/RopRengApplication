@@ -64,7 +64,16 @@ export class Order extends AggregateRoot<OrderProps> {
     storeId: string,
     items: OrderItem[],
     options?: {
-      deliveryAddress?: string;
+      deliveryAddress?: {
+        street: string;
+        ward: string;
+        district: string;
+        city: string;
+        coordinates?: {
+          latitude: number;
+          longitude: number;
+        };
+      };
       deliveryFee?: Price;
       discount?: Price;
       notes?: string;
@@ -88,6 +97,14 @@ export class Order extends AggregateRoot<OrderProps> {
     // Calculate total
     const total = subtotal.add(deliveryFee).subtract(discount);
 
+    // Build delivery address string safely
+    const deliveryAddress = (() => {
+      const addr = options?.deliveryAddress;
+      return addr?.street
+        ? `${addr.street}, ${addr.ward}, ${addr.district}, ${addr.city}`
+        : undefined;
+    })();
+
     const order = new Order({
       id,
       userId,
@@ -98,7 +115,7 @@ export class Order extends AggregateRoot<OrderProps> {
       deliveryFee,
       discount,
       total,
-      deliveryAddress: options?.deliveryAddress,
+      deliveryAddress: deliveryAddress,
       notes: options?.notes,
     });
 

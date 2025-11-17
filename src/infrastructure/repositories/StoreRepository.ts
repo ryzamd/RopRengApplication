@@ -36,7 +36,7 @@ export class StoreRepository
     location: StoreLocation,
     radiusKm: number
   ): Promise<Store[]> {
-    const userLoc = location.toValue();
+    //const userLoc = location.toValue();
 
     // Fetch all active stores first
     const rows = await database.getAllAsync<any>(

@@ -3,15 +3,15 @@
  * Redux slice for authentication state
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { User } from '../../../domain/entities/user/User';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { SendOTPUseCase } from '../../usecases/auth/SendOTPUseCase';
-import { VerifyOTPUseCase } from '../../usecases/auth/VerifyOTPUseCase';
-import { LogoutUseCase } from '../../usecases/auth/LogoutUseCase';
-import { GetCurrentUserUseCase } from '../../usecases/auth/GetCurrentUserUseCase';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { ServiceContainer } from '../../../core/di/ServiceContainer';
 import { TYPES } from '../../../core/di/types';
+import { User } from '../../../domain/entities/user/User';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository';
+import { GetCurrentUserUseCase } from '../../usecases/auth/GetCurrentUserUseCase';
+import { LogoutUseCase } from '../../usecases/auth/LogoutUseCase';
+import { SendOTPUseCase } from '../../usecases/auth/SendOTPUseCase';
+import { VerifyOTPUseCase } from '../../usecases/auth/VerifyOTPUseCase';
 
 // State interface
 export interface AuthState {

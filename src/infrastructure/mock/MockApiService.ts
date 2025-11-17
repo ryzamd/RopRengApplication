@@ -4,44 +4,43 @@
  * Simulates network delays and mimics real API behavior
  */
 
-import {
-  UserDTO,
-  SendOTPRequest,
-  SendOTPResponse,
-  VerifyOTPRequest,
-  VerifyOTPResponse,
-  UpdateUserRequest,
-  UpdateUserResponse,
-  ProductDTO,
-  CategoryDTO,
-  GetProductsRequest,
-  GetProductsResponse,
-  GetCategoriesResponse,
-  StoreDTO,
-  GetStoresResponse,
-  GetNearbyStoresRequest,
-  GetNearbyStoresResponse,
-  OrderDTO,
-  CreateOrderRequest,
-  CreateOrderResponse,
-  GetOrdersResponse,
-  PaymentDTO,
-  CreatePaymentRequest,
-  CreatePaymentResponse,
-} from '../api/dto';
+import { OrderStatus } from '../../domain/entities/order/OrderStatus';
 import { PaymentMethod } from '../../domain/entities/payment/PaymentMethod';
 import { PaymentStatus } from '../../domain/entities/payment/PaymentStatus';
-import { OrderStatus } from '../../domain/entities/order/OrderStatus';
 import {
-  MOCK_USERS,
+  CreateOrderRequest,
+  CreateOrderResponse,
+  CreatePaymentRequest,
+  CreatePaymentResponse,
+  GetCategoriesResponse,
+  GetNearbyStoresRequest,
+  GetNearbyStoresResponse,
+  GetOrdersResponse,
+  GetProductsRequest,
+  GetProductsResponse,
+  GetStoresResponse,
+  OrderDTO,
+  PaymentDTO,
+  ProductDTO,
+  SendOTPRequest,
+  SendOTPResponse,
+  StoreDTO,
+  UpdateUserRequest,
+  UpdateUserResponse,
+  UserDTO,
+  VerifyOTPRequest,
+  VerifyOTPResponse
+} from '../api/dto';
+import {
   CURRENT_MOCK_USER,
-  MOCK_OTP,
   MOCK_AUTH_TOKEN,
   MOCK_CATEGORIES,
+  MOCK_ORDERS,
+  MOCK_OTP,
+  MOCK_PAYMENTS,
   MOCK_PRODUCTS,
   MOCK_STORES,
-  MOCK_ORDERS,
-  MOCK_PAYMENTS,
+  MOCK_USERS,
 } from './index';
 
 /**
