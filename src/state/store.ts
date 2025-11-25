@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import auth from './slices/auth';
+import orderCart from './slices/orderCart';
 
 export const store = configureStore({
   reducer: {
     auth,
+    orderCart,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
