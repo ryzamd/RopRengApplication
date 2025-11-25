@@ -1,24 +1,3 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { BRAND_COLORS } from '../../src/presentation/theme/colors';
+import StoresScreen from '../../src/presentation/screens/stores/StoresScreen';
 
-export default function StoresScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Cửa hàng Screen</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BRAND_COLORS.background.default,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontFamily: 'Phudu-Bold',
-    fontSize: 20,
-    color: BRAND_COLORS.primary.xanhReu,
-  },
-});
+export default StoresScreen;
