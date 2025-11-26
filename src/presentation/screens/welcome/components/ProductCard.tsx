@@ -1,7 +1,9 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Product } from '../../../../data/mockProducts';
+import { addToCart } from '../../../../state/slices/orderCart';
+import { useAppDispatch } from '../../../../utils/hooks';
+import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 
 interface ProductCardProps {
@@ -9,11 +11,22 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const router = useRouter();
-
-  const handleAddPress = () => {
-    router.push('/login');
-  };
+  const dispatch = useAppDispatch();
+  //const router = useRouter();
+  
+  const handleAddPress = useAuthGuard(
+    () => {
+      dispatch(addToCart(product));
+      // Show toast notification (implement later)
+    },
+    {
+      intent: 'PURCHASE',
+      context: {
+        productId: product.id,
+        returnTo: '/welcome',
+      },
+    }
+  );
 
   return (
     <View style={styles.card}>
@@ -42,9 +55,9 @@ export function ProductCard({ product }: ProductCardProps) {
               </Text>
             )}
           </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
-            <Text style={styles.addIcon}>+</Text>
-          </TouchableOpacity>
+           <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
+              <Text style={styles.addIcon}>+</Text>
+           </TouchableOpacity>
         </View>
       </View>
     </View>

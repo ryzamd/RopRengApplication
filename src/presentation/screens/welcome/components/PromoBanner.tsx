@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { BANNER_ANIMATION_PRESETS } from '../../../../infrastructure/animations/presets/banner.presets';
+import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 import { WELCOME_LAYOUT } from '../WelcomeLayout';
@@ -19,9 +20,16 @@ export function PromoBanner() {
     setActiveIndex(index);
   };
 
-  const handleBannerPress = (promoId: string) => {
-    console.log(`Clicked: Promo ${promoId}`);
-  };
+  const handleBannerPress = useAuthGuard(
+    (promoId: string) => {
+      console.log(`Clicked: Promo ${promoId}`);
+      // TODO: Navigate to promo detail
+    },
+    {
+      intent: 'CLAIM_PROMO',
+      context: {}, // promoCode passed dynamically
+    }
+  );
 
   return (
     <View style={styles.container}>
@@ -72,7 +80,7 @@ function PaginationDot({ isActive }: { isActive: boolean }) {
         easing: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.easing,
       }
     );
-  }, [isActive]);
+  }, [isActive, progress]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(

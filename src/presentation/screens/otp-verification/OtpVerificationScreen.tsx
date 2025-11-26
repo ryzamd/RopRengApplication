@@ -1,43 +1,47 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { login } from '../../../state/slices/auth';
-import { useAppDispatch } from '../../../utils/hooks';
-import { useModalBottomSheetAnimation, useShakeAnimation } from '../../hooks/animations';
-import { BRAND_COLORS } from '../../theme/colors';
-import { OtpInput } from './components/OtpInput';
-import { OtpTimer } from './components/OtpTimer';
-import { RetryButton } from './components/RetryButton';
-import { OTP_CONFIG, OTP_TEXT } from './OtpVerificationConstants';
-import { OtpVerificationStateEnum } from './OtpVerificationEnums';
-import { OTP_LAYOUT } from './OtpVerificationLayout';
-import { OtpVerificationService } from './OtpVerificationService';
+import { MOCK_PRODUCTS } from "@/src/data/mockProducts";
+import { TokenStorage } from "@/src/infrastructure/storage/tokenStorage";
+import { addToCart } from "@/src/state/slices/orderCart";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import Animated from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import type { PendingIntent } from "../../../state/slices/auth";
+import { clearPendingIntent, login } from "../../../state/slices/auth";
+import { useAppDispatch, useAppSelector } from "../../../utils/hooks";
+import { useModalBottomSheetAnimation, useShakeAnimation } from "../../hooks/animations";
+import { BRAND_COLORS } from "../../theme/colors";
+import { OtpInput } from "./components/OtpInput";
+import { OtpTimer } from "./components/OtpTimer";
+import { RetryButton } from "./components/RetryButton";
+import { OTP_CONFIG, OTP_TEXT } from "./OtpVerificationConstants";
+import { OtpVerificationStateEnum } from "./OtpVerificationEnums";
+import { OTP_LAYOUT } from "./OtpVerificationLayout";
+import { OtpVerificationService } from "./OtpVerificationService";
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams<{ phoneNumber: string }>();
-  
-  const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+
+  const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(""));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
   const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
   const [hasClickedResendThisCycle, setHasClickedResendThisCycle] = useState(false);
   const [totalRetryCount, setTotalRetryCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const pendingIntent = useAppSelector((s) => s.auth.pendingIntent);
 
   // Bottom sheet animation
-  const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
-    useModalBottomSheetAnimation({
-      heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
-      onExitComplete: () => {
-        // Only back if still in navigation stack
-        if (router.canGoBack()) {
-          router.back();
-        }
-      },
-    });
+  const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } = useModalBottomSheetAnimation({
+    heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
+    onExitComplete: () => {
+      // Only back if still in navigation stack
+      if (router.canGoBack()) {
+        router.back();
+      }
+    },
+  });
 
   // Shake animation for errors
   const { animatedStyle: shakeAnimatedStyle, shake } = useShakeAnimation();
@@ -57,8 +61,9 @@ export default function OtpVerificationScreen() {
     return () => clearInterval(interval);
   }, [timeRemaining]);
 
+
   const resetOtp = () => {
-    setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+    setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(""));
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
     setState(OtpVerificationStateEnum.IDLE);
     setErrorMessage(null);
@@ -69,7 +74,7 @@ export default function OtpVerificationScreen() {
     if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) {
       return;
     }
-    
+
     setHasClickedResendThisCycle(true);
     setTotalRetryCount((prev) => prev + 1);
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
@@ -81,7 +86,7 @@ export default function OtpVerificationScreen() {
     if (!OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount)) {
       return;
     }
-    
+
     setTotalRetryCount((prev) => prev + 1);
     resetOtp();
   };
@@ -93,45 +98,96 @@ export default function OtpVerificationScreen() {
 
     setState(OtpVerificationStateEnum.VERIFYING);
 
-    // Simulate verification delay
-    setTimeout(() => {
+    setTimeout(async () => {
       const result = OtpVerificationService.verifyOtpCode(code);
 
       if (result.isValid && result.userType) {
         setState(OtpVerificationStateEnum.SUCCESS);
-        
-        // Dispatch login action
-        dispatch(login({
-          phoneNumber: params.phoneNumber || '',
-          userId: `user_${Date.now()}`,
-        }));
 
-        // Navigate based on user type
+        // Save tokens to secure storage
+        const mockAccessToken = `jwt_${Date.now()}`;
+        const mockRefreshToken = `refresh_${Date.now()}`;
+        const userId = `user_${Date.now()}`;
+
+        await TokenStorage.saveTokens(mockAccessToken, mockRefreshToken, userId);
+
+        // Dispatch login action
+        dispatch(
+          login({
+            phoneNumber: params.phoneNumber || "",
+            userId,
+          })
+        );
+
+        // Process pending intent (use top-level selector)
         dismiss();
         setTimeout(() => {
-          if (result.userType === 'existing') {
-            router.dismissAll();
-            router.replace('/(tabs)');
+          if (pendingIntent && Date.now() < pendingIntent.expiresAt) {
+            processPendingIntent(pendingIntent);
           } else {
-            // TODO: Navigate to create account screen
+            // No valid intent, go to home
             router.dismissAll();
-            console.log('Navigate to create account (not implemented yet)');
-            router.replace('/(tabs)');
+            router.replace("/(tabs)");
           }
-        });
+        }, 300);
       } else {
-        // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);
         setErrorMessage(OTP_TEXT.ERROR_INVALID);
         shake();
-        
-        // Clear input after shake
+
         setTimeout(() => {
-          setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+          setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(""));
           setState(OtpVerificationStateEnum.IDLE);
         }, OTP_LAYOUT.SHAKE_DURATION);
       }
     }, 500);
+  };
+
+  const processPendingIntent = (intent: PendingIntent) => {
+    switch (intent.intent) {
+      case "PURCHASE":
+        // TODO: Check if store has product available
+        // const availableStores = await checkProductAvailability(intent.context.productId);
+        // if (availableStores.length === 0) {
+        //   showToast('Sản phẩm không có sẵn');
+        //   dispatch(clearPendingIntent());
+        //   return;
+        // }
+        // TODO: Navigate to store selection screen
+        // router.push({ pathname: '/select-store', params: { productId: intent.context.productId } });
+
+        // Temporary: Auto add to cart (until store selection implemented)
+        const product = MOCK_PRODUCTS.find((p) => p.id === intent.context.productId);
+        if (product) {
+          dispatch(addToCart(product));
+          router.replace(intent.context.returnTo ?? "/(tabs)" as any); // need to modify
+        }
+        break;
+
+      case "VIEW_STORE":
+        router.replace({
+          pathname: "/(tabs)/stores",
+          params: { storeId: intent.context.storeId },
+        });
+        break;
+
+      case "BROWSE_CATEGORY":
+        router.replace({
+          pathname: "/(tabs)/search",
+          params: { categoryId: intent.context.categoryId },
+        });
+        break;
+
+      case "VIEW_COLLECTION":
+        // TODO: Implement collection detail screen
+        router.replace("/(tabs)");
+        break;
+
+      default:
+        router.replace("/(tabs)");
+    }
+
+    dispatch(clearPendingIntent());
   };
 
   const handleOkPress = () => {
@@ -157,14 +213,8 @@ export default function OtpVerificationScreen() {
       </Animated.View>
 
       {/* Modal */}
-      <Animated.View
-        style={[
-          styles.modalWrapper,
-          { height: modalHeight },
-          animatedModalStyle,
-        ]}
-      >
-        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <Animated.View style={[styles.modalWrapper, { height: modalHeight }, animatedModalStyle]}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
           {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
@@ -173,10 +223,9 @@ export default function OtpVerificationScreen() {
           {/* Content */}
           <View style={styles.content}>
             <Text style={styles.title}>{OTP_TEXT.TITLE}</Text>
-            
+
             <Text style={styles.subtitle}>
-              {OTP_TEXT.SUBTITLE_PREFIX}{' '}
-              {OtpVerificationService.formatPhoneForDisplay(params.phoneNumber || '')}
+              {OTP_TEXT.SUBTITLE_PREFIX} {OtpVerificationService.formatPhoneForDisplay(params.phoneNumber || "")}
             </Text>
 
             <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
@@ -192,20 +241,14 @@ export default function OtpVerificationScreen() {
 
             {/* Timer - Always show when not at max retries */}
             {!showMaxRetriesError && (
-              <OtpTimer
-                timeRemaining={timeRemaining}
-                onResend={handleResendClick}
-                canClickResend={canClickResend}
-              />
+              <OtpTimer timeRemaining={timeRemaining} onResend={handleResendClick} canClickResend={canClickResend} />
             )}
 
             {/* Error message */}
             {errorMessage && !showMaxRetriesError && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errorMessage}</Text>
-                {isExpired && canShowRetryIcon && (
-                  <RetryButton onPress={handleRetryIconClick} />
-                )}
+                {isExpired && canShowRetryIcon && <RetryButton onPress={handleRetryIconClick} />}
               </View>
             )}
 
@@ -228,13 +271,13 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   backdropTouchable: {
     flex: 1,
   },
   modalWrapper: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -246,21 +289,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: OTP_LAYOUT.CLOSE_BUTTON_TOP,
     right: OTP_LAYOUT.CLOSE_BUTTON_RIGHT,
     width: OTP_LAYOUT.CLOSE_BUTTON_SIZE,
     height: OTP_LAYOUT.CLOSE_BUTTON_SIZE,
     borderRadius: OTP_LAYOUT.CLOSE_BUTTON_BORDER_RADIUS,
-    backgroundColor: 'rgba(96, 106, 55, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(96, 106, 55, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
   },
   closeButtonText: {
     fontSize: OTP_LAYOUT.CLOSE_BUTTON_FONT_SIZE,
     color: BRAND_COLORS.primary.xanhReu,
-    fontFamily: 'SpaceGrotesk-Bold',
+    fontFamily: "SpaceGrotesk-Bold",
   },
   content: {
     flex: 1,
@@ -269,49 +312,49 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: OTP_LAYOUT.TITLE_FONT_SIZE,
-    fontFamily: 'Phudu-Bold',
+    fontFamily: "Phudu-Bold",
     color: BRAND_COLORS.primary.xanhReu,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: OTP_LAYOUT.TITLE_MARGIN_BOTTOM,
   },
   subtitle: {
     fontSize: OTP_LAYOUT.SUBTITLE_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: "SpaceGrotesk-Medium",
     color: BRAND_COLORS.primary.xanhReu,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: OTP_LAYOUT.SUBTITLE_LINE_HEIGHT,
     marginBottom: OTP_LAYOUT.SUBTITLE_MARGIN_BOTTOM,
   },
   inputLabel: {
     fontSize: OTP_LAYOUT.INPUT_LABEL_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: "SpaceGrotesk-Medium",
     color: BRAND_COLORS.primary.xanhReu,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: OTP_LAYOUT.INPUT_LABEL_MARGIN_BOTTOM,
   },
   errorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: OTP_LAYOUT.ERROR_MARGIN_TOP,
   },
   errorText: {
     fontSize: OTP_LAYOUT.ERROR_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
-    color: '#FF0000',
+    fontFamily: "SpaceGrotesk-Medium",
+    color: "#FF0000",
     lineHeight: OTP_LAYOUT.ERROR_LINE_HEIGHT,
-    textAlign: 'center',
+    textAlign: "center",
   },
   okButton: {
     marginTop: OTP_LAYOUT.OK_BUTTON_MARGIN_TOP,
     backgroundColor: BRAND_COLORS.secondary.nauEspresso,
     borderRadius: OTP_LAYOUT.OK_BUTTON_BORDER_RADIUS,
     paddingVertical: OTP_LAYOUT.OK_BUTTON_PADDING_VERTICAL,
-    alignItems: 'center',
+    alignItems: "center",
   },
   okButtonText: {
     fontSize: OTP_LAYOUT.OK_BUTTON_FONT_SIZE,
-    fontFamily: 'Phudu-Bold',
+    fontFamily: "Phudu-Bold",
     color: BRAND_COLORS.background.white,
   },
 });

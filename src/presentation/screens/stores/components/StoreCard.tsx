@@ -1,18 +1,29 @@
+import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { StoreCardProps } from '../StoresInterfaces';
 import { STORES_TEXT } from '../StoresConstants';
+import { StoreCardProps } from '../StoresInterfaces';
 import { STORES_LAYOUT } from '../StoresLayout';
 import { StoresUIService } from '../StoresService';
 
 export function StoreCard({ store, onPress }: StoreCardProps) {
+  const handlePress = useAuthGuard(
+    () => {
+      onPress();
+      console.log(`[StoreCard] Viewing: ${store.name}`);
+      // TODO: Navigate to store detail
+    },
+    {
+      intent: 'VIEW_STORE',
+      context: {
+        storeId: store.id,
+        returnTo: '/(tabs)/stores',
+      },
+    }
+  );
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
       <Image source={{ uri: store.imageUrl }} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.brandName}>{store.brandName}</Text>

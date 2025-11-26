@@ -1,17 +1,28 @@
+import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, Image, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { Collection } from '../HomeInterfaces';
 import { HOME_LAYOUT } from '../HomeLayout';
 
-interface CollectionCardProps {
-  collection: Collection;
-  onPress: () => void;
-}
+interface CollectionCardProps {collection: Collection; onPress: () => void;}
 
 export function CollectionCard({ collection, onPress }: CollectionCardProps) {
+  const handlePress = useAuthGuard(
+    () => {
+      onPress();
+    },
+    {
+      intent: 'VIEW_COLLECTION',
+      context: {
+        collectionId: collection.id,
+        returnTo: '/(tabs)',
+      },
+    }
+  );
+  
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.8}>
       <Image source={{ uri: collection.bannerImage }} style={styles.image} />
       <View style={styles.overlay}>
         <Text style={styles.title}>{collection.title}</Text>
