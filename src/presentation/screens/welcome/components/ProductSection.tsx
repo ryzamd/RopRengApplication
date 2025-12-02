@@ -1,21 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Category, Product } from '../../../../data/mockProducts';
 import { BRAND_COLORS } from '../../../theme/colors';
-import { Product, Category } from '../../../../data/mockProducts';
 import { ProductCard } from './ProductCard';
 
 interface ProductSectionProps {
-  category: Category;
+  category?: Category;
+  title?: string;
   products: Product[];
   onProductPress?: () => void;
 }
 
-export function ProductSection({ category, products, onProductPress }: ProductSectionProps) {
+export function ProductSection({ category, title, products, onProductPress }: ProductSectionProps) {
   if (products.length === 0) return null;
+
+  const displayTitle = title || category?.name || '';
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>{category.name}</Text>
+      <Text style={styles.title}>{displayTitle}</Text>
       <View style={styles.grid}>
         {products.map((product) => (
           <ProductCard

@@ -109,9 +109,6 @@ export class CartRepository {
     return row?.store_id || null;
   }
 
-   * TODO: Expire old cart items (7+ days)
-   * Call this on app startup or periodically
-   */
   async expireOldItems(maxAgeDays: number = 7): Promise<void> {
     const cutoffTime = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
     await this.db.runAsync('DELETE FROM cart_items WHERE created_at < ?', [

@@ -1,11 +1,13 @@
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, Alert } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { login, clearPendingIntent } from '../../../state/slices/auth';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TokenStorage } from '../../../infrastructure/storage/tokenStorage';
+import { clearPendingIntent, login } from '../../../state/slices/auth';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
-import { useModalBottomSheetAnimation, useShakeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpInput } from './components/OtpInput';
 import { OtpTimer } from './components/OtpTimer';
@@ -14,14 +16,14 @@ import { OTP_CONFIG, OTP_TEXT } from './OtpVerificationConstants';
 import { OtpVerificationStateEnum } from './OtpVerificationEnums';
 import { OTP_LAYOUT } from './OtpVerificationLayout';
 import { OtpVerificationService } from './OtpVerificationService';
-import { TokenStorage } from '../../../infrastructure/storage/tokenStorage';
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ phoneNumber: string }>();
-  const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
   
+  const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
   const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
   const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
@@ -29,83 +31,23 @@ export default function OtpVerificationScreen() {
   const [totalRetryCount, setTotalRetryCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Bottom sheet animation
-  const { modalHeight, animatedModalStyle, animatedBackdropStyle, dismiss } =
-    useModalBottomSheetAnimation({
-      heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
-      onExitComplete: () => {
-        if (router.canGoBack()) {
-          router.back();
-        }
-      },
-    });
+  const sheetRef = useRef<BottomSheet>(null);
+  const isLoginSuccessRef = useRef(false);
+  
+  const shakeTranslateX = useSharedValue(0);
 
-  // Shake animation for errors
-  const { animatedStyle: shakeAnimatedStyle, shake } = useShakeAnimation();
+  // const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+  // const snapPoints = useMemo(() => [SCREEN_HEIGHT * OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE], [SCREEN_HEIGHT]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (timeRemaining <= 0) {
-      setState(OtpVerificationStateEnum.EXPIRED);
-      setErrorMessage(OTP_TEXT.ERROR_EXPIRED);
-      return;
-    }
+  const snapPoints = useMemo(() => ['90%'], []);
 
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => Math.max(0, prev - 1));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeRemaining]);
-
-  const resetOtp = () => {
-    setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
-    setState(OtpVerificationStateEnum.IDLE);
-    setErrorMessage(null);
-    setHasClickedResendThisCycle(false);
-  };
-
-  const handleResendClick = () => {
-    if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) {
-      return;
-    }
-    
-    setHasClickedResendThisCycle(true);
-    setTotalRetryCount((prev) => prev + 1);
-    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
-    setState(OtpVerificationStateEnum.IDLE);
-    setErrorMessage(null);
-  };
-
-  const handleRetryIconClick = () => {
-    if (!OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount)) {
-      return;
-    }
-    
-    setTotalRetryCount((prev) => prev + 1);
-    resetOtp();
-  };
-
-  // Clear intent on cancel
-  const handleClose = () => {
-    dispatch(clearPendingIntent());
-    dismiss();
-  };
-
-  const handleBackdropPress = () => {
-    dispatch(clearPendingIntent());
-    dismiss();
-  };
-
-  // Process pending intent after successful login
-  const processPendingIntent = async () => {
+  const processPendingIntent = useCallback(() => {
     if (!pendingIntent) {
+      console.log('[OTP] No intent, replacing with Tabs');
       router.replace('/(tabs)');
       return;
     }
 
-    // Check TTL
     const now = Date.now();
     if (now >= pendingIntent.expiresAt) {
       console.log('[OTP] Intent expired');
@@ -115,84 +57,94 @@ export default function OtpVerificationScreen() {
     }
 
     const { intent, context } = pendingIntent;
+    console.log(`[OTP] Processing intent: ${intent}`);
 
     try {
       switch (intent) {
-        case 'PURCHASE': {
-          if (!context.productId) {
-            throw new Error('Missing productId in PURCHASE intent');
-          }
-
-          // Navigate to StoresScreen with product selection mode
-          console.log(`[OTP] Navigating to stores for product: ${context.productId}`);
+        case 'PURCHASE':
+          if (!context.productId) throw new Error('Missing productId');
           router.replace({
             pathname: '/(tabs)/stores',
-            params: {
-              productId: context.productId,
-              mode: 'select'
-            },
+            params: { productId: context.productId, mode: 'select' },
           });
           break;
-        }
-
-        case 'VIEW_STORE': {
+        case 'VIEW_STORE':
           dispatch(clearPendingIntent());
-          router.replace({
-            pathname: '/(tabs)/stores',
-            params: { storeId: context.storeId }
-          });
+          router.replace({ pathname: '/(tabs)/stores', params: { storeId: context.storeId } });
           break;
-        }
-
-        case 'BROWSE_CATEGORY': {
+        case 'BROWSE_CATEGORY':
           dispatch(clearPendingIntent());
-          router.replace({
-            pathname: '/(tabs)/search',
-            params: { categoryId: context.categoryId }
-          });
+          router.replace({ pathname: '/(tabs)/search', params: { categoryId: context.categoryId } });
           break;
-        }
-
-        case 'VIEW_COLLECTION': {
-          // TODO: Implement collection detail screen
-          dispatch(clearPendingIntent());
-          router.replace('/(tabs)');
-          break;
-        }
-
-        case 'CLAIM_PROMO': {
-          // TODO: Implement promo claim flow
-          dispatch(clearPendingIntent());
-          router.replace('/(tabs)');
-          break;
-        }
-
         default:
           dispatch(clearPendingIntent());
           router.replace('/(tabs)');
       }
     } catch (error) {
       console.error('[OTP] Error processing intent:', error);
-      Alert.alert(
-        'Có lỗi xảy ra',
-        'Không thể hoàn tất yêu cầu của bạn. Vui lòng thử lại.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              dispatch(clearPendingIntent());
-              router.replace('/(tabs)');
-            }
-          }
-        ]
-      );
+      dispatch(clearPendingIntent());
+      router.replace('/(tabs)');
     }
+  }, [pendingIntent, dispatch, router]);
+
+  // --- Animation Handlers ---
+  
+  // Hàm trigger shake (Standard Reanimated Logic)
+  const triggerShake = useCallback(() => {
+    shakeTranslateX.value = withSequence(
+      withTiming(-10, { duration: 50 }),
+      withSpring(10, { damping: 8, stiffness: 400 }),
+      withTiming(-5, { duration: 50 }),
+      withTiming(0, { duration: 50 })
+    );
+  }, [shakeTranslateX]);
+
+  const shakeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeTranslateX.value }],
+  }));
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      if (isLoginSuccessRef.current) {
+        console.log('[OTP] Sheet closed (Success) -> Processing Intent');
+        processPendingIntent();
+      } else {
+        console.log('[OTP] Sheet closed (Cancel) -> Going Back');
+        if (router.canGoBack()) {
+          router.back();
+        }
+      }
+    }
+  }, [processPendingIntent, router]);
+
+  const handleClose = useCallback(() => {
+    dispatch(clearPendingIntent());
+    sheetRef.current?.close();
+  },[dispatch]);
+
+  useEffect(() => {
+    if (timeRemaining <= 0) {
+      setState(OtpVerificationStateEnum.EXPIRED);
+      setErrorMessage(OTP_TEXT.ERROR_EXPIRED);
+      return;
+    }
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining]);
+
+  const handleResendClick = () => {
+    if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) return;
+    setHasClickedResendThisCycle(true);
+    setTotalRetryCount((prev) => prev + 1);
+    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+    setState(OtpVerificationStateEnum.IDLE);
+    setErrorMessage(null);
   };
 
   const handleOtpComplete = async (code: string) => {
-    if (state !== OtpVerificationStateEnum.IDLE) {
-      return;
-    }
+    if (state !== OtpVerificationStateEnum.IDLE) return;
 
     setState(OtpVerificationStateEnum.VERIFYING);
 
@@ -200,36 +152,24 @@ export default function OtpVerificationScreen() {
       const result = OtpVerificationService.verifyOtpCode(code);
 
       if (result.isValid && result.userType) {
+        console.log('[OTP] Verification success');
+        
+        isLoginSuccessRef.current = true;
         setState(OtpVerificationStateEnum.SUCCESS);
         
-        // Save tokens
-        const mockTokens = {
-          accessToken: `jwt_${Date.now()}`,
-          refreshToken: `refresh_${Date.now()}`,
-          userId: `user_${Date.now()}`
-        };
+        await TokenStorage.saveTokens(`jwt_${Date.now()}`, `refresh_${Date.now()}`, `user_${Date.now()}`);
         
-        await TokenStorage.saveTokens(
-          mockTokens.accessToken,
-          mockTokens.refreshToken,
-          mockTokens.userId
-        );
-
-        // Dispatch login action
         dispatch(login({
           phoneNumber: params.phoneNumber || '',
-          userId: mockTokens.userId,
+          userId: `user_${Date.now()}`,
         }));
 
-        // Process pending intent
-        dismiss();
-        setTimeout(() => {
-          processPendingIntent();
-        }, 100);
+        sheetRef.current?.close();
+        
       } else {
         setState(OtpVerificationStateEnum.ERROR);
         setErrorMessage(OTP_TEXT.ERROR_INVALID);
-        shake();
+        triggerShake();
         
         setTimeout(() => {
           setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
@@ -239,109 +179,110 @@ export default function OtpVerificationScreen() {
     }, 500);
   };
 
-  const handleOkPress = () => {
-    dispatch(clearPendingIntent());
-    dismiss();
-  };
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        onPress={handleClose}
+      />
+    ),
+    [handleClose]
+  );
 
   const canClickResend = OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle);
-  const canShowRetryIcon = OtpVerificationService.canShowRetryIcon(timeRemaining, totalRetryCount);
-  const isExpired = timeRemaining <= 0;
-  const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && isExpired;
+  const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && timeRemaining <= 0;
 
   return (
-    <View style={styles.container}>
-      {/* Backdrop */}
-      <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
-        <TouchableWithoutFeedback onPress={handleBackdropPress}>
-          <View style={styles.backdropTouchable} />
-        </TouchableWithoutFeedback>
-      </Animated.View>
-
-      {/* Modal */}
-      <Animated.View
-        style={[
-          styles.modalWrapper,
-          { height: modalHeight },
-          animatedModalStyle,
-        ]}
+    <GestureHandlerRootView style={styles.container}>
+      
+      <BottomSheet
+        ref={sheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        backdropComponent={renderBackdrop}
+        onChange={handleSheetChanges}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.indicator}
       >
-        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-          {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
-          </TouchableOpacity>
+        <BottomSheetView style={[styles.contentWrapper, { paddingBottom: insets.bottom }]}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+              <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
+            </TouchableOpacity>
 
-          {/* Content */}
-          <View style={styles.content}>
-            <Text style={styles.title}>{OTP_TEXT.TITLE}</Text>
-            
-            <Text style={styles.subtitle}>
-              {OTP_TEXT.SUBTITLE_PREFIX}{' '}
-              {OtpVerificationService.formatPhoneForDisplay(params.phoneNumber || '')}
-            </Text>
+            <View style={styles.content}>
+              <Text style={styles.title}>{OTP_TEXT.TITLE}</Text>
+              
+              <Text style={styles.subtitle}>
+                {OTP_TEXT.SUBTITLE_PREFIX}{' '}
+                {OtpVerificationService.formatPhoneForDisplay(params.phoneNumber || '')}
+              </Text>
 
-            <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
+              <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
 
-            <OtpInput
-              digits={digits}
-              onDigitsChange={setDigits}
-              onComplete={handleOtpComplete}
-              shakeAnimatedStyle={shakeAnimatedStyle}
-              disabled={state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError}
-            />
-
-            {!showMaxRetriesError && (
-              <OtpTimer
-                timeRemaining={timeRemaining}
-                onResend={handleResendClick}
-                canClickResend={canClickResend}
+              <OtpInput
+                digits={digits}
+                onDigitsChange={setDigits}
+                onComplete={handleOtpComplete}
+                shakeAnimatedStyle={shakeAnimatedStyle}
+                disabled={state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError}
               />
-            )}
 
-            {errorMessage && !showMaxRetriesError && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
-                {isExpired && canShowRetryIcon && (
-                  <RetryButton onPress={handleRetryIconClick} />
-                )}
-              </View>
-            )}
+              {!showMaxRetriesError && (
+                <OtpTimer
+                  timeRemaining={timeRemaining}
+                  onResend={handleResendClick}
+                  canClickResend={canClickResend}
+                />
+              )}
 
-            {showMaxRetriesError && (
-              <TouchableOpacity style={styles.okButton} onPress={handleOkPress}>
-                <Text style={styles.okButtonText}>{OTP_TEXT.BUTTON_OK}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </SafeAreaView>
-      </Animated.View>
-    </View>
+              {errorMessage && !showMaxRetriesError && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                  {timeRemaining <= 0 && (
+                    <RetryButton onPress={() => {
+                        setTotalRetryCount(c => c + 1);
+                        setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+                        setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+                        setState(OtpVerificationStateEnum.IDLE);
+                        setErrorMessage(null);
+                    }} />
+                  )}
+                </View>
+              )}
+
+              {showMaxRetriesError && (
+                <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                  <Text style={styles.okButtonText}>{OTP_TEXT.BUTTON_OK}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+        </BottomSheetView>
+      </BottomSheet>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  modalWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  bottomSheetBackground: {
     backgroundColor: BRAND_COLORS.background.white,
     borderTopLeftRadius: OTP_LAYOUT.MODAL_BORDER_RADIUS,
     borderTopRightRadius: OTP_LAYOUT.MODAL_BORDER_RADIUS,
   },
-  safeArea: {
+  indicator: {
+    backgroundColor: '#DDDDDD',
+    width: 40,
+  },
+  contentWrapper: {
     flex: 1,
+    paddingHorizontal: OTP_LAYOUT.CONTENT_PADDING_HORIZONTAL,
   },
   closeButton: {
     position: 'absolute',

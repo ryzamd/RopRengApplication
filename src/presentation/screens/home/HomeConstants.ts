@@ -12,4 +12,5 @@ export const HOME_TEXT = {
     TITLE: 'Bộ sưu tập',
     VIEW_MORE: 'Xem thêm',
   },
+  PRODUCT_SECTION_TITLE: 'Gợi ý cho bạn',
 } as const;

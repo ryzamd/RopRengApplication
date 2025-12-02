@@ -1,12 +1,16 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { MOCK_CATEGORIES } from '../../../../data/mockProducts';
+import { Category } from '../../../../data/mockProducts';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_LAYOUT } from '../HomeLayout';
 
-export function HomeCategoryScroll() {
+interface HomeCategoryScrollProps {
+  categories: Category[];
+}
+
+export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
   const router = useRouter();
 
   const handleCategoryPress = (categoryId: string, categoryName: string) => {
@@ -23,7 +27,7 @@ export function HomeCategoryScroll() {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
     >
-      {MOCK_CATEGORIES.map((category) => (
+      {categories.map((category) => (
         <TouchableOpacity
           key={category.id}
           style={styles.categoryItem}

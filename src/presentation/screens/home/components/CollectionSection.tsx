@@ -1,44 +1,37 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Collection } from '../HomeInterfaces';
 import { HOME_TEXT } from '../HomeConstants';
 import { HOME_LAYOUT } from '../HomeLayout';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { CollectionCard } from './CollectionCard';
-import { CollectionModal } from './CollectionModal';
 
 interface CollectionSectionProps {
   collections: Collection[];
+  onCollectionPress: (collection: Collection) => void;
 }
 
-export function CollectionSection({ collections }: CollectionSectionProps) {
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+export function CollectionSection({ collections, onCollectionPress }: CollectionSectionProps) {
 
   return (
-    <>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{HOME_TEXT.COLLECTION_SECTION.TITLE}</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          decelerationRate="fast"
-          snapToInterval={HOME_LAYOUT.COLLECTION_CARD_WIDTH + HOME_LAYOUT.COLLECTION_SCROLL_GAP}
-        >
-          {collections.map((collection) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              onPress={() => setSelectedCollection(collection)}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {selectedCollection && (
-        <CollectionModal collection={selectedCollection} onClose={() => setSelectedCollection(null)} />
-      )}
-    </>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{HOME_TEXT.COLLECTION_SECTION.TITLE}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        decelerationRate="fast"
+        snapToInterval={HOME_LAYOUT.COLLECTION_CARD_WIDTH + HOME_LAYOUT.COLLECTION_SCROLL_GAP}
+      >
+        {collections.map((collection) => (
+          <CollectionCard
+            key={collection.id}
+            collection={collection}
+            onPress={() => onCollectionPress(collection)} // Gọi callback lên cha
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 

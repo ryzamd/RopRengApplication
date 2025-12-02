@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
-import { clearPendingIntent } from '../../../state/slices/auth';
+import { clearPendingIntent, setPendingIntent } from '../../../state/slices/auth';
 import { addToCart } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
@@ -16,11 +18,17 @@ import { orderStyles } from './styles';
 export default function OrderScreen() {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
+  const isFocused = useIsFocused();
+  const router = useRouter();
   
   const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const totalItems = useAppSelector((state) => state.orderCart.totalItems);
 
   useEffect(() => {
+    if (!isFocused) return;
+
     if (!pendingIntent || pendingIntent.intent !== 'PURCHASE') return;
     if (!pendingIntent.context.productId) return;
     if (!selectedStore) return;
@@ -28,8 +36,9 @@ export default function OrderScreen() {
     console.log(`[OrderScreen] Auto-adding product from intent: ${pendingIntent.context.productId}`);
 
     const product = MOCK_PRODUCTS.find((p) => p.id === pendingIntent.context.productId);
+    
     if (!product) {
-      Alert.alert('Lỗi', 'Sản phẩm không tồn tại');
+      Alert.alert('Lỗi', 'Sản phẩm trong yêu cầu không tồn tại');
       dispatch(clearPendingIntent());
       return;
     }
@@ -40,15 +49,28 @@ export default function OrderScreen() {
     dispatch(clearPendingIntent());
 
     Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
-  }, [pendingIntent, selectedStore, dispatch]);
+  }, [pendingIntent, selectedStore, dispatch, isFocused]);
 
   const handleAddToCart = useCallback(
     (product: Product) => {
+      if (!isAuthenticated) {
+        console.log('[OrderScreen] User not authenticated. Saving intent and redirecting...');
+        
+        dispatch(setPendingIntent({
+          intent: 'PURCHASE',
+          context: { productId: product.id },
+          expiresAt: Date.now() + 5 * 60 * 1000,
+          timestamp: Date.now(),
+        }));
+
+        router.push('/login');
+        return;
+      }
+
       dispatch(addToCart(product));
       console.log(`[OrderScreen] Added ${product.name} to cart`);
-      // TODO: Show toast
     },
-    [dispatch]
+    [dispatch, isAuthenticated, router]
   );
 
   const handleMiniCartPress = useCallback(() => {
@@ -60,6 +82,8 @@ export default function OrderScreen() {
     categoryName: category.name,
     products: MOCK_PRODUCTS.filter((p) => p.categoryId === category.id),
   }));
+
+  const showMiniCart = isAuthenticated && totalItems > 0;
 
   return (
     <View style={[orderStyles.container, { paddingTop: insets.top }]}>
@@ -90,7 +114,9 @@ export default function OrderScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <MiniCartButton onPress={handleMiniCartPress} />
+      {showMiniCart && (
+        <MiniCartButton onPress={handleMiniCartPress} />
+      )}
     </View>
   );
 }
