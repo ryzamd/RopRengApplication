@@ -1,54 +1,55 @@
-import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COLLECTIONS } from '../../../data/mockCollections';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
 import { useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
+import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
 import { ProductSection } from '../welcome/components/ProductSection';
 import { AuthenticatedPromoBanner } from './components/AuthenticatedPromoBanner';
+import { CollectionModal } from './components/CollectionModal';
 import { CollectionSection } from './components/CollectionSection';
 import { ComboHotSale } from './components/ComboHotSale';
 import { HomeBrandSelector } from './components/HomeBrandSelector';
 import { HomeCategoryScroll } from './components/HomeCategoryScroll';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
-import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { HOME_TEXT } from './HomeConstants';
 import { ComboType } from './HomeEnums';
+import { Collection } from './HomeInterfaces';
 import { HOME_LAYOUT } from './HomeLayout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { phoneNumber } = useAppSelector((state) => state.auth);
-
   const userName = phoneNumber?.replace('+84', '0') || 'User';
+  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+
   const voucherCount = 17;
   const notificationCount = 2;
 
-  const groupedProducts = MOCK_CATEGORIES.map((category) => ({
-    category,
-    products: MOCK_PRODUCTS.filter((p) => p.categoryId === category.id),
-  }));
-
-  const dailyCombos = MOCK_COMBOS.filter((c) => c.type === ComboType.DAILY);
-  const hourlyCombos = MOCK_COMBOS.filter((c) => c.type === ComboType.HOURLY);
+  const handleProductPress = useCallback(() => {
+    router.push('/(tabs)/order');
+  }, [router]);
 
   const handleMiniCartPress = useCallback(() => {
-    console.log('[HomeScreen] Mini cart pressed');
-    // TODO: Open CartModalScreen
     Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
   }, []);
 
-  const handleProductPress = useCallback(() => {
-    console.log('[HomeScreen] Product pressed, navigating to order');
-    router.push('/(tabs)/order');
-  }, [router]);
+  const handleCollectionPress = useCallback((collection: Collection) => {
+    setSelectedCollection(collection);
+  }, []);
+
+  const showMiniCart = isAuthenticated && totalItems > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -96,33 +97,44 @@ export default function HomeScreen() {
           <HomeSearchBar />
         </View>
         
-        <HomeCategoryScroll />
+        <HomeCategoryScroll categories={MOCK_CATEGORIES} />
         
-        {dailyCombos.map((combo) => (
-          <ComboHotSale key={combo.id} combo={combo} />
-        ))}
+        <ComboHotSale
+          type={ComboType.DAILY}
+          combos={MOCK_COMBOS}
+        />
 
-        {hourlyCombos.map((combo) => (
-          <ComboHotSale key={combo.id} combo={combo} />
-        ))}
+        <ComboHotSale
+          type={ComboType.HOURLY}
+          combos={MOCK_COMBOS}
+        />
 
-        <CollectionSection collections={MOCK_COLLECTIONS} />
+        <CollectionSection
+          collections={MOCK_COLLECTIONS}
+          onCollectionPress={handleCollectionPress}
+        />
 
         <View style={styles.section}>
-          {groupedProducts.map(({ category, products }) => (
-            <ProductSection
-              key={category.id}
-              category={category}
-              products={products}
-              onProductPress={handleProductPress}
-            />
-          ))}
+          <ProductSection
+            title={HOME_TEXT.PRODUCT_SECTION_TITLE}
+            products={MOCK_PRODUCTS}
+            onProductPress={handleProductPress}
+          />
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <MiniCartButton onPress={handleMiniCartPress} />
+      {showMiniCart && (
+        <MiniCartButton onPress={handleMiniCartPress} />
+      )}
+
+      {selectedCollection && (
+        <CollectionModal
+          collection={selectedCollection}
+          onClose={() => setSelectedCollection(null)}
+        />
+      )}
     </View>
   );
 }

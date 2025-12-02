@@ -1,4 +1,6 @@
-import { router } from 'expo-router';
+import { CartRepository } from '@/src/infrastructure/db/sqlite/repositories/CartRepository';
+import { useRouter } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 import React, { useCallback, useMemo } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { logout } from '../../../state/slices/auth';
@@ -13,7 +15,9 @@ import { styles } from './styles';
 
 export default function MoreScreen() {
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const router = useRouter();
+  const db = useSQLiteContext();
+  const { isAuthenticated, userId } = useAppSelector((state) => state.auth);
 
   const accountMenuSection: MenuSectionData = useMemo(() => {
     if (isAuthenticated) {
@@ -22,22 +26,36 @@ export default function MoreScreen() {
       return {
         title: 'Tài khoản',
         items: [
-          {
-            id: 'login',
-            label: 'Đăng nhập',
-            icon: 'log-in-outline'
-          },
-          {
-            id: 'register',
-            label: 'Đăng ký',
-            icon: 'person-add-outline'
-          },
+          { id: 'login', label: 'Đăng nhập', icon: 'log-in-outline' },
+          { id: 'register', label: 'Đăng ký', icon: 'person-add-outline' },
         ],
       };
     }
   }, [isAuthenticated]);
 
+  const handleLogout = useCallback(async () => {
+    console.log('[MoreScreen] Processing logout...');
+    
+    // 1. Clear SQLite Cart (Side Effect)
+    if (userId) {
+        try {
+            const cartRepo = new CartRepository(db);
+            await cartRepo.clearAllCartsForUser(userId);
+            console.log('[MoreScreen] SQLite cart cleared');
+        } catch (error) {
+            console.error('[MoreScreen] Failed to clear SQLite cart', error);
+        }
+    }
+
+    // 2. Dispatch Logout (Redux will handle state clearing via extraReducers)
+    dispatch(logout());
+    
+    // 3. Navigation (Optional: redirect to welcome or stay here)
+    // router.replace('/');
+  }, [dispatch, userId, db]);
+
   const handleMenuPress = useCallback((id: string) => {
+    console.log(`[MoreScreen] Menu pressed: ${id}, Auth: ${isAuthenticated}`);
     switch (id) {
       case 'logout':
         Alert.alert(
@@ -48,9 +66,7 @@ export default function MoreScreen() {
             {
               text: MORE_STRINGS.AGREE,
               style: 'destructive',
-              onPress: () => {
-                dispatch(logout());
-              },
+              onPress: handleLogout,
             },
           ]
         );
@@ -71,22 +87,17 @@ export default function MoreScreen() {
         break;
 
       default:
-        console.log(`Menu pressed: ${id}`);
         break;
     }
-  }, [dispatch, isAuthenticated]);
+  }, [handleLogout, isAuthenticated, router]);
 
   return (
     <View style={styles.container}>
       <MoreHeader />
-      
       <ScrollView showsVerticalScrollIndicator={false}>
         <UtilityGrid />
-        
         <MenuSection section={SUPPORT_MENU} onItemPress={handleMenuPress} />
-        
         <MenuSection section={accountMenuSection} onItemPress={handleMenuPress} />
-
         <VersionFooter />
         <View style={{ height: 20 }} />
       </ScrollView>

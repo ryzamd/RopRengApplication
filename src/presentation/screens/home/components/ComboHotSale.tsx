@@ -5,23 +5,25 @@ import { useAppDispatch } from '../../../../utils/hooks';
 import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_TEXT } from '../HomeConstants';
+import { ComboType } from '../HomeEnums';
 import { Combo, ComboProduct } from '../HomeInterfaces';
 import { HOME_LAYOUT } from '../HomeLayout';
 
-interface ComboHotSaleProps {combo: Combo;}
+interface ComboHotSaleProps {combos: Combo[]; type: ComboType;}
 
-export function ComboHotSale({ combo }: ComboHotSaleProps) {
+const ComboItem = ({ combo }: { combo: Combo }) => {
   const [timeLeft, setTimeLeft] = useState('');
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!combo.expiresAt) return;
+    
+    const calculateTime = () => {
       const now = new Date().getTime();
       const distance = combo.expiresAt.getTime() - now;
 
       if (distance < 0) {
         setTimeLeft('00:00:00');
-        clearInterval(interval);
         return;
       }
 
@@ -32,7 +34,10 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
       setTimeLeft(
         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
       );
-    }, 1000);
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
 
     return () => clearInterval(interval);
   }, [combo.expiresAt]);
@@ -41,34 +46,27 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
     (product: ComboProduct) => {
       console.log(`[ComboHotSale] Add to cart: ${product.name}`);
       dispatch(addToCart(product));
-      // TODO: Show toast notification
     },
     {
       intent: 'PURCHASE',
-      context: {}, // productId passed dynamically
+      context: {},
     }
   );
 
   return (
     <View style={styles.section}>
-      {/* Combo Title (OUTSIDE) */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.comboTitle}>{combo.title}</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.comboTitle}>{combo.title}</Text>
+        </View>
+
+        <View style={styles.countdownContainer}>
+          <Text style={styles.countdownLabel}>{HOME_TEXT.COMBO_SECTION.EXPIRES_IN}</Text>
+          <Text style={styles.countdownValue}>{timeLeft}</Text>
+        </View>
       </View>
 
-      {/* Countdown (OUTSIDE) */}
-      <View style={styles.countdownContainer}>
-        <Text style={styles.countdownLabel}>{HOME_TEXT.COMBO_SECTION.EXPIRES_IN}</Text>
-        <Text style={styles.countdownValue}>{timeLeft}</Text>
-      </View>
-
-      {/* Product Scroll */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        style={styles.scrollView}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
         {combo.products.map((product) => (
           <TouchableOpacity
             key={product.id}
@@ -76,30 +74,26 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
             onPress={() => handleProductPress(product)}
             activeOpacity={0.9}
           >
-            {/* Product Image Container */}
             <View style={styles.imageContainer}>
               <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
               
-              {/* Discount Badge (if exists) */}
-              {product.discountAmount && product.discountAmount > 0 ? (
+              {(product.discountAmount ?? 0) > 0 && (
                 <View style={styles.discountBadge}>
                   <Text style={styles.discountText}>
                     {HOME_TEXT.COMBO_SECTION.DISCOUNT_PREFIX}
-                    {product.discountAmount.toLocaleString('vi-VN')}
+                    {product.discountAmount?.toLocaleString('vi-VN')}
                     {HOME_TEXT.COMBO_SECTION.DISCOUNT_SUFFIX}
                   </Text>
                 </View>
-              ) : null}
+              )}
 
-              {/* Best Seller Badge (if product has badge property) */}
-              {product.badge ? (
+              {product.badge && (
                 <View style={styles.bestSellerBadge}>
-                  <Text style={styles.bestSellerText}>BEST{'\n'}SELLER</Text>
+                  <Text style={styles.bestSellerText}>BEST SELLER</Text>
                 </View>
-              ) : null}
+              )}
             </View>
 
-            {/* Product Info */}
             <View style={styles.productInfo}>
               <Text style={styles.productName} numberOfLines={2}>
                 {product.name}
@@ -119,11 +113,28 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
       </ScrollView>
     </View>
   );
+};
+
+export function ComboHotSale({ combos, type }: ComboHotSaleProps) {
+  const filteredCombos = combos.filter((c) => c.type === type);
+
+  if (!filteredCombos || filteredCombos.length === 0) return null;
+
+  return (
+    <View>
+      {filteredCombos.map((combo) => (
+        <ComboItem key={combo.id} combo={combo} />
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   section: {
     marginBottom: HOME_LAYOUT.COMBO_SECTION_MARGIN_BOTTOM,
+  },
+  headerRow: {
+    marginBottom: HOME_LAYOUT.COMBO_TITLE_MARGIN_BOTTOM,
   },
   headerContainer: {
     paddingHorizontal: HOME_LAYOUT.COMBO_SECTION_PADDING_HORIZONTAL,

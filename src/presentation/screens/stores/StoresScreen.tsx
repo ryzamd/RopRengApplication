@@ -16,6 +16,8 @@ export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  
+  // Params nhận từ OTP Verification hoặc Navigation thường
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,16 +44,22 @@ export default function StoresScreen() {
     [filteredStores]
   );
 
+  // Store Selection Handler
   const handleStorePress = (store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
     
-    // If in "select" mode, save store and navigate to order
     if (params.mode === 'select') {
+      // 1. Update Selected Store in Redux
       dispatch(setSelectedStore(store));
+      
+      // 2. CRITICAL: DO NOT CLEAR PENDING INTENT HERE
+      // We must preserve the 'PURCHASE' intent so OrderScreen can consume it to auto-add product.
+      
+      // 3. Navigate to Order
       router.replace('/(tabs)/order');
     } else {
-      // Browse mode: just show info (existing behavior)
-      // TODO: Navigate to store detail
+      // Browse mode logic (Future impl)
+      // router.push(`/store-detail/${store.id}`);
     }
   };
 
@@ -61,6 +69,15 @@ export default function StoresScreen() {
       
       <StoresSearchBar value={searchQuery} onChangeText={setSearchQuery} />
       
+      {/* {params.mode === 'select' && (
+        <View style={styles.productContext}>
+          <Text style={styles.productContextLabel}>Đang tìm cửa hàng cho:</Text>
+          <Text style={styles.storeCount}>
+            Tìm thấy {filteredStores.length} cửa hàng phù hợp
+          </Text>
+        </View>
+      )} */}
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {filteredStores.length === 0 ? (
           <View style={styles.emptyState}>
@@ -97,7 +114,7 @@ const styles = StyleSheet.create({
   },
   productContext: {
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: BRAND_COLORS.primary.beSua,
     borderBottomWidth: 1,
     borderBottomColor: BRAND_COLORS.secondary.nauCaramel,
@@ -108,16 +125,10 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.secondary.reuDam,
     marginBottom: 4,
   },
-  productContextName: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Bold',
-    color: BRAND_COLORS.primary.beSua,
-    marginBottom: 8,
-  },
   storeCount: {
     fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.secondary.reuDam,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: BRAND_COLORS.primary.xanhReu,
   },
   emptyState: {
     flex: 1,

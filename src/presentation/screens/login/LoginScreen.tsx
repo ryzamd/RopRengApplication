@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppDispatch } from '../../../utils/hooks';
-import { useModalFadeAnimation } from '../../hooks/animations';
+import { scheduleOnRN } from 'react-native-worklets';
 import { BRAND_COLORS } from '../../theme/colors';
 import { PhoneInput } from './components/PhoneInput';
 import { SocialButton } from './components/SocialButton';
@@ -15,26 +14,53 @@ import { LoginUIService } from './LoginService';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [isSendingOtp, setIsSendingOtp] = React.useState(false);
 
-  const { animatedModalStyle, animatedBackdropStyle, dismiss } = useModalFadeAnimation({
-    onExitComplete: () => router.back(),
-  });
+  // 1. Reanimated Shared Values (Thay thế Custom Hook)
+  const opacity = useSharedValue(0);
+  const contentScale = useSharedValue(0.95);
+
+  // 2. Animation Logic
+  const startEntranceAnimation = useCallback(() => {
+    opacity.value = withTiming(1, { duration: 300 });
+    contentScale.value = withTiming(1, { duration: 300 });
+  }, [contentScale, opacity]);
+
+  const handleDismiss = useCallback(() => {
+    // Exit Animation: Fade out -> Sau đó mới Back
+    opacity.value = withTiming(0, { duration: 200 }, (finished) => {
+      if (finished) {
+        scheduleOnRN(router.back);
+      }
+    });
+    contentScale.value = withTiming(0.95, { duration: 200 });
+  }, [router, contentScale, opacity]);
+
+  useEffect(() => {
+    startEntranceAnimation();
+  }, [startEntranceAnimation]);
+
+  // 3. Animated Styles
+  const animatedBackdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const animatedModalStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: contentScale.value }],
+  }));
 
   const isValidPhone = LoginUIService.validatePhoneNumber(phoneNumber);
 
   const handleLogin = () => {
     if (isValidPhone && !isSendingOtp) {
       setIsSendingOtp(true);
-      
-      // Simulate sending OTP (2 seconds)
       setTimeout(() => {
         setIsSendingOtp(false);
         const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
         
-        // Navigate to OTP verification screen
+        // Navigate to OTP
         router.push({
           pathname: '/otp-verification',
           params: { phoneNumber: formattedPhone },
@@ -51,19 +77,19 @@ export default function LoginScreen() {
     <View style={styles.container}>
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
-        <TouchableWithoutFeedback onPress={dismiss}>
+        <TouchableWithoutFeedback onPress={handleDismiss}>
           <View style={styles.backdropTouchable} />
         </TouchableWithoutFeedback>
       </Animated.View>
 
-      {/* Modal */}
+      {/* Modal Content */}
       <Animated.View style={[styles.modalWrapper, animatedModalStyle]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.closeContainer}>
               <TouchableOpacity
                 style={styles.closeButtonWrapper}
-                onPress={dismiss}
+                onPress={handleDismiss}
                 activeOpacity={0.7}
               >
                 <Text style={styles.closeButton}>{LOGIN_TEXT.CLOSE_BUTTON}</Text>
@@ -112,6 +138,9 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // Transparent background handled by navigation presentation usually, 
+    // but explicit transparent helps ensure overlay effect.
+    backgroundColor: 'transparent', 
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from '../../data/mockProducts';
 import { Store } from '../../data/mockStores';
 import { CartItem } from '../../presentation/screens/order/OrderInterfaces';
+import { logout } from './auth';
 
 interface OrderCartState {
   selectedStore: Store | null;
@@ -51,6 +52,7 @@ const orderCartSlice = createSlice({
 
       state.totalItems += 1;
       state.totalPrice += action.payload.price;
+      console.log('[Redux] Cart updated:', state.totalItems, 'items');
     },
 
     updateQuantity: (
@@ -92,13 +94,24 @@ const orderCartSlice = createSlice({
       state.totalItems = 0;
       state.totalPrice = 0;
     },
-
+    
+    // Explicit reset action
     resetCart: (state) => {
+        state.selectedStore = null;
+        state.items = [];
+        state.totalItems = 0;
+        state.totalPrice = 0;
+    }
+  },
+  // CLEAN ARCHITECTURE: React to Auth Logout automatically
+  extraReducers: (builder) => {
+    builder.addCase(logout, (state) => {
+      console.log('[OrderCart] Auth logout detected. Resetting cart state.');
       state.selectedStore = null;
       state.items = [];
       state.totalItems = 0;
       state.totalPrice = 0;
-    },
+    });
   },
 });
 
