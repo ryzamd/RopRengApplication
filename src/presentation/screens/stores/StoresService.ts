@@ -33,8 +33,8 @@ export class StoresUIService {
   }
 
   static filterStores(stores: Store[], query: string): Store[] {
-    if (!query.trim()) return stores;
-    
+    if (!query) return stores;
+
     const lowerQuery = query.toLowerCase();
     return stores.filter(
       (store) =>
@@ -48,8 +48,8 @@ export class StoresUIService {
     return stores.filter((store) => storeIds.includes(store.id));
   }
 
-  static getAvailableStoresForProduct(stores: Store[], productId: string): Store[] {
-    const filtered = this.filterStoresByProduct(stores, productId);
-    return this.sortStores(filtered, StoresSortMode.NEAREST);
+  static getAvailableStoresForProduct(allStores: Store[], productId: string): Store[] {
+    const validStoreIds = StoreMenuService.getStoresWithProduct(productId);
+    return allStores.filter(store => validStoreIds.includes(store.id));
   }
 }

@@ -1,11 +1,11 @@
-import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COLLECTIONS } from '../../../data/mockCollections';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
 import { useAppSelector } from '../../../utils/hooks';
+import { useAddToCart } from '../../../utils/hooks/useAddToCart';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -26,7 +26,7 @@ import { HOME_LAYOUT } from './HomeLayout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const handleAddToCart = useAddToCart();
   
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
@@ -37,9 +37,10 @@ export default function HomeScreen() {
   const voucherCount = 17;
   const notificationCount = 2;
 
-  const handleProductPress = useCallback(() => {
-    router.push('/(tabs)/order');
-  }, [router]);
+  // Refactor: Use the centralized hook
+  const handleProductPress = useCallback((product: Product) => {
+    handleAddToCart(product);
+  }, [handleAddToCart]);
 
   const handleMiniCartPress = useCallback(() => {
     Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
@@ -54,7 +55,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-
+        {/* ... Header content unchanged ... */}
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
           <Text style={styles.greetingText} numberOfLines={1}>
@@ -80,6 +81,7 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* ... Sections unchanged ... */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
           <HomeBrandSelector />
@@ -139,6 +141,7 @@ export default function HomeScreen() {
   );
 }
 
+// ... Styles unchanged ...
 const styles = StyleSheet.create({
   container: {
     flex: 1,

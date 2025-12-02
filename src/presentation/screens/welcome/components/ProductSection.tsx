@@ -8,7 +8,7 @@ interface ProductSectionProps {
   category?: Category;
   title?: string;
   products: Product[];
-  onProductPress?: () => void;
+  onProductPress?: (product: Product) => void;
 }
 
 export function ProductSection({ category, title, products, onProductPress }: ProductSectionProps) {
