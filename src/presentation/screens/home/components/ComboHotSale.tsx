@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { addToCart } from '../../../../state/slices/orderCart';
+import { useAppDispatch } from '../../../../utils/hooks';
+import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_TEXT } from '../HomeConstants';
-import { Combo } from '../HomeInterfaces';
+import { Combo, ComboProduct } from '../HomeInterfaces';
 import { HOME_LAYOUT } from '../HomeLayout';
 
-interface ComboHotSaleProps {
-  combo: Combo;
-}
+interface ComboHotSaleProps {combo: Combo;}
 
 export function ComboHotSale({ combo }: ComboHotSaleProps) {
   const [timeLeft, setTimeLeft] = useState('');
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,10 +37,17 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
     return () => clearInterval(interval);
   }, [combo.expiresAt]);
 
-  const handleProductPress = (productName: string) => {
-    console.log(`[ComboHotSale] Add to cart: ${productName} from combo: ${combo.title}`);
-    // TODO: Add product to cart
-  };
+  const handleProductPress = useAuthGuard(
+    (product: ComboProduct) => {
+      console.log(`[ComboHotSale] Add to cart: ${product.name}`);
+      dispatch(addToCart(product));
+      // TODO: Show toast notification
+    },
+    {
+      intent: 'PURCHASE',
+      context: {}, // productId passed dynamically
+    }
+  );
 
   return (
     <View style={styles.section}>
@@ -64,7 +73,7 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
           <TouchableOpacity
             key={product.id}
             style={styles.productCard}
-            onPress={() => handleProductPress(product.name)}
+            onPress={() => handleProductPress(product)}
             activeOpacity={0.9}
           >
             {/* Product Image Container */}
@@ -100,7 +109,7 @@ export function ComboHotSale({ combo }: ComboHotSaleProps) {
               </Text>
               <TouchableOpacity
                 style={styles.chooseButton}
-                onPress={() => handleProductPress(product.name)}
+                onPress={() => handleProductPress(product)}
               >
                 <Text style={styles.chooseButtonText}>{HOME_TEXT.COMBO_SECTION.CHOOSE_BUTTON}</Text>
               </TouchableOpacity>

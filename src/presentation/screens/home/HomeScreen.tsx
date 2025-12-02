@@ -1,6 +1,7 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { MOCK_COLLECTIONS } from '../../../data/mockCollections';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
@@ -16,15 +17,16 @@ import { HomeBrandSelector } from './components/HomeBrandSelector';
 import { HomeCategoryScroll } from './components/HomeCategoryScroll';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
+import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { HOME_TEXT } from './HomeConstants';
 import { ComboType } from './HomeEnums';
 import { HOME_LAYOUT } from './HomeLayout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { phoneNumber } = useAppSelector((state) => state.auth);
 
-  // Mock user data
   const userName = phoneNumber?.replace('+84', '0') || 'User';
   const voucherCount = 17;
   const notificationCount = 2;
@@ -37,10 +39,21 @@ export default function HomeScreen() {
   const dailyCombos = MOCK_COMBOS.filter((c) => c.type === ComboType.DAILY);
   const hourlyCombos = MOCK_COMBOS.filter((c) => c.type === ComboType.HOURLY);
 
+  const handleMiniCartPress = useCallback(() => {
+    console.log('[HomeScreen] Mini cart pressed');
+    // TODO: Open CartModalScreen
+    Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
+  }, []);
+
+  const handleProductPress = useCallback(() => {
+    console.log('[HomeScreen] Product pressed, navigating to order');
+    router.push('/(tabs)/order');
+  }, [router]);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Authenticated Header */}
       <View style={styles.header}>
+
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
           <Text style={styles.greetingText} numberOfLines={1}>
@@ -48,6 +61,7 @@ export default function HomeScreen() {
             {HOME_TEXT.HEADER.GREETING_SUFFIX}
           </Text>
         </View>
+
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.voucherBadge}>
             <AppIcon name={HEADER_ICONS.VOUCHER} size="sm" />
@@ -64,7 +78,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
@@ -85,26 +98,31 @@ export default function HomeScreen() {
         
         <HomeCategoryScroll />
         
-        {/* Combo Daily - NO section wrapper */}
         {dailyCombos.map((combo) => (
           <ComboHotSale key={combo.id} combo={combo} />
         ))}
 
-        {/* Combo Hourly - NO section wrapper */}
         {hourlyCombos.map((combo) => (
           <ComboHotSale key={combo.id} combo={combo} />
         ))}
 
-        {/* Collection */}
         <CollectionSection collections={MOCK_COLLECTIONS} />
 
-        {/* Product Sections */}
         <View style={styles.section}>
           {groupedProducts.map(({ category, products }) => (
-            <ProductSection key={category.id} category={category} products={products} />
+            <ProductSection
+              key={category.id}
+              category={category}
+              products={products}
+              onProductPress={handleProductPress}
+            />
           ))}
         </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      <MiniCartButton onPress={handleMiniCartPress} />
     </View>
   );
 }

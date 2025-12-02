@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, Alert } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { login } from '../../../state/slices/auth';
-import { useAppDispatch } from '../../../utils/hooks';
+import { login, clearPendingIntent } from '../../../state/slices/auth';
+import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { useModalBottomSheetAnimation, useShakeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpInput } from './components/OtpInput';
@@ -14,11 +14,13 @@ import { OTP_CONFIG, OTP_TEXT } from './OtpVerificationConstants';
 import { OtpVerificationStateEnum } from './OtpVerificationEnums';
 import { OTP_LAYOUT } from './OtpVerificationLayout';
 import { OtpVerificationService } from './OtpVerificationService';
+import { TokenStorage } from '../../../infrastructure/storage/tokenStorage';
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams<{ phoneNumber: string }>();
+  const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
   
   const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
   const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
@@ -32,7 +34,6 @@ export default function OtpVerificationScreen() {
     useModalBottomSheetAnimation({
       heightPercentage: OTP_LAYOUT.MODAL_HEIGHT_PERCENTAGE,
       onExitComplete: () => {
-        // Only back if still in navigation stack
         if (router.canGoBack()) {
           router.back();
         }
@@ -62,7 +63,7 @@ export default function OtpVerificationScreen() {
     setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
     setState(OtpVerificationStateEnum.IDLE);
     setErrorMessage(null);
-    setHasClickedResendThisCycle(false); // Reset resend state for new cycle
+    setHasClickedResendThisCycle(false);
   };
 
   const handleResendClick = () => {
@@ -86,46 +87,150 @@ export default function OtpVerificationScreen() {
     resetOtp();
   };
 
-  const handleOtpComplete = (code: string) => {
+  // Clear intent on cancel
+  const handleClose = () => {
+    dispatch(clearPendingIntent());
+    dismiss();
+  };
+
+  const handleBackdropPress = () => {
+    dispatch(clearPendingIntent());
+    dismiss();
+  };
+
+  // Process pending intent after successful login
+  const processPendingIntent = async () => {
+    if (!pendingIntent) {
+      router.replace('/(tabs)');
+      return;
+    }
+
+    // Check TTL
+    const now = Date.now();
+    if (now >= pendingIntent.expiresAt) {
+      console.log('[OTP] Intent expired');
+      dispatch(clearPendingIntent());
+      router.replace('/(tabs)');
+      return;
+    }
+
+    const { intent, context } = pendingIntent;
+
+    try {
+      switch (intent) {
+        case 'PURCHASE': {
+          if (!context.productId) {
+            throw new Error('Missing productId in PURCHASE intent');
+          }
+
+          // Navigate to StoresScreen with product selection mode
+          console.log(`[OTP] Navigating to stores for product: ${context.productId}`);
+          router.replace({
+            pathname: '/(tabs)/stores',
+            params: {
+              productId: context.productId,
+              mode: 'select'
+            },
+          });
+          break;
+        }
+
+        case 'VIEW_STORE': {
+          dispatch(clearPendingIntent());
+          router.replace({
+            pathname: '/(tabs)/stores',
+            params: { storeId: context.storeId }
+          });
+          break;
+        }
+
+        case 'BROWSE_CATEGORY': {
+          dispatch(clearPendingIntent());
+          router.replace({
+            pathname: '/(tabs)/search',
+            params: { categoryId: context.categoryId }
+          });
+          break;
+        }
+
+        case 'VIEW_COLLECTION': {
+          // TODO: Implement collection detail screen
+          dispatch(clearPendingIntent());
+          router.replace('/(tabs)');
+          break;
+        }
+
+        case 'CLAIM_PROMO': {
+          // TODO: Implement promo claim flow
+          dispatch(clearPendingIntent());
+          router.replace('/(tabs)');
+          break;
+        }
+
+        default:
+          dispatch(clearPendingIntent());
+          router.replace('/(tabs)');
+      }
+    } catch (error) {
+      console.error('[OTP] Error processing intent:', error);
+      Alert.alert(
+        'Có lỗi xảy ra',
+        'Không thể hoàn tất yêu cầu của bạn. Vui lòng thử lại.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              dispatch(clearPendingIntent());
+              router.replace('/(tabs)');
+            }
+          }
+        ]
+      );
+    }
+  };
+
+  const handleOtpComplete = async (code: string) => {
     if (state !== OtpVerificationStateEnum.IDLE) {
       return;
     }
 
     setState(OtpVerificationStateEnum.VERIFYING);
 
-    // Simulate verification delay
-    setTimeout(() => {
+    setTimeout(async () => {
       const result = OtpVerificationService.verifyOtpCode(code);
 
       if (result.isValid && result.userType) {
         setState(OtpVerificationStateEnum.SUCCESS);
         
+        // Save tokens
+        const mockTokens = {
+          accessToken: `jwt_${Date.now()}`,
+          refreshToken: `refresh_${Date.now()}`,
+          userId: `user_${Date.now()}`
+        };
+        
+        await TokenStorage.saveTokens(
+          mockTokens.accessToken,
+          mockTokens.refreshToken,
+          mockTokens.userId
+        );
+
         // Dispatch login action
         dispatch(login({
           phoneNumber: params.phoneNumber || '',
-          userId: `user_${Date.now()}`,
+          userId: mockTokens.userId,
         }));
 
-        // Navigate based on user type
+        // Process pending intent
         dismiss();
         setTimeout(() => {
-          if (result.userType === 'existing') {
-            router.dismissAll();
-            router.replace('/(tabs)');
-          } else {
-            // TODO: Navigate to create account screen
-            router.dismissAll();
-            console.log('Navigate to create account (not implemented yet)');
-            router.replace('/(tabs)');
-          }
-        });
+          processPendingIntent();
+        }, 100);
       } else {
-        // Invalid OTP
         setState(OtpVerificationStateEnum.ERROR);
         setErrorMessage(OTP_TEXT.ERROR_INVALID);
         shake();
         
-        // Clear input after shake
         setTimeout(() => {
           setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
           setState(OtpVerificationStateEnum.IDLE);
@@ -135,10 +240,7 @@ export default function OtpVerificationScreen() {
   };
 
   const handleOkPress = () => {
-    dismiss();
-  };
-
-  const handleClose = () => {
+    dispatch(clearPendingIntent());
     dismiss();
   };
 
@@ -151,7 +253,7 @@ export default function OtpVerificationScreen() {
     <View style={styles.container}>
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
-        <TouchableWithoutFeedback onPress={handleClose}>
+        <TouchableWithoutFeedback onPress={handleBackdropPress}>
           <View style={styles.backdropTouchable} />
         </TouchableWithoutFeedback>
       </Animated.View>
@@ -181,7 +283,6 @@ export default function OtpVerificationScreen() {
 
             <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
 
-            {/* OTP Input */}
             <OtpInput
               digits={digits}
               onDigitsChange={setDigits}
@@ -190,7 +291,6 @@ export default function OtpVerificationScreen() {
               disabled={state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError}
             />
 
-            {/* Timer - Always show when not at max retries */}
             {!showMaxRetriesError && (
               <OtpTimer
                 timeRemaining={timeRemaining}
@@ -199,7 +299,6 @@ export default function OtpVerificationScreen() {
               />
             )}
 
-            {/* Error message */}
             {errorMessage && !showMaxRetriesError && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errorMessage}</Text>
@@ -209,7 +308,6 @@ export default function OtpVerificationScreen() {
               </View>
             )}
 
-            {/* Max retries - OK button */}
             {showMaxRetriesError && (
               <TouchableOpacity style={styles.okButton} onPress={handleOkPress}>
                 <Text style={styles.okButtonText}>{OTP_TEXT.BUTTON_OK}</Text>

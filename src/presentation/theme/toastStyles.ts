@@ -1,0 +1,11 @@
+// src/presentation/theme/toastStyles.ts
+export const TOAST_LAYOUT = {
+  WIDTH: 300,
+  PADDING_HORIZONTAL: 20,
+  PADDING_VERTICAL: 14,
+  BORDER_RADIUS: 24,
+  BOTTOM_OFFSET: 100,
+  FONT_SIZE: 14,
+  ANIMATION_DURATION: 300,
+  DEFAULT_DURATION: 2000,
+} as const;

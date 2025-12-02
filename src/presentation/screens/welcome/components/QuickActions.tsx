@@ -1,13 +1,21 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 
 export function QuickActions() {
-  const handleActionPress = (actionId: string, label: string) => {
-    console.log(`Clicked: ${label} (${actionId})`);
-  };
+  const handleActionPress = useAuthGuard(
+    (actionId: string, label: string) => {
+      console.log(`Clicked: ${label} (${actionId})`);
+      // TODO: Navigate to order flow with pre-selected mode
+    },
+    {
+      intent: 'PURCHASE',
+      context: { returnTo: '/welcome' },
+    }
+  );
 
   return (
     <View style={styles.container}>

@@ -1,12 +1,16 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 
 export function BrandSelector() {
-  const handleBrandPress = (brandId: string, brandName: string) => {
-    console.log(`Clicked: ${brandName} (${brandId})`);
-  };
+   const handleBrandPress = useAuthGuard(
+    (brandId: string, brandName: string) => {
+      console.log(`Clicked: ${brandName} (${brandId})`);
+      // TODO: Switch brand context
+    }
+  );
 
   return (
     <View>

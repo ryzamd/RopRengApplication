@@ -1,7 +1,10 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_STORES, Store } from '../../../data/mockStores';
+import { setSelectedStore } from '../../../state/slices/orderCart';
+import { useAppDispatch } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
 import { StoreSection } from './components/StoreSection';
 import { StoresHeader } from './components/StoresHeader';
@@ -11,11 +14,22 @@ import { StoresUIService } from './StoresService';
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
+  
   const [searchQuery, setSearchQuery] = useState('');
 
+  const baseStores = useMemo(() => {
+    if (params.mode === 'select' && params.productId) {
+      return StoresUIService.getAvailableStoresForProduct(MOCK_STORES, params.productId);
+    }
+    return MOCK_STORES;
+  }, [params.mode, params.productId]);
+
   const filteredStores = useMemo(
-    () => StoresUIService.filterStores(MOCK_STORES, searchQuery),
-    [searchQuery]
+    () => StoresUIService.filterStores(baseStores, searchQuery),
+    [baseStores, searchQuery]
   );
 
   const nearestStore = useMemo(
@@ -30,28 +44,47 @@ export default function StoresScreen() {
 
   const handleStorePress = (store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
-    // TODO: Navigate to store detail or show info
+    
+    // If in "select" mode, save store and navigate to order
+    if (params.mode === 'select') {
+      dispatch(setSelectedStore(store));
+      router.replace('/(tabs)/order');
+    } else {
+      // Browse mode: just show info (existing behavior)
+      // TODO: Navigate to store detail
+    }
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StoresHeader />
+      
       <StoresSearchBar value={searchQuery} onChangeText={setSearchQuery} />
       
       <ScrollView showsVerticalScrollIndicator={false}>
-        {nearestStore && (
-          <StoreSection
-            title={STORES_TEXT.SECTION_NEARBY}
-            stores={[nearestStore]}
-            onStorePress={handleStorePress}
-          />
+        {filteredStores.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>
+              {params.mode === 'select' ? 'Không có cửa hàng nào có sản phẩm này' : 'Không tìm thấy cửa hàng'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            {nearestStore && (
+              <StoreSection
+                title={STORES_TEXT.SECTION_NEARBY}
+                stores={[nearestStore]}
+                onStorePress={handleStorePress}
+              />
+            )}
+            
+            <StoreSection
+              title={STORES_TEXT.SECTION_OTHERS}
+              stores={otherStores}
+              onStorePress={handleStorePress}
+            />
+          </>
         )}
-        
-        <StoreSection
-          title={STORES_TEXT.SECTION_OTHERS}
-          stores={otherStores}
-          onStorePress={handleStorePress}
-        />
       </ScrollView>
     </View>
   );
@@ -61,5 +94,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
+  },
+  productContext: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: BRAND_COLORS.primary.beSua,
+    borderBottomWidth: 1,
+    borderBottomColor: BRAND_COLORS.secondary.nauCaramel,
+  },
+  productContextLabel: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.secondary.reuDam,
+    marginBottom: 4,
+  },
+  productContextName: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: BRAND_COLORS.primary.beSua,
+    marginBottom: 8,
+  },
+  storeCount: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.secondary.reuDam,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 24,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.primary.xanhReu,
+    textAlign: 'center',
   },
 });
