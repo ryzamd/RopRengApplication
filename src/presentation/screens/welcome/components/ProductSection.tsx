@@ -7,9 +7,10 @@ import { ProductCard } from './ProductCard';
 interface ProductSectionProps {
   category: Category;
   products: Product[];
+  onProductPress?: () => void;
 }
 
-export function ProductSection({ category, products }: ProductSectionProps) {
+export function ProductSection({ category, products, onProductPress }: ProductSectionProps) {
   if (products.length === 0) return null;
 
   return (
@@ -17,7 +18,11 @@ export function ProductSection({ category, products }: ProductSectionProps) {
       <Text style={styles.title}>{category.name}</Text>
       <View style={styles.grid}>
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            onPress={onProductPress}
+          />
         ))}
       </View>
     </View>

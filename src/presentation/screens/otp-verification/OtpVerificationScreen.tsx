@@ -4,7 +4,6 @@ import { StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, Ale
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login, clearPendingIntent } from '../../../state/slices/auth';
-import { addToCart } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { useModalBottomSheetAnimation, useShakeAnimation } from '../../hooks/animations';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -16,8 +15,6 @@ import { OtpVerificationStateEnum } from './OtpVerificationEnums';
 import { OTP_LAYOUT } from './OtpVerificationLayout';
 import { OtpVerificationService } from './OtpVerificationService';
 import { TokenStorage } from '../../../infrastructure/storage/tokenStorage';
-import { MOCK_PRODUCTS } from '../../../data/mockProducts';
-import { showToast } from '../../components/shared/Toast';
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
@@ -90,26 +87,18 @@ export default function OtpVerificationScreen() {
     resetOtp();
   };
 
-  // ========== TASK 1: Clear intent on cancel ==========
+  // Clear intent on cancel
   const handleClose = () => {
-    // Clear pending intent when user cancels
     dispatch(clearPendingIntent());
     dismiss();
   };
 
   const handleBackdropPress = () => {
-    // Clear pending intent when user taps backdrop
     dispatch(clearPendingIntent());
     dismiss();
   };
-  // ====================================================
 
-  // ========== TASK 2: Validate product availability ==========
-  const validateProductAvailability = (productId: string): boolean => {
-    const product = MOCK_PRODUCTS.find(p => p.id === productId);
-    return !!product;
-  };
-
+  // Process pending intent after successful login
   const processPendingIntent = async () => {
     if (!pendingIntent) {
       router.replace('/(tabs)');
@@ -134,36 +123,15 @@ export default function OtpVerificationScreen() {
             throw new Error('Missing productId in PURCHASE intent');
           }
 
-          // ========== TASK 2: Validate product ==========
-          if (!validateProductAvailability(context.productId)) {
-            Alert.alert(
-              'Sản phẩm không khả dụng',
-              'Sản phẩm bạn chọn hiện không còn trong menu. Vui lòng chọn sản phẩm khác.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    dispatch(clearPendingIntent());
-                    router.replace('/(tabs)');
-                  }
-                }
-              ]
-            );
-            return;
-          }
-          // ================================================
-
-          const product = MOCK_PRODUCTS.find(p => p.id === context.productId)!;
-          
-          // TODO: Check product availability from API
-          // TODO: Navigate to store selection screen
-          
-          // Temporary: Auto add to cart
-          dispatch(addToCart(product));
-          showToast('Đã thêm vào giỏ hàng');
-          
-          dispatch(clearPendingIntent());
-          router.replace('/(tabs)'); //context.returnTo ||
+          // Navigate to StoresScreen with product selection mode
+          console.log(`[OTP] Navigating to stores for product: ${context.productId}`);
+          router.replace({
+            pathname: '/(tabs)/stores',
+            params: {
+              productId: context.productId,
+              mode: 'select'
+            },
+          });
           break;
         }
 
@@ -220,7 +188,6 @@ export default function OtpVerificationScreen() {
       );
     }
   };
-  // ============================================================
 
   const handleOtpComplete = async (code: string) => {
     if (state !== OtpVerificationStateEnum.IDLE) {
@@ -284,7 +251,7 @@ export default function OtpVerificationScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Backdrop - TASK 1: Clear intent on backdrop press */}
+      {/* Backdrop */}
       <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
         <TouchableWithoutFeedback onPress={handleBackdropPress}>
           <View style={styles.backdropTouchable} />
@@ -300,7 +267,7 @@ export default function OtpVerificationScreen() {
         ]}
       >
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-          {/* Close button - TASK 1: Clear intent on close */}
+          {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
           </TouchableOpacity>

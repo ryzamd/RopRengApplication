@@ -8,6 +8,8 @@ import { BRAND_COLORS } from '../../../theme/colors';
 
 interface ProductCardProps {
   product: Product;
+  onPress?: () => void;
+  onProductPress?: () => void;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
