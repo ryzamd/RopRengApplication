@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 40,
     height: 40,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',

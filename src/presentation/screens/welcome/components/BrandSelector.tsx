@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 5,
     marginLeft: 5,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

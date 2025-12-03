@@ -16,7 +16,7 @@ const tokens = createTokens({
     nauCaramel: BRAND_COLORS.secondary.nauCaramel,
     // System colors
     background: BRAND_COLORS.background.default,
-    white: BRAND_COLORS.background.default,
+    white: BRAND_COLORS.background.white,
     black: BRAND_COLORS.background.black,
   },
   space: {

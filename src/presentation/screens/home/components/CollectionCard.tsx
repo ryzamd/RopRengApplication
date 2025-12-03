@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: HOME_LAYOUT.COLLECTION_TITLE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
     marginBottom: 4,
   },
   description: {
     fontSize: HOME_LAYOUT.COLLECTION_DESC_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
   },
 });

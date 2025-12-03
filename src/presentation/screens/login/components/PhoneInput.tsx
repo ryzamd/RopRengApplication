@@ -54,7 +54,7 @@ export function PhoneInput({ value, onChangeText, onSubmit, isValid, autoFocusDe
         activeOpacity={0.8}
       >
         {isLoading ? (
-          <ActivityIndicator color={BRAND_COLORS.background.default} />
+          <ActivityIndicator color={BRAND_COLORS.background.white} />
         ) : (
           <Text style={[styles.buttonText, isValid && styles.buttonTextActive]}>
             {LOGIN_TEXT.LOGIN_BUTTON}
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderWidth: LOGIN_LAYOUT.INPUT_BORDER_WIDTH,
     borderColor: '#807878ff',
     borderRadius: LOGIN_LAYOUT.INPUT_BORDER_RADIUS,
@@ -116,6 +116,6 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
   buttonTextActive: {
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
   },
 });

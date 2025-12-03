@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   inputFilled: {
     borderColor: BRAND_COLORS.secondary.nauEspresso,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
   },
   inputDisabled: {
     opacity: 0.5,

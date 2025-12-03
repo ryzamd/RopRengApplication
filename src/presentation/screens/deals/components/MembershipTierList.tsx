@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: DEALS_LAYOUT.TIER_SECTION_PADDING_TOP,
     paddingBottom: DEALS_LAYOUT.TIER_SECTION_PADDING_BOTTOM,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
   },
   header: {
     paddingHorizontal: DEALS_LAYOUT.TIER_SECTION_PADDING_HORIZONTAL,
