@@ -1,8 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
-import { Ionicons } from '@expo/vector-icons';
 import React, { forwardRef, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { ORDER_TYPE_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
@@ -15,9 +15,11 @@ interface OrderTypeModalProps {
   onSelectType: (type: OrderType) => void;
 }
 
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+
 export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
   ({ selectedType, onSelectType }, ref) => {
-    const snapPoints = useMemo(() => ['60%'], []);
+    const snapPoints = useMemo(() => [WINDOW_HEIGHT * 0.6], []);
     const orderTypes = useMemo(() => [OrderType.DELIVERY, OrderType.TAKEAWAY, OrderType.DINE_IN], []);
     
     const renderBackdrop = useCallback(
@@ -27,6 +29,7 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
           appearsOnIndex={0}
           disappearsOnIndex={-1}
           opacity={0.5}
+          pressBehavior="close"
         />
       ),
       []
@@ -43,9 +46,10 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
         ref={ref}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
-        enablePanDownToClose
+        enablePanDownToClose={true}
         handleIndicatorStyle={styles.indicator}
         backgroundStyle={styles.background}
+        stackBehavior="push"
       >
         <BottomSheetView style={styles.container}>
           <View style={styles.header}>
@@ -105,6 +109,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   header: {
     flexDirection: 'row',
@@ -136,6 +141,7 @@ const styles = StyleSheet.create({
   optionsList: {
     padding: PREORDER_LAYOUT.SECTION_PADDING_HORIZONTAL,
     gap: 12,
+    marginTop: 12,
   },
   option: {
     flexDirection: 'row',

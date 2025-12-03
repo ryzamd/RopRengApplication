@@ -1,4 +1,4 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView, WINDOW_HEIGHT } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { forwardRef, useCallback, useMemo } from 'react';
@@ -17,7 +17,7 @@ interface PaymentTypeModalProps {
 
 export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalProps>(
   ({ selectedMethod, onSelectMethod }, ref) => {
-    const snapPoints = useMemo(() => ['60%'], []);
+    const snapPoints = useMemo(() => [WINDOW_HEIGHT], []);
     const paymentMethods = useMemo(
       () => [PaymentMethod.CASH, PaymentMethod.VNPAY, PaymentMethod.MOMO],
       []
@@ -30,6 +30,7 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
           appearsOnIndex={0}
           disappearsOnIndex={-1}
           opacity={0.5}
+          pressBehavior="close"
         />
       ),
       []
@@ -42,7 +43,15 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
     }, [ref]);
     
     return (
-      <BottomSheetModal ref={ref} snapPoints={snapPoints} backdropComponent={renderBackdrop} enablePanDownToClose handleIndicatorStyle={styles.indicator} backgroundStyle={styles.background}>
+      <BottomSheetModal
+        ref={ref}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose={true}
+        handleIndicatorStyle={styles.indicator}
+        backgroundStyle={styles.background}
+        stackBehavior="push"
+      >
         <BottomSheetView style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>{PREORDER_TEXT.PAYMENT_MODAL_TITLE}</Text>
@@ -128,6 +137,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   header: {
     flexDirection: 'row',
@@ -159,6 +169,7 @@ const styles = StyleSheet.create({
   optionsList: {
     padding: PREORDER_LAYOUT.SECTION_PADDING_HORIZONTAL,
     gap: 12,
+    marginTop: 12,
   },
   option: {
     flexDirection: 'row',
