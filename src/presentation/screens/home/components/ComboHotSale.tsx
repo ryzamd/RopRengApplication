@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: HOME_LAYOUT.COMBO_PRODUCT_CARD_WIDTH,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: HOME_LAYOUT.COMBO_PRODUCT_CARD_BORDER_RADIUS,
     marginBottom: HOME_LAYOUT.COMBO_PRODUCT_CARD_MARGIN_BOTTOM,
     shadowColor: '#000',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: HOME_LAYOUT.COMBO_DISCOUNT_BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   bestSellerBadge: {
     position: 'absolute',
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   bestSellerText: {
     fontSize: 9,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     textAlign: 'center',
     lineHeight: 12,
   },

@@ -1,25 +1,28 @@
-import React, { useCallback, useEffect } from 'react';
+import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
+import { useIsFocused } from '@react-navigation/native';
+import { router } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
 import { clearPendingIntent } from '../../../state/slices/auth';
 import { addToCart } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
+import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { OrderCategoryScroll } from './components/OrderCategoryScroll';
 import { OrderHeader } from './components/OrderHeader';
 import { OrderProductSection } from './components/OrderProductSection';
 import { OrderPromoSection } from './components/OrderPromoSection';
 import { orderStyles } from './styles';
-import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 
 export default function OrderScreen() {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const isFocused = useIsFocused();
   const handleAddToCart = useAddToCart();
+  const [showPreOrder, setShowPreOrder] = useState(false);
   
   const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
@@ -74,8 +77,17 @@ export default function OrderScreen() {
   // );
 
   const handleMiniCartPress = useCallback(() => {
-    console.log('[OrderScreen] Mini cart pressed');
-    Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
+    console.log('[OrderScreen] Opening PreOrder sheet');
+    setShowPreOrder(true);
+  }, []);
+
+  const handlePreOrderClose = useCallback(() => {
+    setShowPreOrder(false);
+  }, []);
+
+  const handleOrderSuccess = useCallback(() => {
+    console.log('[OrderScreen] Order placed successfully, redirecting to Home');
+    router.replace('../(tabs)/');
   }, []);
 
   const productsByCategory = MOCK_CATEGORIES.map((category) => ({
@@ -117,6 +129,12 @@ export default function OrderScreen() {
       {showMiniCart && (
         <MiniCartButton onPress={handleMiniCartPress} />
       )}
+
+      <PreOrderBottomSheet
+        visible={showPreOrder}
+        onClose={handlePreOrderClose}
+        onOrderSuccess={handleOrderSuccess}
+      />
     </View>
   );
 }

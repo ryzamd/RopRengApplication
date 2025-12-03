@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     height: HOME_LAYOUT.HOME_BRAND_CARD_SIZE,
     marginBottom: HOME_LAYOUT.HOME_BRAND_CARD_MARGIN_BOTTOM,
     marginLeft: HOME_LAYOUT.HOME_BRAND_CARD_MARGIN_LEFT,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: HOME_LAYOUT.HOME_BRAND_CARD_BORDER_RADIUS,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

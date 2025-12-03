@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: HOME_LAYOUT.HOME_SEARCH_BAR_BORDER_RADIUS,
     paddingHorizontal: HOME_LAYOUT.HOME_SEARCH_BAR_PADDING_HORIZONTAL,
     paddingVertical: HOME_LAYOUT.HOME_SEARCH_BAR_PADDING_VERTICAL,

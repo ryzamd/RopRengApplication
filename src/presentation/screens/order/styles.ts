@@ -67,7 +67,7 @@ export const orderStyles = StyleSheet.create({
   promoCard: {
     width: ORDER_LAYOUT.PROMO_CARD_WIDTH,
     marginRight: ORDER_LAYOUT.PROMO_CARD_GAP,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -91,7 +91,7 @@ export const orderStyles = StyleSheet.create({
   discountText: {
     fontSize: ORDER_LAYOUT.PROMO_DISCOUNT_BADGE_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   percentBadge: {
     position: 'absolute',
@@ -107,7 +107,7 @@ export const orderStyles = StyleSheet.create({
   percentText: {
     fontSize: 11,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   promoInfo: {
     padding: 12,
@@ -195,7 +195,7 @@ export const orderStyles = StyleSheet.create({
   },
   productAddText: {
     fontSize: 24,
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     fontFamily: 'Phudu-Bold',
   },
 });
