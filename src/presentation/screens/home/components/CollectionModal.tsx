@@ -1,9 +1,9 @@
+import { BRAND_COLORS } from '@/src/presentation/theme/colors';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Collection } from '../HomeInterfaces';
-import { BRAND_COLORS } from '@/src/presentation/theme/colors';
 
 interface CollectionModalProps {
   collection: Collection | null;
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   background: {
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },

@@ -1,37 +1,34 @@
-export const FONT_FAMILIES = {
-  // Title & Headline
-  phudu: {
-    medium: 'Phudu-Medium',
-    semiBold: 'Phudu-SemiBold',
-    bold: 'Phudu-Bold',
+export const TYPOGRAPHY = {
+  fontFamily: {
+    heading: 'Phudu-Bold',
+    bodyBold: 'SpaceGrotesk-Bold',
+    bodyMedium: 'SpaceGrotesk-Medium',
+    bodyRegular: 'SpaceGrotesk-Regular',
+    monoBold: 'SpaceMono-Bold',
+    monoRegular: 'SpaceMono-Regular',
   },
-  // Body Text
-  spaceGrotesk: {
-    medium: 'SpaceGrotesk-Medium',
-    bold: 'SpaceGrotesk-Bold',
+  
+  fontSize: {
+    xs: 11,    // Captions, footnotes
+    sm: 12,    // Secondary text, hints
+    base: 14,  // Body text, default
+    md: 16,    // Emphasized body, input fields
+    lg: 18,    // Section headers, titles
+    xl: 20,    // Page titles, important numbers
+    xxl: 24,   // Hero titles
+    xxxl: 28,  // Display text
   },
-  // Code & Mono
-  spaceMono: {
-    bold: 'SpaceMono-Bold',
+  
+  lineHeight: {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.8,
   },
-} as const;
-
-export const FONT_SIZES = {
-  h1: 32,
-  h2: 28,
-  h3: 24,
-  h4: 20,
-  body: 16,
-  small: 14,
-  tiny: 12,
-} as const;
-
-export const LINE_HEIGHTS = {
-  h1: 40,
-  h2: 36,
-  h3: 32,
-  h4: 28,
-  body: 24,
-  small: 20,
-  tiny: 16,
-} as const;
+  
+  fontWeight: {
+    regular: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+  },
+};
