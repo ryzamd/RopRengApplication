@@ -55,7 +55,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   discountBadge: {
     position: 'absolute',
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 11,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   info: {
     padding: 12,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   addIcon: {
     fontSize: 20,
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     fontWeight: 'bold',
   },
 });

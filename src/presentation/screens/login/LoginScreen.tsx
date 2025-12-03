@@ -151,11 +151,11 @@ const styles = StyleSheet.create({
   },
   modalWrapper: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   safeArea: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   scrollContent: {
     flexGrow: 1,

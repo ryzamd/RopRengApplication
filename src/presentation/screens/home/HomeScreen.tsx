@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COLLECTIONS } from '../../../data/mockCollections';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
@@ -10,6 +11,7 @@ import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
+import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { ProductSection } from '../welcome/components/ProductSection';
 import { AuthenticatedPromoBanner } from './components/AuthenticatedPromoBanner';
 import { CollectionModal } from './components/CollectionModal';
@@ -33,6 +35,7 @@ export default function HomeScreen() {
   const { phoneNumber } = useAppSelector((state) => state.auth);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const [showPreOrder, setShowPreOrder] = useState(false);
 
   const voucherCount = 17;
   const notificationCount = 2;
@@ -43,7 +46,17 @@ export default function HomeScreen() {
   }, [handleAddToCart]);
 
   const handleMiniCartPress = useCallback(() => {
-    Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
+    console.log('[HomeScreen] Opening PreOrder sheet');
+    setShowPreOrder(true);
+  }, []);
+
+  const handlePreOrderClose = useCallback(() => {
+    setShowPreOrder(false);
+  }, []);
+
+  const handleOrderSuccess = useCallback(() => {
+    console.log('[HomeScreen] Order placed successfully, redirecting to Home');
+    router.replace('../(tabs)/');
   }, []);
 
   const handleCollectionPress = useCallback((collection: Collection) => {
@@ -137,6 +150,12 @@ export default function HomeScreen() {
           onClose={() => setSelectedCollection(null)}
         />
       )}
+
+      <PreOrderBottomSheet
+        visible={showPreOrder}
+        onClose={handlePreOrderClose}
+        onOrderSuccess={handleOrderSuccess}
+      />
     </View>
   );
 }
@@ -176,7 +195,7 @@ const styles = StyleSheet.create({
   voucherBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     paddingHorizontal: HOME_LAYOUT.VOUCHER_BADGE_PADDING_HORIZONTAL,
     paddingVertical: HOME_LAYOUT.VOUCHER_BADGE_PADDING_VERTICAL,
     borderRadius: HOME_LAYOUT.VOUCHER_BADGE_BORDER_RADIUS,
@@ -195,7 +214,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: HOME_LAYOUT.HEADER_ICON_SIZE,
     height: HOME_LAYOUT.HEADER_ICON_SIZE,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: HOME_LAYOUT.HEADER_ICON_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
@@ -219,7 +238,7 @@ const styles = StyleSheet.create({
   notificationCount: {
     fontSize: HOME_LAYOUT.NOTIFICATION_BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   scrollView: {
     flex: 1,

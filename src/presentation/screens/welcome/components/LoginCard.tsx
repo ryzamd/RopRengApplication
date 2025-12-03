@@ -1,4 +1,4 @@
-import { FONT_FAMILIES } from '@/src/presentation/theme/typography';
+import { TYPOGRAPHY } from '@/src/presentation/theme/typography';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -36,7 +36,7 @@ export function LoginCard() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: WELCOME_LAYOUT.CARD_BORDER_RADIUS,
     marginTop: WELCOME_LAYOUT.CARD_MARGIN_TOP,
     padding: WELCOME_LAYOUT.CARD_PADDING,
@@ -48,13 +48,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: WELCOME_LAYOUT.LOGIN_TITLE_SIZE,
-    fontFamily: FONT_FAMILIES.phudu.bold,
+    fontFamily: TYPOGRAPHY.fontFamily.heading,
     color: BRAND_COLORS.primary.xanhReu,
     marginBottom: WELCOME_LAYOUT.LOGIN_TITLE_MARGIN_BOTTOM,
   },
   subtitle: {
     fontSize: WELCOME_LAYOUT.LOGIN_SUBTITLE_SIZE,
-    fontFamily: FONT_FAMILIES.spaceGrotesk.medium,
+    fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
     color: BRAND_COLORS.primary.xanhReu,
     lineHeight: WELCOME_LAYOUT.LOGIN_SUBTITLE_LINE_HEIGHT,
     marginBottom: WELCOME_LAYOUT.LOGIN_SUBTITLE_MARGIN_BOTTOM,
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: WELCOME_LAYOUT.LOGIN_BUTTON_TEXT_SIZE,
-    fontFamily: FONT_FAMILIES.phudu.bold,
-    color: BRAND_COLORS.background.white,
+    fontFamily: TYPOGRAPHY.fontFamily.heading,
+    color: BRAND_COLORS.background.default,
   },
   loyaltyRow: {
     flexDirection: 'row',
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   loyaltyText: {
     fontSize: WELCOME_LAYOUT.LOYALTY_TEXT_FONT_SIZE,
-    fontFamily: FONT_FAMILIES.spaceGrotesk.medium,
+    fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
     color: BRAND_COLORS.primary.xanhReu,
   },
   arrow: {
