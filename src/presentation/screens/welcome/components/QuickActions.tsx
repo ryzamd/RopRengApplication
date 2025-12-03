@@ -38,7 +38,7 @@ export function QuickActions() {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: 16,
     padding: 16,
     justifyContent: 'space-around',

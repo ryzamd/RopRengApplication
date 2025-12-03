@@ -86,7 +86,7 @@ function PaginationDot({ isActive }: { isActive: boolean }) {
     const backgroundColor = interpolateColor(
       progress.value,
       [0, 1],
-      ['rgba(255, 255, 255, 0.5)', BRAND_COLORS.background.default]
+      ['rgba(255, 255, 255, 0.5)', BRAND_COLORS.background.white]
     );
 
     return { backgroundColor };

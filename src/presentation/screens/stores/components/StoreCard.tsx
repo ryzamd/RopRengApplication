@@ -39,7 +39,7 @@ export function StoreCard({ store, onPress }: StoreCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: STORES_LAYOUT.STORE_CARD_BORDER_RADIUS,
     padding: STORES_LAYOUT.STORE_CARD_PADDING,
     marginBottom: STORES_LAYOUT.STORE_CARD_MARGIN_BOTTOM,

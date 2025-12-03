@@ -1,6 +1,6 @@
 // src/presentation/components/shared/Toast.tsx
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, Text } from 'react-native';
+import { Animated, StyleSheet, Text, Dimensions } from 'react-native';
 import { BRAND_COLORS } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
     textAlign: 'center',
   },
 });

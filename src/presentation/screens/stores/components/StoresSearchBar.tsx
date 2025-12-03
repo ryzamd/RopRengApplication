@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   mapButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: STORES_LAYOUT.MAP_BUTTON_BORDER_RADIUS,
     paddingHorizontal: STORES_LAYOUT.MAP_BUTTON_PADDING_HORIZONTAL,
     paddingVertical: STORES_LAYOUT.MAP_BUTTON_PADDING_VERTICAL,

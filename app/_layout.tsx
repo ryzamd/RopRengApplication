@@ -2,14 +2,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { TamaguiProvider } from 'tamagui';
 import { DatabaseProvider } from '../src/infrastructure/db/sqlite/provider';
 import { persistor, store } from '../src/state/store';
 import config from '../tamagui.config';
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,18 +33,36 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
           <TamaguiProvider config={config}>
-            <BottomSheetModalProvider>
-              <DatabaseProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-              </DatabaseProvider>
-            </BottomSheetModalProvider>
+            <DatabaseProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen
+                  name="login"
+                  options={{
+                    presentation: 'fullScreenModal',
+                    animation: 'slide_from_bottom',
+                    gestureEnabled: true,
+                    gestureDirection: 'vertical',
+                  }}
+                />
+                <Stack.Screen
+                  name="otp-verification"
+                  options={{
+                    presentation: 'transparentModal',
+                    animation: 'none',
+                    gestureEnabled: false,
+                  }}
+                />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </DatabaseProvider>
           </TamaguiProvider>
-        </PersistGate>
-      </Provider>
-    </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PersistGate>
+    </Provider>
   );
 }

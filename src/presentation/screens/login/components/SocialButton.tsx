@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderWidth: LOGIN_LAYOUT.INPUT_BORDER_WIDTH,
     borderColor: '#E5E5E5',
     borderRadius: LOGIN_LAYOUT.BUTTON_BORDER_RADIUS,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   facebookIcon: {
     fontSize: LOGIN_LAYOUT.SOCIAL_ICON_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
   },
   googleIcon: {
     fontSize: LOGIN_LAYOUT.SOCIAL_ICON_FONT_SIZE,
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.primary.xanhReu,
   },
   labelFacebook: {
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
   },
 });

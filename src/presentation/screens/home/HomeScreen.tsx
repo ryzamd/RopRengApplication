@@ -1,17 +1,15 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COLLECTIONS } from '../../../data/mockCollections';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
 import { useAppSelector } from '../../../utils/hooks';
-import { useAddToCart } from '../../../utils/hooks/useAddToCart';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
-import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { ProductSection } from '../welcome/components/ProductSection';
 import { AuthenticatedPromoBanner } from './components/AuthenticatedPromoBanner';
 import { CollectionModal } from './components/CollectionModal';
@@ -28,35 +26,23 @@ import { HOME_LAYOUT } from './HomeLayout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const handleAddToCart = useAddToCart();
+  const router = useRouter();
   
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { phoneNumber } = useAppSelector((state) => state.auth);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
-  const [showPreOrder, setShowPreOrder] = useState(false);
 
   const voucherCount = 17;
   const notificationCount = 2;
 
-  // Refactor: Use the centralized hook
-  const handleProductPress = useCallback((product: Product) => {
-    handleAddToCart(product);
-  }, [handleAddToCart]);
+  const handleProductPress = useCallback(() => {
+    router.push('/(tabs)/order');
+  }, [router]);
 
   const handleMiniCartPress = useCallback(() => {
-    console.log('[HomeScreen] Opening PreOrder sheet');
-    setShowPreOrder(true);
-  }, []);
-
-  const handlePreOrderClose = useCallback(() => {
-    setShowPreOrder(false);
-  }, []);
-
-  const handleOrderSuccess = useCallback(() => {
-    console.log('[HomeScreen] Order placed successfully, redirecting to Home');
-    router.replace('../(tabs)/');
+    Alert.alert('Giỏ hàng', 'Cart modal coming soon!');
   }, []);
 
   const handleCollectionPress = useCallback((collection: Collection) => {
@@ -68,7 +54,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        {/* ... Header content unchanged ... */}
+
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
           <Text style={styles.greetingText} numberOfLines={1}>
@@ -94,7 +80,6 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* ... Sections unchanged ... */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
           <HomeBrandSelector />
@@ -150,17 +135,10 @@ export default function HomeScreen() {
           onClose={() => setSelectedCollection(null)}
         />
       )}
-
-      <PreOrderBottomSheet
-        visible={showPreOrder}
-        onClose={handlePreOrderClose}
-        onOrderSuccess={handleOrderSuccess}
-      />
     </View>
   );
 }
 
-// ... Styles unchanged ...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -195,7 +173,7 @@ const styles = StyleSheet.create({
   voucherBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     paddingHorizontal: HOME_LAYOUT.VOUCHER_BADGE_PADDING_HORIZONTAL,
     paddingVertical: HOME_LAYOUT.VOUCHER_BADGE_PADDING_VERTICAL,
     borderRadius: HOME_LAYOUT.VOUCHER_BADGE_BORDER_RADIUS,
@@ -214,7 +192,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: HOME_LAYOUT.HEADER_ICON_SIZE,
     height: HOME_LAYOUT.HEADER_ICON_SIZE,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: HOME_LAYOUT.HEADER_ICON_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
@@ -238,7 +216,7 @@ const styles = StyleSheet.create({
   notificationCount: {
     fontSize: HOME_LAYOUT.NOTIFICATION_BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.default,
+    color: BRAND_COLORS.background.white,
   },
   scrollView: {
     flex: 1,

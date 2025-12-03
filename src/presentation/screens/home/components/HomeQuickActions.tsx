@@ -32,7 +32,7 @@ export function HomeQuickActions() {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.white,
     borderRadius: HOME_LAYOUT.HOME_QUICK_ACTION_CONTAINER_BORDER_RADIUS,
     padding: HOME_LAYOUT.HOME_QUICK_ACTION_CONTAINER_PADDING,
     justifyContent: 'space-around',
