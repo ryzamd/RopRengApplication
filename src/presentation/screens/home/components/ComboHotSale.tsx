@@ -1,7 +1,8 @@
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { addToCart } from '../../../../state/slices/orderCart';
-import { useAppDispatch } from '../../../../utils/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../utils/hooks';
 import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_TEXT } from '../HomeConstants';
@@ -9,11 +10,17 @@ import { ComboType } from '../HomeEnums';
 import { Combo, ComboProduct } from '../HomeInterfaces';
 import { HOME_LAYOUT } from '../HomeLayout';
 
-interface ComboHotSaleProps {combos: Combo[]; type: ComboType;}
+interface ComboHotSaleProps {
+  combos: Combo[];
+  type: ComboType;
+}
 
 const ComboItem = ({ combo }: { combo: Combo }) => {
   const [timeLeft, setTimeLeft] = useState('');
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  
+  const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
 
   useEffect(() => {
     if (!combo.expiresAt) return;
@@ -21,29 +28,37 @@ const ComboItem = ({ combo }: { combo: Combo }) => {
     const calculateTime = () => {
       const now = new Date().getTime();
       const distance = combo.expiresAt.getTime() - now;
-
       if (distance < 0) {
         setTimeLeft('00:00:00');
         return;
       }
-
       const hours = Math.floor(distance / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
       setTimeLeft(
         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
       );
     };
-
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
-
     return () => clearInterval(interval);
   }, [combo.expiresAt]);
 
   const handleProductPress = useAuthGuard(
     (product: ComboProduct) => {
+      if (!selectedStore) {
+        console.log(`[ComboHotSale] No store selected. Redirecting to store selection for product: ${product.id}`);
+        
+        router.push({
+          pathname: '/(tabs)/stores',
+          params: {
+            mode: 'select',
+            productId: product.id
+          }
+        });
+        return;
+      }
+
       console.log(`[ComboHotSale] Add to cart: ${product.name}`);
       dispatch(addToCart(product));
     },
@@ -130,12 +145,8 @@ export function ComboHotSale({ combos, type }: ComboHotSaleProps) {
 }
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: HOME_LAYOUT.COMBO_SECTION_MARGIN_BOTTOM,
-  },
-  headerRow: {
-    marginBottom: HOME_LAYOUT.COMBO_TITLE_MARGIN_BOTTOM,
-  },
+  section: { marginBottom: HOME_LAYOUT.COMBO_SECTION_MARGIN_BOTTOM },
+  headerRow: { marginBottom: HOME_LAYOUT.COMBO_TITLE_MARGIN_BOTTOM },
   headerContainer: {
     paddingHorizontal: HOME_LAYOUT.COMBO_SECTION_PADDING_HORIZONTAL,
     marginBottom: HOME_LAYOUT.COMBO_TITLE_MARGIN_BOTTOM,
@@ -163,16 +174,14 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceMono-Bold',
     color: BRAND_COLORS.primary.xanhReu,
   },
-  scrollView: {
-    paddingVertical: HOME_LAYOUT.COMBO_PRODUCT_SCROLL_PADDING_VERTICAL,
-  },
+  scrollView: { paddingVertical: HOME_LAYOUT.COMBO_PRODUCT_SCROLL_PADDING_VERTICAL },
   scrollContent: {
     paddingHorizontal: HOME_LAYOUT.COMBO_SECTION_PADDING_HORIZONTAL,
     gap: HOME_LAYOUT.COMBO_PRODUCT_SCROLL_GAP,
   },
   productCard: {
     width: HOME_LAYOUT.COMBO_PRODUCT_CARD_WIDTH,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: HOME_LAYOUT.COMBO_PRODUCT_CARD_BORDER_RADIUS,
     marginBottom: HOME_LAYOUT.COMBO_PRODUCT_CARD_MARGIN_BOTTOM,
     shadowColor: '#000',
@@ -207,7 +216,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: HOME_LAYOUT.COMBO_DISCOUNT_BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   bestSellerBadge: {
     position: 'absolute',
@@ -223,13 +232,11 @@ const styles = StyleSheet.create({
   bestSellerText: {
     fontSize: 9,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     textAlign: 'center',
     lineHeight: 12,
   },
-  productInfo: {
-    padding: HOME_LAYOUT.COMBO_PRODUCT_INFO_PADDING,
-  },
+  productInfo: { padding: HOME_LAYOUT.COMBO_PRODUCT_INFO_PADDING },
   productName: {
     fontSize: HOME_LAYOUT.COMBO_PRODUCT_NAME_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',

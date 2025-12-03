@@ -1,34 +1,20 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Product } from '../../../../data/mockProducts';
-import { addToCart } from '../../../../state/slices/orderCart';
-import { useAppDispatch } from '../../../../utils/hooks';
-import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { BRAND_COLORS } from '../../../theme/colors';
 
 interface ProductCardProps {
   product: Product;
-  onPress?: () => void;
-  onProductPress?: () => void;
+  onPress?: (product: Product) => void;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-  const dispatch = useAppDispatch();
-  //const router = useRouter();
+export function ProductCard({ product, onPress }: ProductCardProps) {
   
-  const handleAddPress = useAuthGuard(
-    () => {
-      dispatch(addToCart(product));
-      // Show toast notification (implement later)
-    },
-    {
-      intent: 'PURCHASE',
-      context: {
-        productId: product.id,
-        returnTo: '/welcome',
-      },
+  const handlePress = () => {
+    if (onPress) {
+      onPress(product);
     }
-  );
+  };
 
   return (
     <View style={styles.card}>
@@ -57,7 +43,7 @@ export function ProductCard({ product }: ProductCardProps) {
               </Text>
             )}
           </View>
-           <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
+           <TouchableOpacity style={styles.addButton} onPress={handlePress}>
               <Text style={styles.addIcon}>+</Text>
            </TouchableOpacity>
         </View>
@@ -69,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
@@ -104,7 +90,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   discountBadge: {
     position: 'absolute',
@@ -118,7 +104,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 11,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   info: {
     padding: 12,
@@ -157,7 +143,7 @@ const styles = StyleSheet.create({
   },
   addIcon: {
     fontSize: 20,
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     fontWeight: 'bold',
   },
 });

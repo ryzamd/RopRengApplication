@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   productItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: SEARCH_LAYOUT.ITEM_BORDER_RADIUS,
     padding: SEARCH_LAYOUT.ITEM_PADDING,
     marginBottom: SEARCH_LAYOUT.ITEM_MARGIN_BOTTOM,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: SEARCH_LAYOUT.BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
   productInfo: {
     flex: 1,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   addIcon: {
     fontSize: SEARCH_LAYOUT.ADD_ICON_FONT_SIZE,
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     fontWeight: 'bold',
   },
 });

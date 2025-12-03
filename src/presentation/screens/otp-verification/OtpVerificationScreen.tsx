@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   bottomSheetBackground: {
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderTopLeftRadius: OTP_LAYOUT.MODAL_BORDER_RADIUS,
     borderTopRightRadius: OTP_LAYOUT.MODAL_BORDER_RADIUS,
   },
@@ -351,6 +351,6 @@ const styles = StyleSheet.create({
   okButtonText: {
     fontSize: OTP_LAYOUT.OK_BUTTON_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
 });

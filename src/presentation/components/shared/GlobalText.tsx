@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
 import { BRAND_COLORS } from '../../theme/colors';
-import { FONT_FAMILIES } from '../../theme/typography';
+import { TYPOGRAPHY } from '../../theme/typography';
 
 interface GlobalTextProps extends RNTextProps {
   variant?: 'heading' | 'body' | 'mono';
@@ -19,12 +19,12 @@ export function GlobalText({
   const getFontFamily = () => {
     switch (variant) {
       case 'heading':
-        return FONT_FAMILIES.phudu[weight] || FONT_FAMILIES.phudu.bold;
+        return TYPOGRAPHY.fontFamily.heading;
       case 'mono':
-        return FONT_FAMILIES.spaceMono.bold;
+        return TYPOGRAPHY.fontFamily.monoBold;
       case 'body':
       default:
-        return FONT_FAMILIES.spaceGrotesk.medium || FONT_FAMILIES.spaceGrotesk.medium;
+        return TYPOGRAPHY.fontFamily.bodyBold;
     }
   };
 

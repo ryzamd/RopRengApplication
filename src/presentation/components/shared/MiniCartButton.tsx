@@ -17,7 +17,7 @@ export function MiniCartButton({ onPress }: MiniCartButtonProps) {
   }
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom + 16 }]}>
+    <View style={[styles.container, { bottom: insets.bottom - 36}]}>
       <TouchableOpacity
         style={styles.button}
         onPress={onPress}
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   button: {
-    backgroundColor: BRAND_COLORS.primary.beSua,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

@@ -22,7 +22,7 @@ export const splashStyles = StyleSheet.create({
     alignItems: 'center',
   },
   logoText: {
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     fontSize: 16,
     textAlign: 'center',
   },

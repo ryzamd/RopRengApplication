@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
   },
   // Header
   headerContainer: {
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
 
   // Sections Wrapper
   sectionContainer: {
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     marginBottom: MORE_LAYOUT.SECTION_SPACING,
     paddingVertical: 16,
   },
@@ -90,7 +90,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     height: MORE_LAYOUT.MENU_ITEM_HEIGHT,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   menuItemBorder: {
     borderBottomWidth: 1,

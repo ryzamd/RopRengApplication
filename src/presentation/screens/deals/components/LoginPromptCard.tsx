@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: DEALS_LAYOUT.LOGIN_TEXT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: DEALS_LAYOUT.LOGIN_BUTTON_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.white,
+    color: BRAND_COLORS.background.default,
   },
 });

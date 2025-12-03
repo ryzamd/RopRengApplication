@@ -36,7 +36,7 @@ export const welcomeStyles = StyleSheet.create({
   iconButton: {
     width: 48,
     height: 48,
-    backgroundColor: BRAND_COLORS.background.white,
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
