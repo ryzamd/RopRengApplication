@@ -107,10 +107,9 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
 
     const triggerShake = useCallback(() => {
       shakeTranslateX.value = withSequence(
-        withTiming(-10, { duration: 50 }),
-        withSpring(10, { damping: 8, stiffness: 400 }),
-        withTiming(-5, { duration: 50 }),
-        withTiming(0, { duration: 50 })
+        withTiming(-6, { duration: 20 }),
+        withTiming(6, { duration: 25 }),
+        withTiming(0, { duration: 20 })
       );
     }, [shakeTranslateX]);
 

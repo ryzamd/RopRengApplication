@@ -59,7 +59,6 @@ export function OrderPromoSection({ title, expiresAt, products, onProductPress }
                 style={orderStyles.promoImage}
               />
               
-              {/* FIX LỖI Ở ĐÂY: Dùng cú pháp so sánh trực tiếp hoặc ép kiểu Boolean */}
               {(product.discountAmount ?? 0) > 0 && (
                 <View style={orderStyles.discountBadge}>
                   <Text style={orderStyles.discountText}>
@@ -87,7 +86,6 @@ export function OrderPromoSection({ title, expiresAt, products, onProductPress }
                   {`${product.price.toLocaleString('vi-VN')}VND`}
                 </Text>
                 
-                {/* Sửa luôn chỗ này để tránh lỗi nếu originalPrice = 0 */}
                 {!!product.originalPrice && product.originalPrice > product.price && (
                   <Text style={orderStyles.promoOriginalPrice}>
                     {`${product.originalPrice.toLocaleString('vi-VN')}VND`}

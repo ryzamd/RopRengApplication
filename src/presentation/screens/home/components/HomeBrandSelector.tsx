@@ -3,12 +3,22 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../../welcome/WelcomeConstants';
 import { HOME_LAYOUT } from '../HomeLayout';
+import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 
 export function HomeBrandSelector() {
-  const handleBrandPress = (brandId: string, brandName: string) => {
-    console.log(`[HomeBrandSelector] Selected brand: ${brandName} (${brandId})`);
-    // TODO: Switch brand context and reload products
-  };
+  const handleBrandPress = useAuthGuard(
+    (brandId: string, brandName: string) => {
+      console.log(`Clicked: ${brandName} (${brandId})`);
+      // TODO: Switch brand context
+    },
+    (brandId: string) => ({
+      intent: 'BROWSE_CATEGORY',
+      context: { 
+        categoryId: brandId, 
+        returnTo: '/welcome' 
+      },
+    })
+  );
 
   return (
     <View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { NativeSyntheticEvent, StyleSheet, TextInput, TextInputKeyPressEventData } from 'react-native';
+import { StyleSheet, TextInput, TextInputKeyPressEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { OTP_CONFIG } from '../OtpVerificationConstants';
@@ -18,7 +18,6 @@ export function OtpInput({ digits, onDigitsChange, onComplete, shakeAnimatedStyl
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
-    // Auto-focus first input on mount
     setTimeout(() => {
       inputRefs.current[0]?.focus();
     }, OTP_LAYOUT.CONTENT_PADDING_TOP);
@@ -27,7 +26,6 @@ export function OtpInput({ digits, onDigitsChange, onComplete, shakeAnimatedStyl
   const handleChangeText = (text: string, index: number) => {
     if (disabled) return;
 
-    // Only accept single digit
     const digit = text.slice(-1);
     
     if (digit && !OtpVerificationService.isValidDigit(digit)) {
@@ -38,22 +36,19 @@ export function OtpInput({ digits, onDigitsChange, onComplete, shakeAnimatedStyl
     newDigits[index] = digit;
     onDigitsChange(newDigits);
 
-    // Auto-focus next input
     if (digit && index < OTP_CONFIG.CODE_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when complete
     if (OtpVerificationService.isOtpComplete(newDigits)) {
       onComplete(newDigits.join(''));
     }
   };
 
-  const handleKeyPress = ( e: NativeSyntheticEvent<TextInputKeyPressEventData>, index: number ) => {
+  const handleKeyPress = (e: TextInputKeyPressEvent, index: number) => {
     if (disabled) return;
 
     if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
-      // Focus previous input on backspace
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -94,7 +89,7 @@ const styles = StyleSheet.create({
     width: OTP_LAYOUT.OTP_BOX_SIZE,
     height: OTP_LAYOUT.OTP_BOX_SIZE,
     borderWidth: OTP_LAYOUT.OTP_BOX_BORDER_WIDTH,
-    borderColor: BRAND_COLORS.background.default,
+    borderColor: BRAND_COLORS.secondary.camNhat,
     borderRadius: OTP_LAYOUT.OTP_BOX_BORDER_RADIUS,
     backgroundColor: BRAND_COLORS.background.default,
     fontSize: OTP_LAYOUT.OTP_BOX_FONT_SIZE,

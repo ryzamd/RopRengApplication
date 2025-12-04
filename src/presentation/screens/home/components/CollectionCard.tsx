@@ -9,17 +9,15 @@ interface CollectionCardProps {collection: Collection; onPress: () => void;}
 
 export function CollectionCard({ collection, onPress }: CollectionCardProps) {
   const handlePress = useAuthGuard(
-    () => {
-      onPress();
+  () => { onPress(); },
+  () => ({
+    intent: 'VIEW_COLLECTION',
+    context: {
+      collectionId: collection.id,
+      returnTo: '/(tabs)',
     },
-    {
-      intent: 'VIEW_COLLECTION',
-      context: {
-        collectionId: collection.id,
-        returnTo: '/(tabs)',
-      },
-    }
-  );
+  })
+);
   
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.8}>

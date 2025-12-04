@@ -17,7 +17,6 @@ export default function StoresScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   
-  // Params nhận từ OTP Verification hoặc Navigation thường
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,18 +43,15 @@ export default function StoresScreen() {
     [filteredStores]
   );
 
-  // Store Selection Handler
   const handleStorePress = (store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
     
     if (params.mode === 'select') {
-      // 1. Update Selected Store in Redux
+      console.log(`[StoresScreen] Select mode - setting store and navigating to Order`);
+      
       dispatch(setSelectedStore(store));
       
-      // 2. CRITICAL: DO NOT CLEAR PENDING INTENT HERE
-      // We must preserve the 'PURCHASE' intent so OrderScreen can consume it to auto-add product.
-      
-      // 3. Navigate to Order
+      console.log(`[StoresScreen] Navigating to OrderScreen...`);
       router.replace('/(tabs)/order');
     } else {
       // Browse mode logic (Future impl)
@@ -69,15 +65,6 @@ export default function StoresScreen() {
       
       <StoresSearchBar value={searchQuery} onChangeText={setSearchQuery} />
       
-      {/* {params.mode === 'select' && (
-        <View style={styles.productContext}>
-          <Text style={styles.productContextLabel}>Đang tìm cửa hàng cho:</Text>
-          <Text style={styles.storeCount}>
-            Tìm thấy {filteredStores.length} cửa hàng phù hợp
-          </Text>
-        </View>
-      )} */}
-
       <ScrollView showsVerticalScrollIndicator={false}>
         {filteredStores.length === 0 ? (
           <View style={styles.emptyState}>

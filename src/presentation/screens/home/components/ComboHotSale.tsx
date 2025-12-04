@@ -1,9 +1,6 @@
-import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { addToCart } from '../../../../state/slices/orderCart';
-import { useAppDispatch, useAppSelector } from '../../../../utils/hooks';
-import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
+import { useAddToCart } from '../../../../utils/hooks/useAddToCart';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_TEXT } from '../HomeConstants';
 import { ComboType } from '../HomeEnums';
@@ -17,10 +14,7 @@ interface ComboHotSaleProps {
 
 const ComboItem = ({ combo }: { combo: Combo }) => {
   const [timeLeft, setTimeLeft] = useState('');
-  const dispatch = useAppDispatch();
-  const router = useRouter();
-  
-  const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
+  const handleAddToCart = useAddToCart();
 
   useEffect(() => {
     if (!combo.expiresAt) return;
@@ -44,30 +38,6 @@ const ComboItem = ({ combo }: { combo: Combo }) => {
     return () => clearInterval(interval);
   }, [combo.expiresAt]);
 
-  const handleProductPress = useAuthGuard(
-    (product: ComboProduct) => {
-      if (!selectedStore) {
-        console.log(`[ComboHotSale] No store selected. Redirecting to store selection for product: ${product.id}`);
-        
-        router.push({
-          pathname: '/(tabs)/stores',
-          params: {
-            mode: 'select',
-            productId: product.id
-          }
-        });
-        return;
-      }
-
-      console.log(`[ComboHotSale] Add to cart: ${product.name}`);
-      dispatch(addToCart(product));
-    },
-    // {
-    //   intent: 'PURCHASE',
-    //   context: {},
-    // }
-  );
-
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
@@ -86,7 +56,7 @@ const ComboItem = ({ combo }: { combo: Combo }) => {
           <TouchableOpacity
             key={product.id}
             style={styles.productCard}
-            onPress={() => handleProductPress(product)}
+            onPress={() => handleAddToCart(product)}
             activeOpacity={0.9}
           >
             <View style={styles.imageContainer}>
@@ -118,7 +88,7 @@ const ComboItem = ({ combo }: { combo: Combo }) => {
               </Text>
               <TouchableOpacity
                 style={styles.chooseButton}
-                onPress={() => handleProductPress(product)}
+                onPress={() => handleAddToCart(product)}
               >
                 <Text style={styles.chooseButtonText}>{HOME_TEXT.COMBO_SECTION.CHOOSE_BUTTON}</Text>
               </TouchableOpacity>

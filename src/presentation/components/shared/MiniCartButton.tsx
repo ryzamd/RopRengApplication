@@ -17,7 +17,7 @@ export function MiniCartButton({ onPress }: MiniCartButtonProps) {
   }
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom - 36}]}>
+    <View style={[styles.container, { bottom: insets.bottom}]}>
       <TouchableOpacity
         style={styles.button}
         onPress={onPress}
