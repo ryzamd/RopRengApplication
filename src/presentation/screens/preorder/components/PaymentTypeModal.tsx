@@ -1,8 +1,8 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import React, { forwardRef, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { PAYMENT_METHOD_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
@@ -15,9 +15,12 @@ interface PaymentTypeModalProps {
   onSelectMethod: (method: PaymentMethod) => void;
 }
 
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = WINDOW_HEIGHT * 0.6;
+
 export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalProps>(
   ({ selectedMethod, onSelectMethod }, ref) => {
-    const snapPoints = useMemo(() => ['60%'], []);
+    const snapPoints = useMemo(() => [MODAL_HEIGHT], []);
     const paymentMethods = useMemo(
       () => [PaymentMethod.CASH, PaymentMethod.VNPAY, PaymentMethod.MOMO],
       []
@@ -30,6 +33,7 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
           appearsOnIndex={0}
           disappearsOnIndex={-1}
           opacity={0.5}
+          pressBehavior="close"
         />
       ),
       []
@@ -42,8 +46,24 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
     }, [ref]);
     
     return (
-      <BottomSheetModal ref={ref} snapPoints={snapPoints} backdropComponent={renderBackdrop} enablePanDownToClose handleIndicatorStyle={styles.indicator} backgroundStyle={styles.background}>
-        <BottomSheetView style={styles.container}>
+      <BottomSheetModal
+        ref={ref}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        handleIndicatorStyle={styles.indicator}
+        backgroundStyle={styles.background}
+        stackBehavior="push"
+        enablePanDownToClose={true}
+        enableDynamicSizing={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture={true}
+        animateOnMount={true}
+      >
+        <BottomSheetScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>{PREORDER_TEXT.PAYMENT_MODAL_TITLE}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -107,7 +127,7 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
               );
             })}
           </View>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModal>
     );
   }
@@ -126,8 +146,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
   },
-  container: {
+  scrollView: {
     flex: 1,
+    backgroundColor: BRAND_COLORS.background.default,
+  },
+  contentContainer: {
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
@@ -159,6 +183,7 @@ const styles = StyleSheet.create({
   optionsList: {
     padding: PREORDER_LAYOUT.SECTION_PADDING_HORIZONTAL,
     gap: 12,
+    marginTop: 12,
   },
   option: {
     flexDirection: 'row',

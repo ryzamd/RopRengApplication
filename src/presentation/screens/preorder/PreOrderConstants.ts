@@ -27,7 +27,7 @@ export const PREORDER_TEXT = {
   TOTAL_SECTION_TITLE: 'Tổng cộng',
   SUBTOTAL_LABEL: 'Thành tiền',
   SHIPPING_FEE_LABEL: 'Phí giao hàng',
-  PROMOTION_LABEL: 'Chọn khuyến mãi/đổi bean',
+  PROMOTION_LABEL: 'Chọn khuyến mãi',
   FINAL_TOTAL_LABEL: 'Số tiền thanh toán',
   
   // Payment Section

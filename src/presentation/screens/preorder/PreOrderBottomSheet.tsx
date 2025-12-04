@@ -1,12 +1,13 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetFooter } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { BottomSheetFooterProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetFooter/types';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearCart, removeItem } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { PREORDER_TEXT } from './PreOrderConstants';
@@ -22,11 +23,10 @@ import { PreOrderFooter } from './components/PreOrderFooter';
 import { PreOrderProductList } from './components/PreOrderProductList';
 import { PreOrderTotalPrice } from './components/PreOrderTotalPrice';
 
-export default function PreOrderBottomSheet({
-  visible,
-  onClose,
-  onOrderSuccess,
-}: PreOrderBottomSheetProps) {
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = WINDOW_HEIGHT;
+
+export default function PreOrderBottomSheet({visible, onClose, onOrderSuccess}: PreOrderBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function PreOrderBottomSheet({
     preOrderState.shippingFee
   );
   
-  const snapPoints = useMemo(() => ['90%'], []);
+  const snapPoints = useMemo(() => [MODAL_HEIGHT], []);
   
   useEffect(() => {
     if (visible) {
@@ -67,6 +67,7 @@ export default function PreOrderBottomSheet({
         appearsOnIndex={0}
         disappearsOnIndex={-1}
         opacity={0.5}
+        pressBehavior="close"
       />
     ),
     []
@@ -160,7 +161,7 @@ export default function PreOrderBottomSheet({
 
   const renderFooter = useCallback(
     (props: BottomSheetFooterProps) => (
-      <BottomSheetFooter {...props} bottomInset={insets.bottom}>
+      <BottomSheetFooter {...props} bottomInset={0}>
         <PreOrderFooter
           orderType={preOrderState.orderType}
           totalItems={totalItems}
@@ -169,7 +170,7 @@ export default function PreOrderBottomSheet({
         />
       </BottomSheetFooter>
     ),
-    [insets.bottom, preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder]
+    [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder]
   );
   
   return (
@@ -181,20 +182,24 @@ export default function PreOrderBottomSheet({
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
         enableDismissOnClose={true}
+        enableDynamicSizing={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture={true}
+        animateOnMount={true}
         handleIndicatorStyle={styles.indicator}
         backgroundStyle={styles.background}
         topInset={insets.top}
-        bottomInset={0} // Let BottomSheetFooter handle bottom inset
-        footerComponent={renderFooter} // CRITICAL: Use built-in footer component
+        bottomInset={0}
+        footerComponent={renderFooter}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
+        stackBehavior="push"
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={handleClearCart}
-            style={styles.clearButton}
+            
             activeOpacity={0.7}
           >
             <Text style={styles.clearText}>{PREORDER_TEXT.CLEAR_BUTTON}</Text>
@@ -207,11 +212,10 @@ export default function PreOrderBottomSheet({
             style={styles.closeButton}
             activeOpacity={0.7}
           >
-            <Text style={styles.closeText}>{PREORDER_TEXT.CLOSE_BUTTON}</Text>
+             <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
           </TouchableOpacity>
         </View>
         
-        {/* Scrollable Content */}
         <BottomSheetScrollView
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
@@ -276,13 +280,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: PREORDER_LAYOUT.HEADER_HEIGHT,
     paddingHorizontal: PREORDER_LAYOUT.HEADER_PADDING_HORIZONTAL,
-    borderBottomWidth: 1,
-    borderBottomColor: BRAND_COLORS.border.light,
-    backgroundColor: BRAND_COLORS.background.primary,
-  },
-  clearButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
   },
   clearText: {
     fontSize: TYPOGRAPHY.fontSize.md,
@@ -290,13 +287,13 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.text.secondary,
   },
   title: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
     color: BRAND_COLORS.text.primary,
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -311,7 +308,7 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_COLORS.background.default,
   },
   contentContainer: {
-    paddingBottom: 20, // Simple padding, no need for dynamic calculation
+    paddingBottom: 200,
   },
   sections: {
     padding: PREORDER_LAYOUT.SECTION_PADDING_HORIZONTAL,
