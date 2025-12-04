@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,10 +16,11 @@ interface OrderTypeModalProps {
 }
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = WINDOW_HEIGHT * 0.6;
 
 export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
   ({ selectedType, onSelectType }, ref) => {
-    const snapPoints = useMemo(() => [WINDOW_HEIGHT * 0.6], []);
+    const snapPoints = useMemo(() => [MODAL_HEIGHT], []);
     const orderTypes = useMemo(() => [OrderType.DELIVERY, OrderType.TAKEAWAY, OrderType.DINE_IN], []);
     
     const renderBackdrop = useCallback(
@@ -46,12 +47,20 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
         ref={ref}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
-        enablePanDownToClose={true}
         handleIndicatorStyle={styles.indicator}
         backgroundStyle={styles.background}
         stackBehavior="push"
+        enablePanDownToClose={true}
+        enableDynamicSizing={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture={true}
+        animateOnMount={true}
       >
-        <BottomSheetView style={styles.container}>
+        <BottomSheetScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>{PREORDER_TEXT.ORDER_TYPE_MODAL_TITLE}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -88,7 +97,7 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
               );
             })}
           </View>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModal>
     );
   }
@@ -107,9 +116,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
   },
-  container: {
+  scrollView: {
     flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
+  },
+  contentContainer: {
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',

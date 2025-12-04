@@ -1,12 +1,13 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetFooter } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { BottomSheetFooterProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetFooter/types';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearCart, removeItem } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { PREORDER_TEXT } from './PreOrderConstants';
@@ -21,13 +22,11 @@ import { PaymentTypeSelector } from './components/PaymentTypeSelector';
 import { PreOrderFooter } from './components/PreOrderFooter';
 import { PreOrderProductList } from './components/PreOrderProductList';
 import { PreOrderTotalPrice } from './components/PreOrderTotalPrice';
-import { AppIcon } from '../../components/shared/AppIcon';
 
-export default function PreOrderBottomSheet({
-  visible,
-  onClose,
-  onOrderSuccess,
-}: PreOrderBottomSheetProps) {
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const MODAL_HEIGHT = WINDOW_HEIGHT;
+
+export default function PreOrderBottomSheet({visible, onClose, onOrderSuccess}: PreOrderBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -51,7 +50,7 @@ export default function PreOrderBottomSheet({
     preOrderState.shippingFee
   );
   
-  const snapPoints = useMemo(() => ['90%'], []);
+  const snapPoints = useMemo(() => [MODAL_HEIGHT], []);
   
   useEffect(() => {
     if (visible) {
@@ -183,6 +182,10 @@ export default function PreOrderBottomSheet({
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
         enableDismissOnClose={true}
+        enableDynamicSizing={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture={true}
+        animateOnMount={true}
         handleIndicatorStyle={styles.indicator}
         backgroundStyle={styles.background}
         topInset={insets.top}
