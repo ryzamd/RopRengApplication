@@ -1,8 +1,10 @@
+import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
+import { useAddToCart } from '../../../utils/hooks/useAddToCart';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
@@ -15,13 +17,14 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
-  
+  const handleAddToCart = useAddToCart();
+  const isFocused = useIsFocused();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(MOCK_PRODUCTS);
   
   const filterMode: SearchFilterMode = params.categoryId ? SearchFilterMode.CATEGORY : SearchFilterMode.ALL;
 
-  // Debounced search handler
   const debouncedSearch = useMemo(
     () => SearchUIService.createDebounce(
       (query: string) => {
@@ -38,12 +41,22 @@ export default function SearchScreen() {
     [filterMode, params.categoryId]
   );
 
+  useEffect(() => {
+    if (!isFocused) {
+      setSearchQuery('');
+      setFilteredProducts(MOCK_PRODUCTS);
+    }
+  }, [isFocused]);
+
+  const handleCancel = useCallback(() => {
+    router.back();
+  }, [router]);
+
   const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
     debouncedSearch(text);
   }, [debouncedSearch]);
 
-  // Initial filter by category
   useEffect(() => {
     if (filterMode === SearchFilterMode.CATEGORY && params.categoryId) {
       const filtered = SearchUIService.filterByCategory(
@@ -54,11 +67,7 @@ export default function SearchScreen() {
     }
   }, [params.categoryId, filterMode]);
 
-  const handleAddPress = () => {
-    router.push('/login');
-  };
-
-  const renderItem = ({ item }: { item: Product }) => (
+  const renderItem = useCallback(({ item }: { item: Product }) => (
     <View style={styles.productItem}>
       <View style={styles.productImage}>
         <Text style={styles.imagePlaceholder}>{SEARCH_TEXT.IMAGE_PLACEHOLDER}</Text>
@@ -72,38 +81,36 @@ export default function SearchScreen() {
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productPrice}>{item.price.toLocaleString('vi-VN')}đ</Text>
       </View>
-      <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
+      <TouchableOpacity style={styles.addButton} onPress={() => handleAddToCart(item)}>
         <Text style={styles.addIcon}>+</Text>
       </TouchableOpacity>
     </View>
-  );
+  ), [handleAddToCart]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <AppIcon name={HEADER_ICONS.SEARCH} size="sm" color="#999999" />
+          <AppIcon name={HEADER_ICONS.SEARCH} size="xs" />
           <TextInput
             style={styles.searchInput}
             placeholder={SEARCH_TEXT.PLACEHOLDER}
-            placeholderTextColor="#999999"
             value={searchQuery}
             onChangeText={handleSearch}
             autoFocus
           />
         </View>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>{SEARCH_TEXT.CANCEL_BUTTON}</Text>
+        
+        <TouchableOpacity onPress={handleCancel}>
+          <Text style={styles.cancelButton}>{SEARCH_TEXT.CANCEL_BUTTON}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Product List */}
       <FlatList
         data={filteredProducts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -121,38 +128,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: SEARCH_LAYOUT.HEADER_PADDING_HORIZONTAL,
     paddingVertical: SEARCH_LAYOUT.HEADER_PADDING_VERTICAL,
     gap: SEARCH_LAYOUT.HEADER_GAP,
-    backgroundColor: BRAND_COLORS.background.default,
     borderBottomWidth: SEARCH_LAYOUT.HEADER_BORDER_BOTTOM_WIDTH,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: BRAND_COLORS.background.default,
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: SEARCH_LAYOUT.SEARCH_BAR_BORDER_RADIUS,
     paddingHorizontal: SEARCH_LAYOUT.SEARCH_BAR_PADDING_HORIZONTAL,
     gap: SEARCH_LAYOUT.SEARCH_BAR_GAP,
-  },
-  searchIcon: {
-    fontSize: SEARCH_LAYOUT.SEARCH_ICON_FONT_SIZE,
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     fontSize: SEARCH_LAYOUT.SEARCH_INPUT_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-Regular',
     color: BRAND_COLORS.primary.xanhReu,
     paddingVertical: 8,
   },
   cancelButton: {
-    paddingVertical: 8,
-  },
-  cancelText: {
     fontSize: SEARCH_LAYOUT.CANCEL_BUTTON_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.secondary.nauEspresso,
+    color: BRAND_COLORS.primary.xanhReu,
   },
-  listContent: {
+  list: {
     padding: SEARCH_LAYOUT.LIST_PADDING,
   },
   productItem: {
@@ -163,20 +164,16 @@ const styles = StyleSheet.create({
     padding: SEARCH_LAYOUT.ITEM_PADDING,
     marginBottom: SEARCH_LAYOUT.ITEM_MARGIN_BOTTOM,
     gap: SEARCH_LAYOUT.ITEM_GAP,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   productImage: {
-    position: 'relative',
     width: SEARCH_LAYOUT.IMAGE_SIZE,
     height: SEARCH_LAYOUT.IMAGE_SIZE,
     backgroundColor: BRAND_COLORS.primary.beSua,
     borderRadius: SEARCH_LAYOUT.IMAGE_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: BRAND_COLORS.border.dark,
   },
   imagePlaceholder: {
     fontSize: SEARCH_LAYOUT.IMAGE_PLACEHOLDER_FONT_SIZE,

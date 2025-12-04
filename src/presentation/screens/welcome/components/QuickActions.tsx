@@ -4,17 +4,18 @@ import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
+import { router } from 'expo-router';
 
 export function QuickActions() {
   const handleActionPress = useAuthGuard(
     (actionId: string, label: string) => {
       console.log(`Clicked: ${label} (${actionId})`);
-      // TODO: Navigate to order flow with pre-selected mode
+      router.push('/(tabs)/order');
     },
-    {
+    (actionId: string) => ({
       intent: 'PURCHASE',
-      context: { returnTo: '/welcome' },
-    }
+      context: { actionId, returnTo: '/welcome' },
+    })
   );
 
   return (

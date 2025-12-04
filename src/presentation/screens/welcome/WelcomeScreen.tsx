@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS, Product } from '../../../data/mockProducts';
+import { useAddToCart } from '../../../utils/hooks/useAddToCart';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
@@ -10,17 +11,22 @@ import { CategoryScroll } from './components/CategoryScroll';
 import { LoginCard } from './components/LoginCard';
 import { ProductSection } from './components/ProductSection';
 import { PromoBanner } from './components/PromoBanner';
-import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
 import { WELCOME_TEXT } from './WelcomeConstants';
+import { QuickActions } from './components/QuickActions';
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const handleAddToCart = useAddToCart();
 
   const groupedProducts = MOCK_CATEGORIES.map((category) => ({
     category,
     products: MOCK_PRODUCTS.filter((p) => p.categoryId === category.id),
   }));
+
+  const handleProductPress = useCallback((product: Product) => {
+    handleAddToCart(product);
+  }, [handleAddToCart]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -69,10 +75,14 @@ export default function WelcomeScreen() {
           <CategoryScroll />
         </View>
 
-        {/* Product Sections */}
         <View style={styles.section}>
           {groupedProducts.map(({ category, products }) => (
-            <ProductSection key={category.id} category={category} products={products} />
+            <ProductSection
+              key={category.id}
+              category={category}
+              products={products}
+              onProductPress={handleProductPress}
+            />
           ))}
         </View>
       </ScrollView>
@@ -93,7 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: BRAND_COLORS.background.default,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E5E5E5',
   },
   greeting: {
     flexDirection: 'row',
@@ -112,21 +122,16 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 40,
     height: 40,
-    backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 20,
+    backgroundColor: BRAND_COLORS.primary.beSua,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   section: {
     paddingHorizontal: 16,
@@ -139,7 +144,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   searchContainer: {
-    flexDirection: 'row',
-    gap: 12,
+    marginBottom: 0,
   },
 });

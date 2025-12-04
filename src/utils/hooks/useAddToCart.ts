@@ -17,21 +17,19 @@ export const useAddToCart = () => {
           pathname: '/(tabs)/stores',
           params: {
             mode: 'select',
-            productId: product.id
-          }
+            productId: product.id,
+          },
         });
         return;
       }
 
       console.log(`[useAddToCart] Adding ${product.name} to cart`);
       dispatch(addToCart(product));
-      
-      // Optional: Có thể thêm Toast thông báo thành công ở đây nếu cần
     },
-    {
+    (product: Product) => ({
       intent: 'PURCHASE',
-      context: {},
-    }
+      context: { productId: product.id },
+    })
   );
 
   return handleAddToCart;

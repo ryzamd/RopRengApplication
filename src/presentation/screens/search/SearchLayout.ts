@@ -16,7 +16,7 @@ export const SEARCH_LAYOUT = {
   // Product item
   ITEM_BORDER_RADIUS: 12,
   ITEM_PADDING: 12,
-  ITEM_MARGIN_BOTTOM: 12,
+  ITEM_MARGIN_BOTTOM: 5,
   ITEM_GAP: 12,
   
   // Product image

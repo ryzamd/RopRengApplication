@@ -9,8 +9,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
-  
-  const handlePress = () => {
+  const handleAddPress = () => {
     if (onPress) {
       onPress(product);
     }
@@ -43,9 +42,9 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
               </Text>
             )}
           </View>
-           <TouchableOpacity style={styles.addButton} onPress={handlePress}>
-              <Text style={styles.addIcon}>+</Text>
-           </TouchableOpacity>
+          <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
+            <Text style={styles.addIcon}>+</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

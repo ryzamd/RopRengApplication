@@ -3,16 +3,7 @@ import { useCallback } from 'react';
 import { PendingIntent, setPendingIntent } from '../../state/slices/auth';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-/**
- * useAuthGuard - Centralized auth protection hook
- *
- * Usage:
- * const handleAdd = useAuthGuard(() => dispatch(addToCart(product)), {
- *   intent: 'PURCHASE',
- *   context: { productId: product.id }
- * });
- */
-export function useAuthGuard<T extends any[]>(action: (...args: T) => void, intent?: Omit<PendingIntent, 'expiresAt' | 'timestamp'>) {
+export function useAuthGuard<T extends any[]>(action: (...args: T) => void, intentFactory?: (...args: T) => Omit<PendingIntent, 'expiresAt' | 'timestamp'>) {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -20,11 +11,11 @@ export function useAuthGuard<T extends any[]>(action: (...args: T) => void, inte
   return useCallback(
     (...args: T) => {
       if (!isAuthenticated) {
-        // Save intent before redirecting to login
-        if (intent) {
+        if (intentFactory) {
+          const intent = intentFactory(...args);
           dispatch(setPendingIntent({
             ...intent,
-            expiresAt: Date.now() + 5 * 60 * 1000, // 5min TTL
+            expiresAt: Date.now() + 5 * 60 * 1000,
             timestamp: Date.now(),
           }));
         }
@@ -33,6 +24,6 @@ export function useAuthGuard<T extends any[]>(action: (...args: T) => void, inte
         action(...args);
       }
     },
-    [isAuthenticated, router, dispatch, action, intent]
+    [isAuthenticated, router, dispatch, action, intentFactory]
   );
 }

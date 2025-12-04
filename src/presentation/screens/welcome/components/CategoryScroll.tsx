@@ -2,25 +2,18 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MOCK_CATEGORIES } from '../../../../data/mockProducts';
-import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 
 export function CategoryScroll() {
   const router = useRouter();
 
-  const handleCategoryPress = useAuthGuard(
-    (categoryId: string) => {
-      router.push({
-        pathname: '../(tabs)/search',
-        params: { categoryId },
-      });
-    },
-    {
-      intent: 'BROWSE_CATEGORY',
-      context: {}, // categoryId will be passed dynamically
-    }
-  );
+  const handleCategoryPress = (categoryId: string) => {
+    router.push({
+      pathname: '../(tabs)/search',
+      params: { categoryId },
+    });
+  };
 
   return (
     <ScrollView
