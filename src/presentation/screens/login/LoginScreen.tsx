@@ -1,10 +1,12 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { BRAND_COLORS } from '../../theme/colors';
+import { OtpVerificationRef, OtpVerificationBottomSheet } from '../otp-verification/OtpVerificationBottomSheet';
 import { PhoneInput } from './components/PhoneInput';
 import { SocialButton } from './components/SocialButton';
 import { LOGIN_TEXT } from './LoginConstants';
@@ -16,19 +18,17 @@ export default function LoginScreen() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
+  const otpModalRef = useRef<OtpVerificationRef>(null);
 
-  // 1. Reanimated Shared Values (Thay thế Custom Hook)
   const opacity = useSharedValue(0);
   const contentScale = useSharedValue(0.95);
 
-  // 2. Animation Logic
   const startEntranceAnimation = useCallback(() => {
     opacity.value = withTiming(1, { duration: 300 });
     contentScale.value = withTiming(1, { duration: 300 });
   }, [contentScale, opacity]);
 
   const handleDismiss = useCallback(() => {
-    // Exit Animation: Fade out -> Sau đó mới Back
     opacity.value = withTiming(0, { duration: 200 }, (finished) => {
       if (finished) {
         scheduleOnRN(router.back);
@@ -41,7 +41,6 @@ export default function LoginScreen() {
     startEntranceAnimation();
   }, [startEntranceAnimation]);
 
-  // 3. Animated Styles
   const animatedBackdropStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
@@ -58,13 +57,7 @@ export default function LoginScreen() {
       setIsSendingOtp(true);
       setTimeout(() => {
         setIsSendingOtp(false);
-        const formattedPhone = LoginUIService.formatPhoneDisplay(phoneNumber);
-        
-        // Navigate to OTP
-        router.push({
-          pathname: '/otp-verification',
-          params: { phoneNumber: formattedPhone },
-        });
+        otpModalRef.current?.present();
       }, LOGIN_LAYOUT.OTP_SENDING_DURATION);
     }
   };
@@ -74,73 +67,77 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Backdrop */}
-      <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
-        <TouchableWithoutFeedback onPress={handleDismiss}>
-          <View style={styles.backdropTouchable} />
-        </TouchableWithoutFeedback>
-      </Animated.View>
+    <BottomSheetModalProvider>
+      <View style={styles.container}>
+        {/* Backdrop */}
+        <Animated.View style={[styles.backdrop, animatedBackdropStyle]}>
+          <TouchableWithoutFeedback onPress={handleDismiss}>
+            <View style={styles.backdropTouchable} />
+          </TouchableWithoutFeedback>
+        </Animated.View>
 
-      {/* Modal Content */}
-      <Animated.View style={[styles.modalWrapper, animatedModalStyle]}>
-        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <View style={styles.closeContainer}>
-              <TouchableOpacity
-                style={styles.closeButtonWrapper}
-                onPress={handleDismiss}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.closeButton}>{LOGIN_TEXT.CLOSE_BUTTON}</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Modal Content */}
+        <Animated.View style={[styles.modalWrapper, animatedModalStyle]}>
+          <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+              <View style={styles.closeContainer}>
+                <TouchableOpacity
+                  style={styles.closeButtonWrapper}
+                  onPress={handleDismiss}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.closeButton}>{LOGIN_TEXT.CLOSE_BUTTON}</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.heroContainer}>
-              <Text style={styles.heroPlaceholder}>
-                {LOGIN_TEXT.IMAGE_PLACEHOLDER}
-              </Text>
-            </View>
+              <View style={styles.heroContainer}>
+                <Text style={styles.heroPlaceholder}>
+                  {LOGIN_TEXT.IMAGE_PLACEHOLDER}
+                </Text>
+              </View>
 
-            <View style={styles.formContainer}>
-              <Text style={styles.welcomeText}>{LOGIN_TEXT.WELCOME_TEXT}</Text>
-              <Text style={styles.brandName}>{LOGIN_TEXT.BRAND_NAME}</Text>
+              <View style={styles.formContainer}>
+                <Text style={styles.welcomeText}>{LOGIN_TEXT.WELCOME_TEXT}</Text>
+                <Text style={styles.brandName}>{LOGIN_TEXT.BRAND_NAME}</Text>
 
-              <PhoneInput
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                onSubmit={handleLogin}
-                isValid={isValidPhone}
-                isLoading={isSendingOtp}
-                autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
-              />
+                <PhoneInput
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  onSubmit={handleLogin}
+                  isValid={isValidPhone}
+                  isLoading={isSendingOtp}
+                  autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
+                />
 
-              <Text style={styles.divider}>{LOGIN_TEXT.DIVIDER_TEXT}</Text>
+                <Text style={styles.divider}>{LOGIN_TEXT.DIVIDER_TEXT}</Text>
 
-              <SocialButton
-                provider={LoginProvider.FACEBOOK}
-                label={LOGIN_TEXT.FACEBOOK_LOGIN}
-                onPress={() => handleSocialLogin(LoginProvider.FACEBOOK)}
-              />
-              <SocialButton
-                provider={LoginProvider.GOOGLE}
-                label={LOGIN_TEXT.GOOGLE_LOGIN}
-                onPress={() => handleSocialLogin(LoginProvider.GOOGLE)}
-              />
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Animated.View>
-    </View>
+                <SocialButton
+                  provider={LoginProvider.FACEBOOK}
+                  label={LOGIN_TEXT.FACEBOOK_LOGIN}
+                  onPress={() => handleSocialLogin(LoginProvider.FACEBOOK)}
+                />
+                <SocialButton
+                  provider={LoginProvider.GOOGLE}
+                  label={LOGIN_TEXT.GOOGLE_LOGIN}
+                  onPress={() => handleSocialLogin(LoginProvider.GOOGLE)}
+                />
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Animated.View>
+
+        <OtpVerificationBottomSheet ref={otpModalRef} phoneNumber={phoneNumber} />
+      </View>
+    </BottomSheetModalProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Transparent background handled by navigation presentation usually, 
+    // Transparent background handled by navigation presentation usually,
     // but explicit transparent helps ensure overlay effect.
-    backgroundColor: 'transparent', 
+    backgroundColor: 'transparent',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

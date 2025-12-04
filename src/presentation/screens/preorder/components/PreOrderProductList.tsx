@@ -1,68 +1,84 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAppSelector } from '../../../../utils/hooks';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
-import { PREORDER_TEXT } from '../PreOrderConstants';
-import { PreOrderProductListProps } from '../PreOrderInterfaces';
-import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderProductItem } from './PreOrderProductItem';
+import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './PreOrderProductItemEditBottomSheet';
+import { CartItem } from '../../order/OrderInterfaces';
+import { PREORDER_TEXT } from '../PreOrderConstants';
 
-export function PreOrderProductList({items, onEditProduct, onRemoveProduct, onAddMore}: PreOrderProductListProps) {
+interface PreOrderProductListProps {
+  handleAddMore: () => void;
+}
+export function PreOrderProductList({ handleAddMore }: PreOrderProductListProps) {
+  const cartItems = useAppSelector((state) => state.orderCart.items);
+  const editModalRef = useRef<PreOrderProductItemEditRef>(null);
+  
+  
+  const handleItemPress = (item: CartItem) => {
+    editModalRef.current?.present(item);
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Chưa có sản phẩm nào</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{PREORDER_TEXT.PRODUCT_LIST_TITLE}</Text>
-        <TouchableOpacity onPress={onAddMore} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleAddMore} activeOpacity={0.7}>
           <Text style={styles.addButton}>{PREORDER_TEXT.ADD_MORE_BUTTON}</Text>
         </TouchableOpacity>
       </View>
-      
-      <View style={styles.productList}>
-        {items.map((item, index) => (
-          <View key={item.product.id}>
-            <PreOrderProductItem
-              item={item}
-              onEdit={() => onEditProduct(item.product.id)}
-              onRemove={() => onRemoveProduct(item.product.id)}
-            />
-            {index < items.length - 1 && <View style={styles.divider} />}
-          </View>
-        ))}
-      </View>
+     
+      {cartItems.map((item) => (
+        <PreOrderProductItem key={item.id} item={item} onPress={handleItemPress} />
+      ))}
+
+      <PreOrderProductItemEditBottomSheet ref={editModalRef} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: BRAND_COLORS.background.primary,
+  container: {
     borderRadius: 12,
-    borderWidth: 1,
+    backgroundColor: BRAND_COLORS.background.primary,
     borderColor: BRAND_COLORS.border.light,
-    padding: PREORDER_LAYOUT.ORDER_TYPE_PADDING,
-    gap: 12,
+    borderWidth: 1,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   title: {
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
     color: BRAND_COLORS.text.primary,
   },
   addButton: {
-    fontSize: TYPOGRAPHY.fontSize.base,
+   fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
     color: BRAND_COLORS.secondary.camNhat,
   },
-  productList: {
-    gap: 0,
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
   },
-  divider: {
-    height: 1,
-    backgroundColor: BRAND_COLORS.border.light,
-    marginVertical: 8,
+  emptyText: {
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontFamily: TYPOGRAPHY.fontFamily.bodyRegular,
+    color: BRAND_COLORS.text.tertiary,
   },
 });

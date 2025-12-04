@@ -8,7 +8,6 @@ export const orderStyles = StyleSheet.create({
     backgroundColor: BRAND_COLORS.background.default,
   },
   
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -63,17 +62,26 @@ export const orderStyles = StyleSheet.create({
   },
   promoScroll: {
     paddingHorizontal: ORDER_LAYOUT.PROMO_SECTION_PADDING,
+    marginBottom: 5,
+    marginTop: 5,
   },
   promoCard: {
     width: ORDER_LAYOUT.PROMO_CARD_WIDTH,
     marginRight: ORDER_LAYOUT.PROMO_CARD_GAP,
     backgroundColor: BRAND_COLORS.background.default,
     borderRadius: 12,
+    borderWidth: 0.05,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   promoImageContainer: {
     position: 'relative',
     aspectRatio: 1,
+    backgroundColor: BRAND_COLORS.primary.beSua,
   },
   promoImage: {
     width: '100%',
@@ -169,6 +177,12 @@ export const orderStyles = StyleSheet.create({
     height: ORDER_LAYOUT.PRODUCT_IMAGE_SIZE,
     borderRadius: 8,
     backgroundColor: BRAND_COLORS.primary.beSua,
+    borderWidth: 0.05,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   productInfo: {
     flex: 1,
@@ -194,8 +208,6 @@ export const orderStyles = StyleSheet.create({
     alignItems: 'center',
   },
   productAddText: {
-    fontSize: 24,
     color: BRAND_COLORS.background.default,
-    fontFamily: 'Phudu-Bold',
   },
 });

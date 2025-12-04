@@ -54,28 +54,6 @@ export default function OrderScreen() {
     Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
   }, [pendingIntent, selectedStore, dispatch, isFocused]);
 
-  // const handleAddToCart = useCallback(
-  //   (product: Product) => {
-  //     if (!isAuthenticated) {
-  //       console.log('[OrderScreen] User not authenticated. Saving intent and redirecting...');
-        
-  //       dispatch(setPendingIntent({
-  //         intent: 'PURCHASE',
-  //         context: { productId: product.id },
-  //         expiresAt: Date.now() + 5 * 60 * 1000,
-  //         timestamp: Date.now(),
-  //       }));
-
-  //       router.push('/login');
-  //       return;
-  //     }
-
-  //     dispatch(addToCart(product));
-  //     console.log(`[OrderScreen] Added ${product.name} to cart`);
-  //   },
-  //   [dispatch, isAuthenticated, router]
-  // );
-
   const handleMiniCartPress = useCallback(() => {
     console.log('[OrderScreen] Opening PreOrder sheet');
     setShowPreOrder(true);

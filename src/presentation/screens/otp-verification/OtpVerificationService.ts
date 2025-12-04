@@ -6,23 +6,12 @@ export class OtpVerificationService {
   
   static verifyOtpCode(code: string): OtpVerificationResult {
     if (code === OTP_CONFIG.VALID_CODE_EXISTING_USER) {
-      return {
-        isValid: true,
-        userType: OtpUserType.EXISTING,
-      };
+      return { isValid: true, userType: OtpUserType.EXISTING };
     }
-    
     if (code === OTP_CONFIG.VALID_CODE_NEW_USER) {
-      return {
-        isValid: true,
-        userType: OtpUserType.NEW,
-      };
+      return { isValid: true, userType: OtpUserType.NEW };
     }
-    
-    return {
-      isValid: false,
-      errorType: OtpErrorType.INVALID_CODE,
-    };
+    return { isValid: false, errorType: OtpErrorType.INVALID_CODE };
   }
 
   static formatTimeRemaining(seconds: number): string {
@@ -52,9 +41,7 @@ export class OtpVerificationService {
   }
 
   static formatPhoneForDisplay(phone: string): string {
-    // Remove +84 prefix if exists
     const cleaned = phone.replace(/^\+84/, '');
-    // Mask middle digits: 0987654321 → 0987***321
     if (cleaned.length === 10) {
       return `${cleaned.slice(0, 4)}***${cleaned.slice(-3)}`;
     }
@@ -63,5 +50,36 @@ export class OtpVerificationService {
 
   static isOtpComplete(digits: string[]): boolean {
     return digits.length === OTP_CONFIG.CODE_LENGTH && digits.every(d => this.isValidDigit(d));
+  }
+
+  // --- NEW METHODS ADDED FOR BOTTOM SHEET LOGIC ---
+
+  /**
+   * Giả lập gọi API verify OTP
+   */
+  static async verifyOtp(phoneNumber: string, code: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const result = this.verifyOtpCode(code);
+        if (result.isValid) {
+          resolve(true);
+        } else {
+          // Trong thực tế, reject với message từ server
+          reject(new Error('Mã OTP không chính xác'));
+        }
+      }, 1000); // Simulate network delay
+    });
+  }
+
+  /**
+   * Giả lập gọi API resend OTP
+   */
+  static async resendOtp(phoneNumber: string): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`Resent OTP to ${phoneNumber}`);
+        resolve();
+      }, 500);
+    });
   }
 }

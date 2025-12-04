@@ -62,10 +62,10 @@ const ComboItem = ({ combo }: { combo: Combo }) => {
       console.log(`[ComboHotSale] Add to cart: ${product.name}`);
       dispatch(addToCart(product));
     },
-    {
-      intent: 'PURCHASE',
-      context: {},
-    }
+    // {
+    //   intent: 'PURCHASE',
+    //   context: {},
+    // }
   );
 
   return (

@@ -15,7 +15,7 @@ export const MOCK_COMBOS: Combo[] = [
     title: 'Combo 2 Ly Chỉ 79K + Freeship',
     type: ComboType.DAILY,
     products: [
-      { ...MOCK_PRODUCTS[20], discountAmount: 0, discount: undefined }, // Matcha Latte
+      { ...MOCK_PRODUCTS[20], discountAmount: 0, discount: undefined, imageUrl: 'https://via.placeholder.com/200x200/FFB6C1/000?text=Tra+Sen+Tuyet' }, // Matcha Latte
       { ...MOCK_PRODUCTS[21], discountAmount: 0, discount: undefined }, // Matcha Đá Xay
       { ...MOCK_PRODUCTS[22], discountAmount: 0, discount: undefined }, // Matcha Nóng
     ],

@@ -1,8 +1,11 @@
 import { Product } from '../../../data/mockProducts';
 
 export interface CartItem {
+  id: string;
   product: Product;
   quantity: number;
+  customizations: CartItemCustomization;
+  finalPrice: number;
 }
 
 export interface OrderHeaderProps {
@@ -28,3 +31,23 @@ export interface ProductItemProps {
   product: Product;
   onAdd: () => void;
 }
+
+export interface Topping {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface CartItemCustomization {
+  size: 'small' | 'medium' | 'large';
+  ice: 'normal' | 'separate' | 'less';
+  sweetness: 'normal' | 'less' | 'more';
+  toppings: Topping[];
+}
+
+export const CART_DEFAULTS: CartItemCustomization = {
+  size: 'medium',
+  ice: 'separate',
+  sweetness: 'normal',
+  toppings: [],
+};

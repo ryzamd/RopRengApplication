@@ -28,7 +28,7 @@ export function OrderPromoSection({ title, expiresAt, products, onProductPress }
       );
     };
 
-    updateTimer(); // Chạy ngay lập tức để tránh delay 1s đầu tiên
+    updateTimer();
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);

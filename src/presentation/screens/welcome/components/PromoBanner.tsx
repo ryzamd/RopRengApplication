@@ -25,10 +25,11 @@ export function PromoBanner() {
       console.log(`Clicked: Promo ${promoId}`);
       // TODO: Navigate to promo detail
     },
-    {
+    () =>
+    ({
       intent: 'CLAIM_PROMO',
       context: {}, // promoCode passed dynamically
-    }
+    })
   );
 
   return (

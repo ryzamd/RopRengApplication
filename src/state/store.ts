@@ -8,7 +8,7 @@ import orderCart from './slices/orderCart';
 const authPersistConfig = {
   key: 'auth',
   storage: AsyncStorage,
-  whitelist: ['isAuthenticated', 'phoneNumber', 'userId', 'pendingIntent'], // Persist these fields
+  whitelist: ['isAuthenticated', 'phoneNumber', 'userId', 'pendingIntent'],
 };
 
 const persistedAuthReducer = persistReducer(authPersistConfig, auth);

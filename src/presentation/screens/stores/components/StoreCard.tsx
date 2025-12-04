@@ -14,13 +14,13 @@ export function StoreCard({ store, onPress }: StoreCardProps) {
       console.log(`[StoreCard] Viewing: ${store.name}`);
       // TODO: Navigate to store detail
     },
-    {
-      intent: 'VIEW_STORE',
-      context: {
-        storeId: store.id,
-        returnTo: '/(tabs)/stores',
-      },
-    }
+    // {
+    //   intent: 'VIEW_STORE',
+    //   context: {
+    //     storeId: store.id,
+    //     returnTo: '/(tabs)/stores',
+    //   },
+    // }
   );
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     padding: STORES_LAYOUT.STORE_CARD_PADDING,
     marginBottom: STORES_LAYOUT.STORE_CARD_MARGIN_BOTTOM,
     gap: STORES_LAYOUT.STORE_CARD_GAP,
+    borderWidth: 0.05,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -55,6 +56,12 @@ const styles = StyleSheet.create({
     height: STORES_LAYOUT.STORE_IMAGE_SIZE,
     borderRadius: STORES_LAYOUT.STORE_IMAGE_BORDER_RADIUS,
     backgroundColor: BRAND_COLORS.primary.beSua,
+    borderWidth: 0.05,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 1,
   },
   info: {
     flex: 1,

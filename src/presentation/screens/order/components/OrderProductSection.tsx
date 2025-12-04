@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Product } from '../../../../data/mockProducts';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { ORDER_TEXT } from '../OrderConstants';
 import { orderStyles } from '../styles';
 
@@ -37,7 +38,7 @@ export function OrderProductSection({
             style={orderStyles.productAddButton}
             onPress={() => onAddPress(product)}
           >
-            <Text style={orderStyles.productAddText}>+</Text>
+            <AppIcon name="add" size={'xs'} style={orderStyles.productAddText} />
           </TouchableOpacity>
         </View>
       ))}

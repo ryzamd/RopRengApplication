@@ -1,3 +1,4 @@
+import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Product } from '../../../../data/mockProducts';
@@ -43,7 +44,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
             )}
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
-            <Text style={styles.addIcon}>+</Text>
+            <AppIcon name="add" size={'xs'} style={styles.addIcon} />
           </TouchableOpacity>
         </View>
       </View>
@@ -141,8 +142,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addIcon: {
-    fontSize: 20,
     color: BRAND_COLORS.background.default,
-    fontWeight: 'bold',
   },
 });
