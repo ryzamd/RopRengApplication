@@ -5,22 +5,22 @@ import { MORE_LAYOUT } from './MoreLayout';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5', // Màu nền xám nhẹ cho toàn màn hình
+    backgroundColor: BRAND_COLORS.background.paper,
   },
   // Header
   headerContainer: {
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: BRAND_COLORS.primary.xanhBo,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: 'Phudu-Bold',
     fontSize: 18,
-    color: '#333',
+    color: BRAND_COLORS.text.inverse,
   },
 
   // Sections Wrapper
@@ -52,11 +52,13 @@ export const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12, // Bo góc nhẹ icon nền
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: BRAND_COLORS.primary.xanhBo,
+    borderColor: BRAND_COLORS.primary.xanhReu,
+    borderWidth: 2,
   },
   gridLabel: {
     fontFamily: 'SpaceGrotesk-Regular',

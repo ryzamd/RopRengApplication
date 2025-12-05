@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,9 +12,9 @@ import { CategoryScroll } from './components/CategoryScroll';
 import { LoginCard } from './components/LoginCard';
 import { ProductSection } from './components/ProductSection';
 import { PromoBanner } from './components/PromoBanner';
+import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
 import { WELCOME_TEXT } from './WelcomeConstants';
-import { QuickActions } from './components/QuickActions';
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -29,11 +30,17 @@ export default function WelcomeScreen() {
   }, [handleAddToCart]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Sticky Header */}
+    <LinearGradient
+      colors={[
+        BRAND_COLORS.primary.xanhReu,
+        BRAND_COLORS.primary.xanhBo,
+        BRAND_COLORS.primary.beSua,
+        '#FFFFFF'
+      ]}
+      style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View style={styles.greeting}>
-          <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
+          <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon} />
           <Text style={styles.greetingText}>{WELCOME_TEXT.HEADER.GREETING}</Text>
         </View>
         <View style={styles.headerIcons}>
@@ -86,7 +93,7 @@ export default function WelcomeScreen() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -101,19 +108,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: BRAND_COLORS.background.default,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    backgroundColor: 'transparent',
   },
   greeting: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  greetingIcon: {
+    color: BRAND_COLORS.primary.beSua,
+  },
   greetingText: {
     fontSize: 18,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.primary.xanhReu,
+    color: BRAND_COLORS.primary.beSua,
   },
   headerIcons: {
     flexDirection: 'row',

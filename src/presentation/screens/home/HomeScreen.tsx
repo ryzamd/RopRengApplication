@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -40,7 +41,6 @@ export default function HomeScreen() {
   const voucherCount = 17;
   const notificationCount = 2;
 
-  // Refactor: Use the centralized hook
   const handleProductPress = useCallback((product: Product) => {
     handleAddToCart(product);
   }, [handleAddToCart]);
@@ -66,11 +66,17 @@ export default function HomeScreen() {
   const showMiniCart = isAuthenticated && totalItems > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={[
+        BRAND_COLORS.primary.xanhReu,
+        BRAND_COLORS.primary.xanhBo,
+        BRAND_COLORS.primary.beSua,
+        '#FFFFFF'
+      ]}
+      style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        {/* ... Header content unchanged ... */}
         <View style={styles.greeting}>
-          <AppIcon name={HEADER_ICONS.GREETING} size="lg" />
+          <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon}/>
           <Text style={styles.greetingText} numberOfLines={1}>
             {userName}
             {HOME_TEXT.HEADER.GREETING_SUFFIX}
@@ -94,7 +100,6 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* ... Sections unchanged ... */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
           <HomeBrandSelector />
@@ -156,11 +161,10 @@ export default function HomeScreen() {
         onClose={handlePreOrderClose}
         onOrderSuccess={handleOrderSuccess}
       />
-    </View>
+    </LinearGradient>
   );
 }
 
-// ... Styles unchanged ...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -172,9 +176,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: HOME_LAYOUT.HEADER_PADDING_HORIZONTAL,
     paddingVertical: HOME_LAYOUT.HEADER_PADDING_VERTICAL,
-    backgroundColor: BRAND_COLORS.background.default,
-    borderBottomWidth: HOME_LAYOUT.HEADER_BORDER_BOTTOM_WIDTH,
-    borderBottomColor: '#F0F0F0',
+    backgroundColor: 'transparent',
   },
   greeting: {
     flexDirection: 'row',
@@ -182,10 +184,13 @@ const styles = StyleSheet.create({
     gap: HOME_LAYOUT.GREETING_GAP,
     flex: 1,
   },
+  greetingIcon: {
+    color: BRAND_COLORS.primary.beSua,
+  },
   greetingText: {
     fontSize: HOME_LAYOUT.GREETING_TEXT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.primary.xanhReu,
+    color: BRAND_COLORS.primary.beSua,
     flexShrink: 1,
   },
   headerIcons: {
@@ -195,7 +200,7 @@ const styles = StyleSheet.create({
   voucherBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.primary.beSua,
     paddingHorizontal: HOME_LAYOUT.VOUCHER_BADGE_PADDING_HORIZONTAL,
     paddingVertical: HOME_LAYOUT.VOUCHER_BADGE_PADDING_VERTICAL,
     borderRadius: HOME_LAYOUT.VOUCHER_BADGE_BORDER_RADIUS,
@@ -209,12 +214,12 @@ const styles = StyleSheet.create({
   voucherCount: {
     fontSize: HOME_LAYOUT.VOUCHER_BADGE_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.primary.xanhReu,
+    color: BRAND_COLORS.text.primary,
   },
   iconButton: {
     width: HOME_LAYOUT.HEADER_ICON_SIZE,
     height: HOME_LAYOUT.HEADER_ICON_SIZE,
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.primary.beSua,
     borderRadius: HOME_LAYOUT.HEADER_ICON_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: HOME_LAYOUT.SECTION_TITLE_SIZE,
     fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.primary.xanhReu,
+    color: BRAND_COLORS.primary.beSua,
     marginBottom: HOME_LAYOUT.SECTION_TITLE_MARGIN_BOTTOM,
   },
 });
