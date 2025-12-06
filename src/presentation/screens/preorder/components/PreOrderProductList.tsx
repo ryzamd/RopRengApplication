@@ -1,24 +1,19 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAppSelector } from '../../../../utils/hooks';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { PreOrderProductItem } from './PreOrderProductItem';
-import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './PreOrderProductItemEditBottomSheet';
 import { CartItem } from '../../order/OrderInterfaces';
 import { PREORDER_TEXT } from '../PreOrderConstants';
 
 interface PreOrderProductListProps {
   handleAddMore: () => void;
+  onItemPress: (item: CartItem) => void;
 }
-export function PreOrderProductList({ handleAddMore }: PreOrderProductListProps) {
+
+export function PreOrderProductList({ handleAddMore, onItemPress }: PreOrderProductListProps) {
   const cartItems = useAppSelector((state) => state.orderCart.items);
-  const editModalRef = useRef<PreOrderProductItemEditRef>(null);
-  
-  
-  const handleItemPress = (item: CartItem) => {
-    editModalRef.current?.present(item);
-  };
 
   if (cartItems.length === 0) {
     return (
@@ -38,10 +33,12 @@ export function PreOrderProductList({ handleAddMore }: PreOrderProductListProps)
       </View>
      
       {cartItems.map((item) => (
-        <PreOrderProductItem key={item.id} item={item} onPress={handleItemPress} />
+        <PreOrderProductItem
+          key={item.id}
+          item={item}
+          onPress={onItemPress}
+        />
       ))}
-
-      <PreOrderProductItemEditBottomSheet ref={editModalRef} />
     </View>
   );
 }

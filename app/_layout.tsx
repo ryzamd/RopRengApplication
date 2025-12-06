@@ -1,6 +1,8 @@
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Provider } from 'react-redux';
@@ -9,7 +11,7 @@ import { TamaguiProvider } from 'tamagui';
 import { DatabaseProvider } from '../src/infrastructure/db/sqlite/provider';
 import { persistor, store } from '../src/state/store';
 import config from '../tamagui.config';
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,6 +42,7 @@ export default function RootLayout() {
           <TamaguiProvider config={config}>
             <BottomSheetModalProvider>
               <DatabaseProvider>
+                <StatusBar style={Platform.OS === 'ios' ? 'dark' : 'auto'} />
                 <Stack screenOptions={{ headerShown: false }} />
               </DatabaseProvider>
             </BottomSheetModalProvider>

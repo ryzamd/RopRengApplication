@@ -27,7 +27,7 @@ export function CollectionSection({ collections, onCollectionPress }: Collection
           <CollectionCard
             key={collection.id}
             collection={collection}
-            onPress={() => onCollectionPress(collection)} // Gọi callback lên cha
+            onPress={() => onCollectionPress(collection)}
           />
         ))}
       </ScrollView>

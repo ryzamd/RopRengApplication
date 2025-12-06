@@ -4,7 +4,6 @@ export const PREORDER_TEXT = {
   // Header
   TITLE: 'Xác nhận đơn hàng',
   CLEAR_BUTTON: 'Xóa',
-  CLOSE_BUTTON: '✕',
   
   // Clear confirmation dialog
   CONFIRM_CLEAR_TITLE: 'Xác nhận',

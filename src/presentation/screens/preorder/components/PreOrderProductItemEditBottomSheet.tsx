@@ -191,7 +191,9 @@ export const PreOrderProductItemEditBottomSheet = forwardRef<PreOrderProductItem
             </View>
             <View style={styles.toppingContent}>
               <Text style={styles.toppingTitle}>{EDIT_PRODUCT_TEXT.TOPPING_LABEL}</Text>
-              <Text style={styles.toppingHint}>{EDIT_PRODUCT_TEXT.TOPPING_HINT}</Text>
+              <Text style={styles.toppingHint}>
+                {selectedToppings.length > 0  ? selectedToppings.map(t => t.name).join(', ') : EDIT_PRODUCT_TEXT.TOPPING_HINT}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
           </TouchableOpacity>

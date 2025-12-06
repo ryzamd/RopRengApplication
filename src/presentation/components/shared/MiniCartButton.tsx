@@ -11,13 +11,21 @@ interface MiniCartButtonProps {
 export function MiniCartButton({ onPress }: MiniCartButtonProps) {
   const insets = useSafeAreaInsets();
   const { totalItems, totalPrice } = useAppSelector((state) => state.orderCart);
+  
+  let bottomSpacing = 0;
+  
+  try {
+    bottomSpacing = 10;
+  } catch (_) {
+    bottomSpacing = insets.bottom;
+  }
 
   if (totalItems === 0) {
     return null;
   }
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom}]}>
+    <View style={[styles.container, { bottom: bottomSpacing }]}>
       <TouchableOpacity
         style={styles.button}
         onPress={onPress}
@@ -48,7 +56,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   button: {
-    backgroundColor: BRAND_COLORS.background.default,
+    backgroundColor: BRAND_COLORS.background.paper,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

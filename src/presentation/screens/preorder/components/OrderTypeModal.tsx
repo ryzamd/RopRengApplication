@@ -9,6 +9,7 @@ import { ORDER_TYPE_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
 import { OrderType } from '../PreOrderEnums';
 import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderService } from '../PreOrderService';
+import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 
 interface OrderTypeModalProps {
   selectedType: OrderType;
@@ -64,7 +65,7 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
           <View style={styles.header}>
             <Text style={styles.title}>{PREORDER_TEXT.ORDER_TYPE_MODAL_TITLE}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>{PREORDER_TEXT.CLOSE_BUTTON}</Text>
+              <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
             </TouchableOpacity>
           </View>
           

@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
+import { CartItem } from '../order/OrderInterfaces';
 import { PREORDER_TEXT } from './PreOrderConstants';
 import { OrderType, PaymentMethod } from './PreOrderEnums';
 import { PreOrderBottomSheetProps, PreOrderState } from './PreOrderInterfaces';
@@ -20,6 +21,7 @@ import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { PaymentTypeModal } from './components/PaymentTypeModal';
 import { PaymentTypeSelector } from './components/PaymentTypeSelector';
 import { PreOrderFooter } from './components/PreOrderFooter';
+import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './components/PreOrderProductItemEditBottomSheet';
 import { PreOrderProductList } from './components/PreOrderProductList';
 import { PreOrderTotalPrice } from './components/PreOrderTotalPrice';
 
@@ -29,6 +31,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const orderTypeModalRef = useRef<BottomSheetModal>(null);
   const paymentModalRef = useRef<BottomSheetModal>(null);
+  const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
 
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
 
@@ -126,6 +129,10 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     router.push('/(tabs)/order');
   }, [bottomSheetRef]);
 
+  const handleEditProduct = useCallback((item: CartItem) => {
+    editProductModalRef.current?.present(item);
+  }, []);
+
   const renderFooter = useCallback(
     (props: BottomSheetFooterProps) => (
       <BottomSheetFooter {...props} bottomInset={0}>
@@ -158,9 +165,6 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         topInset={insets.top}
         bottomInset={0}
         footerComponent={renderFooter}
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
-        android_keyboardInputMode="adjustResize"
         stackBehavior="push"
       >
         <View style={styles.header}>
@@ -178,7 +182,10 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         <BottomSheetScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <OrderTypeSelector selectedType={preOrderState.orderType} onPress={() => orderTypeModalRef.current?.present()} />
 
-          <PreOrderProductList handleAddMore={handleAddMore} />
+          <PreOrderProductList
+            handleAddMore={handleAddMore}
+            onItemPress={handleEditProduct}
+          />
 
           <PreOrderTotalPrice
             subtotal={totalPrice}
@@ -193,6 +200,8 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
       <OrderTypeModal ref={orderTypeModalRef} selectedType={preOrderState.orderType} onSelectType={handleOrderTypeChange} />
 
       <PaymentTypeModal ref={paymentModalRef} selectedMethod={preOrderState.paymentMethod} onSelectMethod={handlePaymentMethodChange} />
+      
+      <PreOrderProductItemEditBottomSheet ref={editProductModalRef} />
     </>
   );
 }

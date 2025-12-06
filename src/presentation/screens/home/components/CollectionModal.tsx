@@ -45,6 +45,7 @@ export function CollectionModal({ collection, onClose }: CollectionModalProps) {
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
+        enableDynamicSizing={false}
         backdropComponent={renderBackdrop}
         onChange={handleSheetChanges}
         backgroundStyle={styles.background}

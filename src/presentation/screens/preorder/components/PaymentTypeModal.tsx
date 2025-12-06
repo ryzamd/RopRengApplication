@@ -9,6 +9,7 @@ import { PAYMENT_METHOD_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
 import { PaymentMethod } from '../PreOrderEnums';
 import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderService } from '../PreOrderService';
+import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 
 interface PaymentTypeModalProps {
   selectedMethod: PaymentMethod;
@@ -67,7 +68,7 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
           <View style={styles.header}>
             <Text style={styles.title}>{PREORDER_TEXT.PAYMENT_MODAL_TITLE}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>{PREORDER_TEXT.CLOSE_BUTTON}</Text>
+              <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
             </TouchableOpacity>
           </View>
           

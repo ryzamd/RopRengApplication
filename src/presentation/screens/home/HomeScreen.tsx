@@ -19,7 +19,7 @@ import { CollectionModal } from './components/CollectionModal';
 import { CollectionSection } from './components/CollectionSection';
 import { ComboHotSale } from './components/ComboHotSale';
 import { HomeBrandSelector } from './components/HomeBrandSelector';
-import { HomeCategoryScroll } from './components/HomeCategoryScroll';
+import { HomeCategoryScroll } from './components/HomeCategoryGrid';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
 import { HOME_TEXT } from './HomeConstants';
