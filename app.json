@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.theliemteam.ropreng",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Rốp Rẻng cần truy cập vị trí của bạn.",
+        "NSLocationAlwaysUsageDescription": "Rốp Rẻng cần truy cập vị trí của bạn để cập nhật trạng thái giao hàng."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +46,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Rốp Rẻng cần truy cập vị trí của bạn."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

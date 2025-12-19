@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
+import { migrateDeliveryAddresses } from './migrations/002_add_delivery_addresses';
 
 export async function migrateDbIfNeeded(db: SQLite.SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
@@ -18,11 +19,21 @@ export async function migrateDbIfNeeded(db: SQLite.SQLiteDatabase) {
       UNIQUE(user_id, store_id, product_id)
     );
   `);
+
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS todos (
+      id INTEGER PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      done INTEGER NOT NULL DEFAULT 0
+    );
+  `);
   
   // Index for fast queries
   await db.execAsync(`
     CREATE INDEX IF NOT EXISTS idx_cart_user_store ON cart_items(user_id, store_id);
   `);
+
+  await migrateDeliveryAddresses(db);
 }
 
 export function DatabaseProvider({ children }: React.PropsWithChildren) {
