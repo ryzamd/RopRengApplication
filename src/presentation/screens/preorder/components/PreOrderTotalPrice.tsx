@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PreOrderTotalPriceProps } from '../PreOrderInterfaces';
 import { PREORDER_TEXT } from '../PreOrderConstants';
@@ -8,7 +8,12 @@ import { PreOrderService } from '../PreOrderService';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 
-export function PreOrderTotalPrice({subtotal, shippingFee, onPromotionPress}: PreOrderTotalPriceProps) {
+export function PreOrderTotalPrice({
+  subtotal,
+  shippingFee,
+  onPromotionPress,
+  isCalculatingShipping = false,
+}: PreOrderTotalPriceProps) {
   const totalPrice = PreOrderService.calculateTotalPrice(subtotal, shippingFee);
   
   return (
@@ -18,12 +23,18 @@ export function PreOrderTotalPrice({subtotal, shippingFee, onPromotionPress}: Pr
       <View style={styles.content}>
         <View style={styles.row}>
           <Text style={styles.label}>{PREORDER_TEXT.SUBTOTAL_LABEL}</Text>
-          <Text style={styles.value}>{PreOrderService.formatPrice(subtotal)}</Text>
+          <Text style={styles.value}>{PreOrderService.formatCurrency(subtotal)}</Text>
         </View>
         
         <View style={styles.row}>
           <Text style={styles.label}>{PREORDER_TEXT.SHIPPING_FEE_LABEL}</Text>
-          <Text style={styles.value}>{PreOrderService.formatPrice(shippingFee)}</Text>
+          {isCalculatingShipping ? (
+            <ActivityIndicator size="small" color={BRAND_COLORS.primary.xanhReu} />
+          ) : (
+            <Text style={styles.value}>
+              {shippingFee === 0 ? PREORDER_TEXT.FREE : PreOrderService.formatCurrency(shippingFee)}
+            </Text>
+          )}
         </View>
         
         <TouchableOpacity
@@ -39,7 +50,7 @@ export function PreOrderTotalPrice({subtotal, shippingFee, onPromotionPress}: Pr
         
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{PREORDER_TEXT.FINAL_TOTAL_LABEL}</Text>
-          <Text style={styles.totalValue}>{PreOrderService.formatPrice(totalPrice)}</Text>
+          <Text style={styles.totalValue}>{PreOrderService.formatCurrency(totalPrice)}</Text>
         </View>
       </View>
     </View>

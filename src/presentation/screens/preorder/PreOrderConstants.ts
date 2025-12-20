@@ -43,6 +43,12 @@ export const PREORDER_TEXT = {
   
   // Coming Soon
   COMING_SOON_MESSAGE: 'Tính năng đang được phát triển',
+  DELIVERY_ADDRESS_TITLE: 'Địa chỉ giao hàng',
+  ADD_DELIVERY_ADDRESS: 'Thêm địa chỉ giao hàng',
+  EDIT_DELIVERY_ADDRESS: 'Sửa địa chỉ',
+  CALCULATING_SHIPPING: 'Đang tính phí ship...',
+  SHIPPING_FEE_ERROR: 'Không thể tính phí ship',
+  FREE: "Free"
 };
 
 export const ORDER_TYPE_LABELS: Record<OrderType, string> = {

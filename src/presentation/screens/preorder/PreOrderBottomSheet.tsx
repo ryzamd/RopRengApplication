@@ -5,8 +5,13 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DeliveryAddress } from '../../../domain/entities/DeliveryAddress';
+import { PreOrderAPI } from '../../../infrastructure/http/PreOrderAPI';
 import { clearCart } from '../../../state/slices/orderCart';
+import { setDeliveryAddress, setShippingFee } from '../../../state/slices/preorder';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { AddressSearchModal } from '../../components/map/AddressSearchModal';
+import { MapPicker } from '../../components/map/MapPicker';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
@@ -16,6 +21,7 @@ import { OrderType, PaymentMethod } from './PreOrderEnums';
 import { PreOrderBottomSheetProps, PreOrderState } from './PreOrderInterfaces';
 import { PREORDER_LAYOUT } from './PreOrderLayout';
 import { PreOrderService } from './PreOrderService';
+import { DeliveryAddressContainer } from './components/DeliveryAddressContainer';
 import { OrderTypeModal } from './components/OrderTypeModal';
 import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { PaymentTypeModal } from './components/PaymentTypeModal';
@@ -34,12 +40,17 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
 
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
+  const deliveryAddress = useAppSelector((state) => state.persistedReducer.preorder.deliveryAddress);
 
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
     orderType: OrderType.TAKEAWAY,
     paymentMethod: PaymentMethod.CASH,
     shippingFee: 0,
   });
+
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [showAddressSearchModal, setShowAddressSearchModal] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const finalTotal = PreOrderService.calculateTotalPrice(totalPrice, preOrderState.shippingFee);
 
@@ -52,6 +63,44 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
       bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
+
+  const calculateShippingFee = useCallback(async () => {
+    if (!selectedStore || !deliveryAddress) return;
+
+    setIsCalculatingShipping(true);
+    try {
+      const api = PreOrderAPI.getInstance();
+      const response = await api.calculateShipping({
+        lng_store: selectedStore.longitude,
+        lat_store: selectedStore.latitude,
+        lng_user: deliveryAddress.longitude,
+        lat_user: deliveryAddress.latitude,
+        orderType: preOrderState.orderType !== null ? OrderType.DELIVERY : OrderType.TAKEAWAY,
+      });
+
+      setPreOrderState(prev => ({ ...prev, shippingFee: response.shippingFee }));
+      dispatch(setShippingFee(response.shippingFee));
+
+      console.log('[PreOrder] Shipping calculated:', response);
+    } catch (error) {
+      console.error('[PreOrder] Shipping calculation error:', error);
+      Alert.alert('Lỗi', PREORDER_TEXT.SHIPPING_FEE_ERROR);
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  }, [selectedStore, deliveryAddress, preOrderState.orderType, dispatch]);
+  
+  // Recalculate shipping when address or orderType changes
+  useEffect(() => {
+    if (preOrderState.orderType === OrderType.DELIVERY && deliveryAddress && selectedStore) {
+      calculateShippingFee();
+    } else if (preOrderState.orderType === OrderType.TAKEAWAY) {
+      setPreOrderState(prev => ({ ...prev, shippingFee: 0 }));
+      dispatch(setShippingFee(0));
+    }
+  }, [preOrderState.orderType, deliveryAddress, selectedStore, calculateShippingFee, dispatch]);
+
+  
 
   const renderBackdrop = useCallback(
     (props: BottomSheetDefaultBackdropProps) => (
@@ -71,17 +120,22 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
   const handleOrderTypeChange = useCallback(
     (type: OrderType) => {
-      const shippingFee = PreOrderService.calculateShippingFee(type, totalPrice);
-      setPreOrderState((prev) => ({ ...prev, orderType: type, shippingFee }));
+      setPreOrderState((prev) => ({ ...prev, orderType: type }));
       orderTypeModalRef.current?.dismiss();
     },
-    [totalPrice]
+    []
   );
 
   const handlePaymentMethodChange = useCallback((method: PaymentMethod) => {
     setPreOrderState((prev) => ({ ...prev, paymentMethod: method }));
     paymentModalRef.current?.dismiss();
   }, []);
+
+  const handleSelectAddress = useCallback((address: DeliveryAddress) => {
+    dispatch(setDeliveryAddress(address));
+    setShowAddressSearchModal(false);
+    setShowMapPicker(false);
+  }, [dispatch]);
 
   const handleClearCart = useCallback(() => {
     Alert.alert(PREORDER_TEXT.CONFIRM_CLEAR_TITLE, PREORDER_TEXT.CONFIRM_CLEAR_MESSAGE, [
@@ -105,7 +159,13 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   }, []);
 
   const handlePlaceOrder = useCallback(() => {
-    const validation = PreOrderService.validateOrder(totalItems, selectedStore?.id || null, preOrderState.paymentMethod);
+    const validation = PreOrderService.validateOrder(
+      totalItems,
+      selectedStore?.id || null,
+      preOrderState.paymentMethod,
+      preOrderState.orderType,
+      deliveryAddress
+    );
 
     if (!validation.valid) {
       Alert.alert('Lỗi', validation.error);
@@ -122,7 +182,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         },
       },
     ]);
-  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess]);
+  }, [totalItems, selectedStore, preOrderState, deliveryAddress, dispatch, onOrderSuccess]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
@@ -182,6 +242,12 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         <BottomSheetScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <OrderTypeSelector selectedType={preOrderState.orderType} onPress={() => orderTypeModalRef.current?.present()} />
 
+          {/* NEW: Delivery Address Section (animated) */}
+          <DeliveryAddressContainer
+            onEditAddress={() => setShowMapPicker(true)}
+            onSearchAddress={() => setShowAddressSearchModal(true)}
+          />
+
           <PreOrderProductList
             handleAddMore={handleAddMore}
             onItemPress={handleEditProduct}
@@ -191,6 +257,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
             subtotal={totalPrice}
             shippingFee={preOrderState.shippingFee}
             onPromotionPress={handlePromotionPress}
+            isCalculatingShipping={isCalculatingShipping}
           />
 
           <PaymentTypeSelector selectedMethod={preOrderState.paymentMethod} onPress={() => paymentModalRef.current?.present()} />
@@ -202,6 +269,23 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
       <PaymentTypeModal ref={paymentModalRef} selectedMethod={preOrderState.paymentMethod} onSelectMethod={handlePaymentMethodChange} />
       
       <PreOrderProductItemEditBottomSheet ref={editProductModalRef} />
+
+      {/* Address Search Modal */}
+      <AddressSearchModal
+        visible={showAddressSearchModal}
+        onClose={() => setShowAddressSearchModal(false)}
+        onSelectAddress={handleSelectAddress}
+      />
+
+      {/* Map Picker Modal */}
+      {showMapPicker && (
+        <MapPicker
+          initialLatitude={deliveryAddress?.latitude}
+          initialLongitude={deliveryAddress?.longitude}
+          onConfirm={handleSelectAddress}
+          onCancel={() => setShowMapPicker(false)}
+        />
+      )}
     </>
   );
 }

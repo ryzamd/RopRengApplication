@@ -1,15 +1,19 @@
 import { RootState } from '../store';
 
-export const selectCurrentLocation = (state: RootState) => state.location.currentLocation;
+export const selectCurrentLocation = (state: RootState) =>
+  state.persistedReducer.location.currentLocation;
 
-export const selectSelectedAddress = (state: RootState) => state.location.selectedAddress;
+export const selectSelectedAddress = (state: RootState) =>
+  state.persistedReducer.location.selectedAddress;
 
-export const selectDefaultAddress = (state: RootState) => state.location.defaultAddress;
+export const selectDefaultAddress = (state: RootState) =>
+  state.persistedReducer.location.defaultAddress;
 
 export const selectHasLocationPermission = (state: RootState) =>
-  state.location.hasLocationPermission;
+  state.persistedReducer.location.hasLocationPermission;
 
 export const selectIsLoadingLocation = (state: RootState) =>
-  state.location.isLoadingLocation;
+  state.persistedReducer.location.isLoadingLocation;
 
-export const selectLocationError = (state: RootState) => state.location.locationError;
+export const selectLocationError = (state: RootState) =>
+  state.persistedReducer.location.locationError;

@@ -1,20 +1,27 @@
 import { RootState } from '../store';
 
-export const selectPreOrderId = (state: RootState) => state.preorder.preOrderId;
+export const selectPreOrderId = (state: RootState) =>
+  state.persistedReducer.preorder.preOrderId;
 
-export const selectOrderType = (state: RootState) => state.preorder.orderType;
+export const selectOrderType = (state: RootState) =>
+  state.persistedReducer.preorder.orderType;
 
 export const selectIsShippingOrder = (state: RootState) =>
-  state.preorder.orderType === 'Shipping';
+  state.persistedReducer.preorder.orderType === 'Shipping';
 
-export const selectDeliveryAddress = (state: RootState) => state.preorder.deliveryAddress;
+export const selectDeliveryAddress = (state: RootState) =>
+  state.persistedReducer.preorder.deliveryAddress;
 
-export const selectShippingFee = (state: RootState) => state.preorder.shippingFee;
+export const selectShippingFee = (state: RootState) =>
+  state.persistedReducer.preorder.shippingFee;
 
 export const selectPreOrderTotal = (state: RootState) =>
-  state.preorder.totalAmount + state.preorder.shippingFee;
+  state.persistedReducer.preorder.totalAmount + state.persistedReducer.preorder.shippingFee;
 
-export const selectPreOrderItems = (state: RootState) => state.preorder.items;
+export const selectPreOrderItems = (state: RootState) =>
+  state.persistedReducer.preorder.items;
 
 export const selectPreOrderItemCount = (state: RootState) =>
-  state.preorder.items.reduce((sum, item) => sum + item.quantity, 0);
+  state.persistedReducer.preorder.items.reduce(
+    (sum: number, item: { quantity: number }) => sum + item.quantity, 0
+  );

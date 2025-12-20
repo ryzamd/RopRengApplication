@@ -1,36 +1,38 @@
 import { OrderType, PaymentMethod } from './PreOrderEnums';
-import { SHIPPING_FEE_CONFIG } from './PreOrderConstants';
 
 export class PreOrderService {
   /**
-   * Calculate shipping fee based on order type
-   * TODO: Replace with actual API call using store location and user location
+   * Calculate total price (subtotal + shipping)
    */
-  static calculateShippingFee(orderType: OrderType, subtotal: number): number {
-    if (orderType !== OrderType.DELIVERY) {
-      return 0;
-    }
-    
-    // TODO: Implement distance-based calculation using Google Maps API
-    // For now, use flat rate
-    if (subtotal >= SHIPPING_FEE_CONFIG.FREE_SHIPPING_THRESHOLD) {
-      return 0;
-    }
-    
-    return SHIPPING_FEE_CONFIG.FLAT_RATE_VND;
-  }
-
   static calculateTotalPrice(subtotal: number, shippingFee: number): number {
     return subtotal + shippingFee;
   }
 
-  static formatPrice(price: number): string {
-    return `${price.toLocaleString('vi-VN')}đ`;
+  /**
+   * DEPRECATED: Use PreOrderAPI.calculateShipping() instead
+   * 
+   * This was the old client-side calculation.
+   * Now shipping fee comes from backend via AhaMove.
+   */
+  static calculateShippingFee(orderType: OrderType, subtotal: number): number {
+    console.warn('[PreOrderService] calculateShippingFee is deprecated. Use PreOrderAPI.calculateShipping()');
+    
+    if (orderType === OrderType.TAKEAWAY) {
+      return 0;
+    }
+
+    // Fallback mock calculation (should not be used)
+    if (subtotal < 100000) {
+      return 15000;
+    } else if (subtotal < 200000) {
+      return 10000;
+    } else {
+      return 0; // Free shipping over 200k
+    }
   }
 
   /**
-   * Check if payment method is available
-   * TODO: Connect to payment gateway availability API
+   * Validate order before submission
    */
   static isPaymentMethodAvailable(method: PaymentMethod): boolean {
     // only CASH is available now
@@ -38,22 +40,31 @@ export class PreOrderService {
   }
 
   static validateOrder(
-    itemsCount: number,
+    totalItems: number,
     storeId: string | null,
-    paymentMethod: PaymentMethod
+    paymentMethod: PaymentMethod,
+    orderType: OrderType,
+    deliveryAddress?: { latitude: number; longitude: number } | null
   ): { valid: boolean; error?: string } {
-    if (itemsCount === 0) {
-      return { valid: false, error: 'Giỏ hàng trống' };
+    if (totalItems === 0) {
+      return { valid: false, error: 'Giỏ hàng trống. Vui lòng thêm sản phẩm.' };
     }
-    
+
     if (!storeId) {
-      return { valid: false, error: 'Chưa chọn cửa hàng' };
+      return { valid: false, error: 'Vui lòng chọn cửa hàng.' };
     }
-    
-    if (!this.isPaymentMethodAvailable(paymentMethod)) {
-      return { valid: false, error: 'Phương thức thanh toán không khả dụng' };
+
+    if (!paymentMethod) {
+      return { valid: false, error: 'Vui lòng chọn phương thức thanh toán.' };
     }
-    
+
+    // Validate delivery address for DELIVERY orders
+    if (orderType === OrderType.DELIVERY) {
+      if (!deliveryAddress || !deliveryAddress.latitude || !deliveryAddress.longitude) {
+        return { valid: false, error: 'Vui lòng chọn địa chỉ giao hàng.' };
+      }
+    }
+
     return { valid: true };
   }
 
@@ -69,6 +80,12 @@ export class PreOrderService {
         return 'help-circle-outline';
     }
   }
+  /**
+   * Format currency (VND)
+   */
+  static formatCurrency(amount: number): string {
+    return amount.toLocaleString('vi-VN') + 'đ';
+  }
 
   static getPaymentMethodIcon(method: PaymentMethod): string {
     switch (method) {
@@ -81,5 +98,14 @@ export class PreOrderService {
       default:
         return 'help-circle-outline';
     }
+  }
+  /**
+   * Format distance
+   */
+  static formatDistance(km: number): string {
+    if (km < 1) {
+      return `${(km * 1000).toFixed(0)}m`;
+    }
+    return `${km.toFixed(1)}km`;
   }
 }

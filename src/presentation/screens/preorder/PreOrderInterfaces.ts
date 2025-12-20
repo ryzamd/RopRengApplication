@@ -35,6 +35,7 @@ export interface PreOrderTotalPriceProps {
   subtotal: number;
   shippingFee: number;
   onPromotionPress: () => void;
+  isCalculatingShipping?: boolean;
 }
 
 export interface PaymentTypeSelectorProps {

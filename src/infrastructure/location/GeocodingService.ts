@@ -24,7 +24,7 @@ export class GeocodingService {
     return GeocodingService.instance;
   }
 
-  async reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  public async reverseGeocode(latitude: number, longitude: number): Promise<string> {
     try {
       const url = `${this.baseUrl}/reverse.json?key=${this.apiKey}&lat=${latitude}&lng=${longitude}`;
       
