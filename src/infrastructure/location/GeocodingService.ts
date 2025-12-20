@@ -1,81 +1,70 @@
 import { TRACKASIA_CONFIG } from '../../config/trackasia.config';
 
-interface GeocodingResponse {
-  features: {
-    place_name: string;
-    center: [number, number];
-    properties: {
-      address?: string;
-    };
-  }[];
+export interface GeocodingFeature {
+  id: string;
+  place_name: string;
+  center: [number, number];
+  geometry: {
+    type: string;
+    coordinates: [number, number];
+  };
+  properties: {
+    name: string;
+    address?: string;
+  };
 }
 
-export class GeocodingService {
-  private static instance: GeocodingService;
-  private readonly baseUrl = TRACKASIA_CONFIG.BASE_API_URL;
-  private readonly apiKey = TRACKASIA_CONFIG.API_KEY;
+export interface GeocodingResponse {
+  features: GeocodingFeature[];
+}
 
-  private constructor() {}
+class GeocodingService {
+  private apiKey: string;
+  private baseUrl: string;
 
-  static getInstance(): GeocodingService {
-    if (!GeocodingService.instance) {
-      GeocodingService.instance = new GeocodingService();
-    }
-    return GeocodingService.instance;
+  constructor() {
+    this.apiKey = TRACKASIA_CONFIG.API_KEY;
+    this.baseUrl = TRACKASIA_CONFIG.BASE_API_URL;
   }
 
-  public async reverseGeocode(latitude: number, longitude: number): Promise<string> {
-    try {
-      const url = `${this.baseUrl}/reverse.json?key=${this.apiKey}&lat=${latitude}&lng=${longitude}`;
-      
-      const response = await fetch(url);
-      const data: GeocodingResponse = await response.json();
+  async searchAddress(query: string): Promise<GeocodingFeature[]> {
+    if (!query || query.length < 2) return [];
 
-      if (data.features && data.features.length > 0) {
-        return data.features[0].place_name;
+    try {
+      const url = `${this.baseUrl}/autocomplete?text=${encodeURIComponent(query)}&key=${this.apiKey}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
 
-      return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-    } catch (error) {
-      console.error('[GeocodingService] Reverse geocode error:', error);
-      return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-    }
-  }
-
-  async geocode(address: string): Promise<{ latitude: number; longitude: number } | null> {
-    try {
-      const url = `${this.baseUrl}/geocode.json?key=${this.apiKey}&q=${encodeURIComponent(address)}`;
-      
-      const response = await fetch(url);
       const data: GeocodingResponse = await response.json();
-
-      if (data.features && data.features.length > 0) {
-        const [longitude, latitude] = data.features[0].center;
-        return { latitude, longitude };
-      }
-
-      return null;
+      return data.features || [];
     } catch (error) {
-      console.error('[GeocodingService] Geocode error:', error);
-      return null;
-    }
-  }
-
-  async searchAddress(query: string): Promise<{ address: string; latitude: number; longitude: number }[]> {
-    try {
-      const url = `${this.baseUrl}/autocomplete.json?key=${this.apiKey}&q=${encodeURIComponent(query)}`;
-      
-      const response = await fetch(url);
-      const data: GeocodingResponse = await response.json();
-
-      return data.features.map((feature) => ({
-        address: feature.place_name,
-        latitude: feature.center[1],
-        longitude: feature.center[0],
-      }));
-    } catch (error) {
-      console.error('[GeocodingService] Search address error:', error);
+      console.error('Error searching address:', error);
       return [];
     }
   }
+
+  async reverseGeocode(lat: number, lng: number): Promise<GeocodingFeature | null> {
+    try {
+      const url = `${this.baseUrl}/reverse?lat=${lat}&lng=${lng}&key=${this.apiKey}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data: GeocodingResponse = await response.json();
+      if (data.features && data.features.length > 0) {
+        return data.features[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      return null;
+    }
+  }
 }
+
+export const geocodingService = new GeocodingService();

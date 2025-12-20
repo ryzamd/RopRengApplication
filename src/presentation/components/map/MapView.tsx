@@ -1,75 +1,103 @@
-import { Camera, MapView, PointAnnotation, UserLocation, MapViewRef } from '@track-asia/trackasia-react-native';
-import React, { useRef } from 'react';
+import MapboxGL, { CameraRef } from '@track-asia/trackasia-react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TRACKASIA_CONFIG } from '../../../config/trackasia.config';
-import { MAP_CONFIG } from './MapConstants';
-import { MapViewProps } from './MapInterfaces';
-import { MAP_LAYOUT } from './MapLayout';
+import { geocodingService } from '../../../infrastructure/location/GeocodingService';
+import { BRAND_COLORS } from '../../theme/colors';
 
-export function MapViewComponent({
-  latitude,
-  longitude,
-  onRegionChange,
-  showUserLocation = false,
-  zoomLevel = MAP_CONFIG.DEFAULT_ZOOM,
-}: MapViewProps) {
-   const mapRef = useRef<MapViewRef>(null);
+MapboxGL.setAccessToken(TRACKASIA_CONFIG.API_KEY);
 
-  const handleRegionDidChange = async () => {
-    if (onRegionChange && mapRef.current) {
-      const center = await mapRef.current.getCenter();
-      onRegionChange({
-        latitude: center[1],
-        longitude: center[0],
+interface CustomMapViewProps {
+  currentLocation: { lat: number; lng: number } | null;
+  onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
+}
+
+const CustomMapView: React.FC<CustomMapViewProps> = ({ currentLocation, onLocationSelect }) => {
+  const cameraRef = useRef<CameraRef>(null);
+  
+  const [markerCoordinate, setMarkerCoordinate] = useState<[number, number] | null>(null);
+
+  // Sync prop currentLocation vào internal state và di chuyển Camera
+  useEffect(() => {
+    if (currentLocation) {
+      const newCoord: [number, number] = [currentLocation.lng, currentLocation.lat];
+      setMarkerCoordinate(newCoord);
+
+      // Di chuyển camera tới vị trí search được
+      if (cameraRef.current) {
+        cameraRef.current.setCamera({
+          centerCoordinate: newCoord,
+          zoomLevel: 16,
+          animationDuration: 1000,
+        });
+      }
+    }
+  }, [currentLocation]);
+
+  const handlePress = async (event: any) => {
+    const { geometry } = event;
+    const [lng, lat] = geometry.coordinates;
+    
+    setMarkerCoordinate([lng, lat]);
+
+    try {
+      const feature = await geocodingService.reverseGeocode(lat, lng);
+      onLocationSelect({
+        lat,
+        lng,
+        address: feature?.properties?.name || feature?.place_name || 'Vị trí đã chọn',
       });
+    } catch (error) {
+      console.warn('Reverse geocode failed', error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
+      <MapboxGL.MapView
         style={styles.map}
-        mapStyle={TRACKASIA_CONFIG.STYLE_MAP_URL}
-        zoomEnabled={true}
-        scrollEnabled={true}
-        pitchEnabled={false}
+        mapStyle={TRACKASIA_CONFIG.STYLE_URL_FULL}
+        onPress={handlePress}
         rotateEnabled={false}
-        onRegionDidChange={handleRegionDidChange}
+        logoEnabled={false}
+        attributionEnabled={false}
+        surfaceView={true}
       >
-        <Camera
-          zoomLevel={zoomLevel}
-          centerCoordinate={[longitude, latitude]}
-          animationMode="flyTo"
-          animationDuration={1000}
+        <MapboxGL.Camera
+          ref={cameraRef}
+          defaultSettings={{
+            centerCoordinate: TRACKASIA_CONFIG.DEFAULT_CENTER,
+            zoomLevel: TRACKASIA_CONFIG.DEFAULT_ZOOM,
+          }}
         />
 
-        {showUserLocation && (
-          <UserLocation
-            visible={true}
-            showsUserHeadingIndicator={true}
-          />
+        {/* Marker Layer */}
+        {markerCoordinate && (
+          <MapboxGL.PointAnnotation
+            id="selected-location-marker"
+            coordinate={markerCoordinate}
+          >
+            {/* Custom Marker UI */}
+            <View style={styles.markerContainer}>
+              <View style={styles.markerDot} />
+              <View style={styles.markerPin} />
+            </View>
+          </MapboxGL.PointAnnotation>
         )}
 
-        {/* Marker at center */}
-        <PointAnnotation
-          id="delivery-marker"
-          coordinate={[longitude, latitude]}
-        >
-          <View style={styles.markerContainer}>
-            <View style={styles.marker} />
-          </View>
-        </PointAnnotation>
-      </MapView>
+        {/* User Location (Blue dot) */}
+        <MapboxGL.UserLocation visible={true} />
+      </MapboxGL.MapView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    height: MAP_LAYOUT.MAP_HEIGHT,
-    borderRadius: MAP_LAYOUT.MAP_BORDER_RADIUS,
-    overflow: 'hidden',
+    flex: 1,
+    height: '100%',
+    width: '100%',
+    backgroundColor: '#F5F5F5',
   },
   map: {
     flex: 1,
@@ -77,18 +105,32 @@ const styles = StyleSheet.create({
   markerContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: 40,
+    height: 40,
   },
-  marker: {
-    width: MAP_LAYOUT.MARKER_SIZE,
-    height: MAP_LAYOUT.MARKER_SIZE,
-    borderRadius: MAP_LAYOUT.MARKER_SIZE / 2,
-    backgroundColor: '#FF6B6B',
+  markerDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
+    borderColor: 'white',
+    zIndex: 2,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
   },
+  markerPin: {
+    position: 'absolute',
+    bottom: 2, // Căn chỉnh chân pin
+    width: 4,
+    height: 20,
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
+    borderRadius: 2,
+    zIndex: 1,
+  }
 });
+
+export default CustomMapView;

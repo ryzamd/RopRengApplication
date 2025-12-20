@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DeliveryAddress } from '../../../domain/entities/DeliveryAddress';
-import { GeocodingService } from '../../../infrastructure/location/GeocodingService';
+import { GeocodingFeature, geocodingService } from '../../../infrastructure/location/GeocodingService';
 import { BRAND_COLORS } from '../../theme/colors';
 import { AppIcon } from '../shared/AppIcon';
 import { MAP_CONFIG, MAP_TEXT } from './MapConstants';
@@ -19,13 +19,18 @@ export function AddressSearchModal({
 }: AddressSearchModalProps) {
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  
+  // State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Refs for debounce
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const snapPoints = useMemo(() => ['90%'], []);
 
+  // Handle visibility
   useEffect(() => {
     if (visible) {
       bottomSheetRef.current?.present();
@@ -36,13 +41,33 @@ export function AddressSearchModal({
     }
   }, [visible]);
 
-  useEffect(() => {
-    if (searchQuery.length > 2) {
-      // Debounce search
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
+  const performSearch = useCallback(
+    async (query: string) => {
+      setIsSearching(true);
+      try {
+        const results = await geocodingService.searchAddress(query);
+        
+        const mappedResults: SearchResult[] = results
+          .map(mapFeatureToSearchResult)
+          .slice(0, MAP_CONFIG.MAX_SEARCH_RESULTS);
 
+        setSearchResults(mappedResults);
+      } catch (error) {
+        console.error('[AddressSearchModal] Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, []
+  );
+
+  // Handle Search Logic
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.length > 2) {
       searchTimeoutRef.current = setTimeout(() => {
         performSearch(searchQuery);
       }, MAP_CONFIG.AUTOCOMPLETE_DEBOUNCE_MS);
@@ -55,28 +80,38 @@ export function AddressSearchModal({
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, performSearch]);
 
-  const performSearch = async (query: string) => {
-    setIsSearching(true);
-    try {
-      const results = await GeocodingService.getInstance().searchAddress(query);
-      
-      const mappedResults: SearchResult[] = results.map((result) => ({
-        id: Crypto.randomUUID(),
-        title: result.address.split(',')[0] || result.address,
-        subtitle: result.address,
-        latitude: result.latitude,
-        longitude: result.longitude,
-      }));
+  const mapFeatureToSearchResult = (feature: GeocodingFeature): SearchResult => {
+    let coordinates: number[] = [];
 
-      setSearchResults(mappedResults.slice(0, MAP_CONFIG.MAX_SEARCH_RESULTS));
-    } catch (error) {
-      console.error('[AddressSearchModal] Search error:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
+    if (feature.center && Array.isArray(feature.center) && feature.center.length >= 2) {
+      coordinates = feature.center;
+    } else if (
+      feature.geometry &&
+      feature.geometry.coordinates &&
+      Array.isArray(feature.geometry.coordinates) &&
+      feature.geometry.coordinates.length >= 2
+    ) {
+      coordinates = feature.geometry.coordinates;
     }
+
+    // GeoJSON standard: [longitude, latitude]
+    const longitude = coordinates[0] || 0;
+    const latitude = coordinates[1] || 0;
+
+    // Safely extract title
+    const nameFromProp = feature.properties?.name;
+    const nameFromPlace = feature.place_name ? feature.place_name.split(',')[0] : '';
+    const title = nameFromProp || nameFromPlace || 'Không xác định';
+
+    return {
+      id: feature.id || Crypto.randomUUID(),
+      title: title.trim(),
+      subtitle: feature.place_name?.trim() || '',
+      latitude,
+      longitude,
+    };
   };
 
   const handleSelectResult = useCallback(
@@ -118,6 +153,8 @@ export function AddressSearchModal({
     [onClose]
   );
 
+  const handleClose = () => bottomSheetRef.current?.dismiss();
+
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
@@ -142,20 +179,22 @@ export function AddressSearchModal({
             onChangeText={setSearchQuery}
             autoFocus={true}
             returnKeyType="search"
+            placeholderTextColor={BRAND_COLORS.text.secondary}
           />
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => bottomSheetRef.current?.dismiss()}
+            onPress={handleClose}
             activeOpacity={0.7}
           >
             <AppIcon name="close" size={24} color={BRAND_COLORS.text.secondary} />
           </TouchableOpacity>
         </View>
 
-        {/* Results */}
+        {/* Content */}
         <BottomSheetScrollView
           contentContainerStyle={styles.resultsContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {isSearching ? (
             <View style={styles.loadingContainer}>
@@ -219,6 +258,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.text.primary,
+    borderWidth: 1,
+    borderColor: BRAND_COLORS.border.light,
   },
   closeButton: {
     width: 40,
@@ -228,6 +269,7 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     padding: 16,
+    paddingBottom: 40,
   },
   loadingContainer: {
     paddingVertical: 40,
@@ -241,11 +283,12 @@ const styles = StyleSheet.create({
   },
   resultItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center', // Center vertically for better look
     padding: MAP_LAYOUT.RESULT_ITEM_PADDING,
     gap: MAP_LAYOUT.RESULT_ITEM_GAP,
     borderBottomWidth: 1,
     borderBottomColor: BRAND_COLORS.border.light,
+    backgroundColor: BRAND_COLORS.background.default,
   },
   resultTextContainer: {
     flex: 1,
@@ -258,7 +301,7 @@ const styles = StyleSheet.create({
   },
   resultSubtitle: {
     fontSize: MAP_LAYOUT.RESULT_SUBTITLE_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-Regular', // Usually subtitle is Regular
     color: BRAND_COLORS.text.secondary,
     lineHeight: 20,
   },
