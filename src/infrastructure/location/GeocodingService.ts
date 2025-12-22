@@ -10,7 +10,9 @@ export interface GeocodingFeature {
   };
   properties: {
     name: string;
-    address?: string;
+    label?: string;
+    housenumber?: string;
+    street?: string;
   };
 }
 
@@ -27,21 +29,29 @@ class GeocodingService {
     this.baseUrl = TRACKASIA_CONFIG.BASE_API_URL;
   }
 
-  async searchAddress(query: string): Promise<GeocodingFeature[]> {
+  async searchAddress(query: string, focusPoint?: { lat: number; lng: number }): Promise<GeocodingFeature[]> {
     if (!query || query.length < 2) return [];
 
     try {
-      const url = `${this.baseUrl}/autocomplete?text=${encodeURIComponent(query)}&key=${this.apiKey}`;
+      let url = `${this.baseUrl}/autocomplete?text=${encodeURIComponent(query)}&key=${this.apiKey}`;
+      
+      if (focusPoint) {
+        url += `&focus.point.lat=${focusPoint.lat}&focus.point.lon=${focusPoint.lng}`;
+      }
+
+      url += `&boundary.country=VN`;
+
       const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`API Error: ${response.status}`);
       }
 
       const data: GeocodingResponse = await response.json();
       return data.features || [];
+
     } catch (error) {
-      console.error('Error searching address:', error);
+      console.error('GeocodingService search error:', error);
       return [];
     }
   }
@@ -51,9 +61,7 @@ class GeocodingService {
       const url = `${this.baseUrl}/reverse?lat=${lat}&lng=${lng}&key=${this.apiKey}`;
       const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Reverse geocoding failed');
 
       const data: GeocodingResponse = await response.json();
       if (data.features && data.features.length > 0) {
@@ -61,7 +69,7 @@ class GeocodingService {
       }
       return null;
     } catch (error) {
-      console.error('Error reverse geocoding:', error);
+      console.error('GeocodingService reverse error:', error);
       return null;
     }
   }

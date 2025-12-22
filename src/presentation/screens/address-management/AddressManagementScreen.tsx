@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TRACKASIA_CONFIG } from '../../../config/trackasia.config';
 import { MapSearchBar } from '../../components/map/MapSearchBar';
 import CustomMapView from '../../components/map/MapView';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -17,18 +18,25 @@ export default function AddressManagementScreen() {
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
 
   const handleSearchSelect = useCallback((location: LocationData) => {
+    console.log('Search selected:', location);
     setSelectedLocation(location);
   }, []);
 
   const handleMapLocationSelect = useCallback((location: LocationData) => {
+    console.log('Map tap selected:', location);
     setSelectedLocation(location);
   }, []);
 
   const handleConfirmAddress = () => {
     if (!selectedLocation) return;
     
-    console.log('Confirmed Address:', selectedLocation);
-    // Logic lưu địa chỉ hoặc back về màn trước
+    // Validation cuối cùng trước khi log
+    if (!selectedLocation.address) {
+        console.warn("Address is empty, retrying reverse geocode logic if needed...");
+        // Ở đây có thể gọi lại API 1 lần nữa nếu cần thiết, nhưng với code mới thì hiếm khi xảy ra
+    }
+
+    console.log('Confirmed Address Payload:', JSON.stringify(selectedLocation));
     // router.back();
   };
 
@@ -36,7 +44,6 @@ export default function AddressManagementScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Map Layer */}
       <View style={styles.mapContainer}>
         <CustomMapView
           currentLocation={selectedLocation}
@@ -44,13 +51,12 @@ export default function AddressManagementScreen() {
         />
       </View>
 
-      {/* Search Layer */}
       <MapSearchBar
         onLocationSelect={handleSearchSelect}
         initialAddress={selectedLocation?.address}
+        currentRegion={selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : { lat: TRACKASIA_CONFIG.DEFAULT_CENTER[1], lng: TRACKASIA_CONFIG.DEFAULT_CENTER[0] }}
       />
 
-      {/* Footer Layer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.addressInfo}>
           <Text style={styles.label}>Vị trí đã chọn:</Text>
@@ -62,10 +68,10 @@ export default function AddressManagementScreen() {
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            !selectedLocation && styles.disabledButton
+            (!selectedLocation || !selectedLocation.address) && styles.disabledButton
           ]}
           onPress={handleConfirmAddress}
-          disabled={!selectedLocation}
+          disabled={!selectedLocation || !selectedLocation.address}
         >
           <Text style={styles.confirmButtonText}>Xác nhận địa chỉ này</Text>
         </TouchableOpacity>
