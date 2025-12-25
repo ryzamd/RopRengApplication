@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { IAddressSuggestion } from '../../../domain/models/LocationModel';
 
 interface MapSearchBarProps {
@@ -20,6 +20,7 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
   initialValue
 }) => {
   const [query, setQuery] = React.useState(initialValue || '');
+  const [isFocused, setIsFocused] = React.useState(false);
 
   React.useEffect(() => {
     if (initialValue) setQuery(initialValue);
@@ -40,6 +41,11 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
           style={styles.input}
           placeholder={placeholder}
           value={query}
+          onFocus={() => {
+            setIsFocused(true);
+            if (query.length >= 2) onSearch(query);
+          }}
+          onBlur={() => setIsFocused(false)}
           onChangeText={(text) => {
             setQuery(text);
             onSearch(text);
@@ -49,7 +55,7 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
         {isLoading && <ActivityIndicator size="small" color={'#FF6600'} style={styles.loader} />}
       </View>
 
-      {suggestions.length > 0 && (
+      {suggestions.length > 0 && isFocused && (
         <View style={styles.resultsContainer}>
           <FlatList
             data={suggestions}
@@ -78,10 +84,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: 50,
-    left: 16,
+    left: 64,
     right: 16,
     zIndex: 10,
-  } as ViewStyle,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -94,19 +100,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
-  } as ViewStyle,
-  iconContainer: { marginRight: 8 } as ViewStyle,
-  input: { flex: 1, fontSize: 16, color: '#333' } as TextStyle,
-  loader: { marginLeft: 8 } as ViewStyle,
+  },
+  iconContainer: { marginRight: 8 },
+  input: { flex: 1, fontSize: 16, color: '#333' },
+  loader: { marginLeft: 8 },
   resultsContainer: {
     marginTop: 8,
     backgroundColor: '#fff',
     borderRadius: 8,
     maxHeight: 250,
     elevation: 4,
-  } as ViewStyle,
-  item: { padding: 12 } as ViewStyle,
-  mainText: { fontSize: 14, fontWeight: '600', color: '#000' } as TextStyle,
-  subText: { fontSize: 12, color: '#666', marginTop: 2 } as TextStyle,
-  separator: { height: 1, backgroundColor: '#eee', marginHorizontal: 12 } as ViewStyle,
+  },
+  item: { padding: 12 },
+  mainText: { fontSize: 14, fontWeight: '600', color: '#000' },
+  subText: { fontSize: 12, color: '#666', marginTop: 2 },
+  separator: { height: 1, backgroundColor: '#eee', marginHorizontal: 12 },
 });

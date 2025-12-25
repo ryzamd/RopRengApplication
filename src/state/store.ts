@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import auth from './slices/auth';
+import deliveryReducer from './slices/delivery';
 import orderCart from './slices/orderCart';
 
 // Persist config for auth slice only
@@ -17,6 +18,7 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     orderCart,
+    delivery: deliveryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

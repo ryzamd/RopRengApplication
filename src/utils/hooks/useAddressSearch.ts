@@ -1,9 +1,9 @@
-import * as Crypto from 'expo-crypto';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { AppError } from '../../core/errors/AppErrors';
+import * as Crypto from 'expo-crypto';
 import { IAddressSuggestion } from '../../domain/models/LocationModel';
 import { GoongGeocodingRepository } from '../../infrastructure/repositories/GoongGeocodingRepository';
+import { AppError } from '../../core/errors/AppErrors';
 
 const repository = new GoongGeocodingRepository();
 
@@ -13,14 +13,13 @@ export const useAddressSearch = () => {
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionToken = useRef<string>("");
 
-  const refreshSessionToken = () => {
+  const refreshSessionToken = useCallback(() => {
     sessionToken.current = Crypto.randomUUID();
-  };
+  }, []);
 
-  // Init token khi mount
   useEffect(() => {
     refreshSessionToken();
-  }, []);
+  }, [refreshSessionToken]);
 
   const onSearch = useCallback((text: string) => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -32,11 +31,11 @@ export const useAddressSearch = () => {
 
     setIsLoading(true);
     
-    // Debounce 500ms
     debounceTimeout.current = setTimeout(async () => {
       try {
         const results = await repository.searchAddress(text, sessionToken.current);
         setSuggestions(results);
+        
       } catch (error: any) {
         setSuggestions([]);
         if (error instanceof AppError && error.code === 'QUOTA_EXCEEDED') {
@@ -48,10 +47,8 @@ export const useAddressSearch = () => {
     }, 500);
   }, []);
 
-  // Gọi hàm này khi user chọn 1 item từ list -> Reset token cho phiên mới
   const onSelectAddress = useCallback((item: IAddressSuggestion) => {
     setSuggestions([]);
-    refreshSessionToken();
     return item;
   }, []);
 
@@ -60,5 +57,7 @@ export const useAddressSearch = () => {
     isLoading,
     onSearch,
     onSelectAddress,
+    sessionToken: sessionToken.current,
+    refreshSessionToken
   };
 };

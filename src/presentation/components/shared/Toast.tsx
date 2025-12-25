@@ -1,4 +1,3 @@
-// src/presentation/components/shared/Toast.tsx
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text } from 'react-native';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -16,7 +15,6 @@ export function Toast({ message, duration = 2000, onHide }: ToastProps) {
   const translateY = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    // Fade in
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -30,7 +28,6 @@ export function Toast({ message, duration = 2000, onHide }: ToastProps) {
       }),
     ]).start();
 
-    // Auto hide
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(opacity, {
