@@ -15,8 +15,10 @@ interface GoongMapViewProps extends ViewProps {
   children?: React.ReactNode;
 }
 
+const DEFAULT_CENTER: [number, number] = [106.6297, 10.8231];
+
 export const GoongMapView: React.FC<GoongMapViewProps> = ({
-  centerCoordinate = [105.804817, 21.028511],
+  centerCoordinate = DEFAULT_CENTER,
   zoomLevel = 14,
   onMapReady,
   onRegionDidChange,
@@ -25,6 +27,7 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({
   ...props
 }) => {
   const styleUrl = `${GOONG_CONFIG.STYLE_URL}?api_key=${GOONG_CONFIG.MAP_TILES_KEY}`;
+  const hasChildren = React.Children.count(children) > 0;
 
   return (
     <View style={[styles.container, style]} {...props}>
@@ -36,12 +39,14 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({
         onDidFinishLoadingMap={onMapReady}
         onRegionDidChange={onRegionDidChange}
       >
-        <Camera
-          zoomLevel={zoomLevel}
-          centerCoordinate={centerCoordinate}
-          animationMode={'flyTo'}
-          animationDuration={500}
-        />
+        {!hasChildren && (
+          <Camera
+            zoomLevel={zoomLevel}
+            centerCoordinate={centerCoordinate}
+            animationMode={'flyTo'}
+            animationDuration={500}
+          />
+        )}
         {children}
       </MapView>
     </View>

@@ -1,49 +1,57 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../state/store';
+import { AppIcon } from '../../../components/shared/AppIcon';
+import { BRAND_COLORS } from '../../../theme/colors';
 import { OrderType } from '../PreOrderEnums';
 
 interface PreOrderAddressCardProps {
   orderType: OrderType;
+  onNavigateToMap: () => void;
 }
 
-export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({ orderType }) => {
-  const router = useRouter();
+export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({orderType, onNavigateToMap}) => {
   const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
 
-  const handlePress = () => {
-    router.push('/address-management');
+  if (orderType !== OrderType.DELIVERY) return null;
+
+  const getShortName = (fullAddress: string): string => {
+    const parts = fullAddress.split(',');
+    return parts[0]?.trim() || fullAddress;
   };
 
-  if (orderType !== OrderType.DELIVERY) return null;
+  const hasAddress = !!deliveryAddress?.addressString;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Giao tới</Text>
-        <TouchableOpacity onPress={handlePress}>
-          <Text style={styles.actionText}>Thay đổi</Text>
+        <Text style={styles.headerTitle}>Giao tới</Text>
+        <TouchableOpacity onPress={onNavigateToMap} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.changeText}>Thay đổi</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
         style={styles.card}
-        onPress={handlePress}
+        onPress={onNavigateToMap}
         activeOpacity={0.7}
       >
-        <View style={styles.iconBox}>
-           <Text style={{fontSize: 20}}>📍</Text>
+        <View style={[styles.iconContainer, hasAddress && styles.iconContainerActive]}>
+          <AppIcon
+            name="location"
+            size={20}
+            color={hasAddress ? BRAND_COLORS.primary.xanhReu : '#999999'} 
+          />
         </View>
 
-        <View style={styles.contentBox}>
-          {deliveryAddress ? (
+        <View style={styles.contentContainer}>
+          {hasAddress ? (
             <>
-              <Text style={styles.addressTitle} numberOfLines={1}>
-                {deliveryAddress.addressString.split(',')[0]}
+              <Text style={styles.addressName} numberOfLines={1}>
+                {getShortName(deliveryAddress.addressString)}
               </Text>
-              <Text style={styles.addressSub} numberOfLines={1}>
+              <Text style={styles.addressFull} numberOfLines={1}>
                 {deliveryAddress.addressString}
               </Text>
             </>
@@ -51,8 +59,10 @@ export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({ orderT
             <Text style={styles.placeholder}>Chọn địa chỉ giao hàng</Text>
           )}
         </View>
-        
-        <Text style={styles.arrow}>{'>'}</Text>
+
+        <View style={styles.arrowContainer}>
+          <AppIcon name="chevron-forward" size={20} color="#CCCCCC" />
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -60,68 +70,71 @@ export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({ orderT
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
-    paddingHorizontal: 16,
+    gap: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
   },
-  title: {
+  headerTitle: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '600',
+    color: '#666666',
   },
-  actionText: {
-    color: '#FF6600',
-    fontWeight: '600',
+  changeText: {
     fontSize: 14,
+    fontWeight: '600',
+    color: BRAND_COLORS.secondary.camNhat,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#F0F0F0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 0.5,
   },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFF5EB',
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  contentBox: {
-    flex: 1,
+  iconContainerActive: {
+    backgroundColor: '#E8F5E9',
   },
-  addressTitle: {
+  contentContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  addressName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
+    color: '#1A1A1A',
     marginBottom: 2,
   },
-  addressSub: {
+  addressFull: {
     fontSize: 13,
-    color: '#888',
+    color: '#888888',
+    lineHeight: 18,
   },
   placeholder: {
     fontSize: 15,
-    color: '#999',
+    color: '#999999',
     fontStyle: 'italic',
   },
-  arrow: {
-    fontSize: 18,
-    color: '#CCC',
-    marginLeft: 8,
+  arrowContainer: {
+    padding: 4,
   },
 });
