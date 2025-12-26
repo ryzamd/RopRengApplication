@@ -43,7 +43,19 @@ export default function RootLayout() {
             <BottomSheetModalProvider>
               <DatabaseProvider>
                 <StatusBar style={Platform.OS === 'ios' ? 'dark' : 'auto'} />
-                <Stack screenOptions={{ headerShown: false }} />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="address-management"
+                    options={{
+                      headerShown: false,
+                      presentation: 'fullScreenModal',
+                      animation: 'slide_from_bottom'
+                    }}
+                  />
+                </Stack>
               </DatabaseProvider>
             </BottomSheetModalProvider>
           </TamaguiProvider>

@@ -37,11 +37,7 @@ export class PreOrderService {
     return method === PaymentMethod.CASH;
   }
 
-  static validateOrder(
-    itemsCount: number,
-    storeId: string | null,
-    paymentMethod: PaymentMethod
-  ): { valid: boolean; error?: string } {
+  static validateOrder(itemsCount: number, storeId: string | null, paymentMethod: PaymentMethod): { valid: boolean; error?: string } {
     if (itemsCount === 0) {
       return { valid: false, error: 'Giỏ hàng trống' };
     }

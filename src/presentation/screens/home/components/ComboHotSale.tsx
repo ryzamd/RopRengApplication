@@ -4,7 +4,7 @@ import { useAddToCart } from '../../../../utils/hooks/useAddToCart';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { HOME_TEXT } from '../HomeConstants';
 import { ComboType } from '../HomeEnums';
-import { Combo, ComboProduct } from '../HomeInterfaces';
+import { Combo } from '../HomeInterfaces';
 import { HOME_LAYOUT } from '../HomeLayout';
 
 interface ComboHotSaleProps {

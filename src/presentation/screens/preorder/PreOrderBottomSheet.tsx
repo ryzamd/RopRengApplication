@@ -1,13 +1,16 @@
+import { RootState } from '@/src/state/store';
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { BottomSheetFooterProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetFooter/types';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import { clearCart } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
+import { Toast } from '../../components/shared/Toast';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { CartItem } from '../order/OrderInterfaces';
@@ -20,6 +23,7 @@ import { OrderTypeModal } from './components/OrderTypeModal';
 import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { PaymentTypeModal } from './components/PaymentTypeModal';
 import { PaymentTypeSelector } from './components/PaymentTypeSelector';
+import { PreOrderAddressCard } from './components/PreOrderAddressCard';
 import { PreOrderFooter } from './components/PreOrderFooter';
 import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './components/PreOrderProductItemEditBottomSheet';
 import { PreOrderProductList } from './components/PreOrderProductList';
@@ -32,26 +36,47 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const orderTypeModalRef = useRef<BottomSheetModal>(null);
   const paymentModalRef = useRef<BottomSheetModal>(null);
   const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
-
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
-
+  const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+  
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
     orderType: OrderType.TAKEAWAY,
     paymentMethod: PaymentMethod.CASH,
     shippingFee: 0,
   });
 
+  const [isNavigatingToAddress, setIsNavigatingToAddress] = useState(false);
   const finalTotal = PreOrderService.calculateTotalPrice(totalPrice, preOrderState.shippingFee);
-
   const snapPoints = useMemo(() => ['90%'], []);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && !isNavigatingToAddress) {
       bottomSheetRef.current?.present();
-    } else {
+    } else if (!visible) {
       bottomSheetRef.current?.dismiss();
     }
-  }, [visible]);
+  }, [visible, isNavigatingToAddress]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isNavigatingToAddress && visible) {
+        const timer = setTimeout(() => {
+          bottomSheetRef.current?.present();
+          setIsNavigatingToAddress(false);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }, [isNavigatingToAddress, visible])
+  );
+
+  const handleNavigateToAddress = useCallback(() => {
+    setIsNavigatingToAddress(true);
+    bottomSheetRef.current?.dismiss();
+    
+    setTimeout(() => {
+      router.push('/address-management');
+    }, 200);
+  }, []);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetDefaultBackdropProps) => (
@@ -62,11 +87,11 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
   const handleSheetChanges = useCallback(
     (index: number) => {
-      if (index === -1) {
+      if (index === -1  && !isNavigatingToAddress) {
         onClose();
       }
     },
-    [onClose]
+    [onClose, isNavigatingToAddress]
   );
 
   const handleOrderTypeChange = useCallback(
@@ -105,6 +130,11 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   }, []);
 
   const handlePlaceOrder = useCallback(() => {
+    if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
+      Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
+      return;
+    }
+    
     const validation = PreOrderService.validateOrder(totalItems, selectedStore?.id || null, preOrderState.paymentMethod);
 
     if (!validation.valid) {
@@ -122,12 +152,12 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         },
       },
     ]);
-  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess]);
+  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
     router.push('/(tabs)/order');
-  }, [bottomSheetRef]);
+  }, []);
 
   const handleEditProduct = useCallback((item: CartItem) => {
     editProductModalRef.current?.present(item);
@@ -180,7 +210,15 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         </View>
 
         <BottomSheetScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-          <OrderTypeSelector selectedType={preOrderState.orderType} onPress={() => orderTypeModalRef.current?.present()} />
+          <OrderTypeSelector
+            selectedType={preOrderState.orderType}
+            onPress={() => orderTypeModalRef.current?.present()}
+          />
+
+          <PreOrderAddressCard
+            orderType={preOrderState.orderType}
+            onNavigateToMap={handleNavigateToAddress}
+          />
 
           <PreOrderProductList
             handleAddMore={handleAddMore}
