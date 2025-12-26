@@ -3,7 +3,7 @@ import { useAddressSearch } from '@/src/utils/hooks/useAddressSearch';
 import { Camera, CameraRef, UserLocation } from '@maplibre/maplibre-react-native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { IAddressSuggestion } from '../../../domain/models/LocationModel';
 import { GoongGeocodingRepository } from '../../../infrastructure/repositories/GoongGeocodingRepository';
@@ -18,20 +18,54 @@ const repo = new GoongGeocodingRepository();
 const locationService = new LocationService();
 
 const DEFAULT_COORDS: [number, number] = [106.6297, 10.8231];
+const DEBOUNCE_MS = 400;
+const MIN_DISTANCE_THRESHOLD = 0.0001;
+
+type MapLoadingState = 'loading' | 'ready' | 'error';
+
+interface GeocodingState {
+  isLoading: boolean;
+  error: string | null;
+}
 
 export default function AddressManagementScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const cameraRef = useRef<CameraRef>(null);
-  
+
   const savedAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
-  
+
   const { suggestions, isLoading, onSearch, onSelectAddress, sessionToken, refreshSessionToken } = useAddressSearch();
+
   const [selectedLocation, setSelectedLocation] = useState<ILocationCoordinate | null>(null);
   const [addressString, setAddressString] = useState('');
-  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [searchBarValue, setSearchBarValue] = useState('');
   const [initialRegion, setInitialRegion] = useState<[number, number] | undefined>(undefined);
-  const [isMapReady, setIsMapReady] = useState(false);
+  const [mapState, setMapState] = useState<MapLoadingState>('loading');
+  const [geocodingState, setGeocodingState] = useState<GeocodingState>({
+    isLoading: false,
+    error: null,
+  });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef<number>(0);
+
+  const selectedLocationRef = useRef<ILocationCoordinate | null>(null);
+  useEffect(() => {
+    selectedLocationRef.current = selectedLocation;
+  }, [selectedLocation]);
+
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const initLocation = async () => {
@@ -41,14 +75,17 @@ export default function AddressManagementScreen() {
             savedAddress.coordinates.longitude,
             savedAddress.coordinates.latitude,
           ];
+
           console.log('[AddressManagement] INIT from Redux:', {
             lat: savedAddress.coordinates.latitude,
             lng: savedAddress.coordinates.longitude,
             address: savedAddress.addressString,
           });
+
           setInitialRegion(coords);
           setSelectedLocation(savedAddress.coordinates);
           setAddressString(savedAddress.addressString);
+          setSearchBarValue(savedAddress.addressString);
           return;
         }
 
@@ -62,12 +99,21 @@ export default function AddressManagementScreen() {
           const coords: [number, number] = [loc.longitude, loc.latitude];
           setInitialRegion(coords);
           setSelectedLocation(loc);
-          
-          setIsReverseGeocoding(true);
-          const address = await repo.reverseGeocode(loc);
-          console.log('[AddressManagement] Reverse geocode result:', address);
-          setAddressString(address);
-          setIsReverseGeocoding(false);
+
+          setGeocodingState({ isLoading: true, error: null });
+
+          try {
+            
+            const address = await repo.reverseGeocode(loc);
+            console.log('[AddressManagement] Reverse geocode result:', address);
+            setAddressString(address);
+            setSearchBarValue(address);
+            setGeocodingState({ isLoading: false, error: null });
+
+          } catch (error) {
+            console.log('[AddressManagement] Reverse geocode failed:', error);
+            setGeocodingState({ isLoading: false, error: 'Không thể xác định địa chỉ' });
+          }
         } else {
           console.log('[AddressManagement] INIT fallback to HCM (no permission)');
           setInitialRegion(DEFAULT_COORDS);
@@ -83,13 +129,16 @@ export default function AddressManagementScreen() {
 
   const handleSelectSuggestion = async (item: IAddressSuggestion) => {
     try {
+      setSearchBarValue(item.description);
       setAddressString(item.description);
       onSelectAddress(item);
+      setGeocodingState({ isLoading: true, error: null });
 
       const coords = await repo.getPlaceDetail(item.place_id, sessionToken);
       refreshSessionToken();
 
       setSelectedLocation(coords);
+      setGeocodingState({ isLoading: false, error: null });
 
       cameraRef.current?.setCamera({
         centerCoordinate: [coords.longitude, coords.latitude],
@@ -97,51 +146,90 @@ export default function AddressManagementScreen() {
         animationDuration: 1000,
       });
     } catch (error) {
-      console.error('Select suggestion error:', error);
+      console.error('[AddressManagement] Select suggestion error:', error);
+      setGeocodingState({ isLoading: false, error: 'Không thể lấy thông tin địa điểm' });
     }
   };
 
-  const onRegionDidChange = useCallback(
-    async (feature: any) => {
-      if (!isMapReady) return;
-      
-      const [lng, lat] = feature.geometry.coordinates;
+  const onRegionDidChange = useCallback((feature: any) => {
+    const { isUserInteraction = false, animated = false } = feature.properties || {};
+    
+    if (!isUserInteraction || animated) {
+      console.log('[AddressManagement] Skipping - programmatic move:', { isUserInteraction, animated });
+      return;
+    }
 
-      if (selectedLocation) {
-        const dist = Math.sqrt(
-          Math.pow(lng - selectedLocation.longitude, 2) + Math.pow(lat - selectedLocation.latitude, 2)
-        );
-        if (dist < 0.0001) return;
-      }
+    const [lng, lat] = feature.geometry.coordinates;
 
-      setIsReverseGeocoding(true);
+    const currentLocation = selectedLocationRef.current;
+    if (currentLocation) {
+      const dist = Math.sqrt(
+        Math.pow(lng - currentLocation.longitude, 2) + Math.pow(lat - currentLocation.latitude, 2)
+      );
+      if (dist < MIN_DISTANCE_THRESHOLD) return;
+    }
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+
+      const currentRequestId = ++requestIdRef.current;
+
+      setGeocodingState({ isLoading: true, error: null });
 
       try {
         const newAddress = await repo.reverseGeocode({ latitude: lat, longitude: lng });
+
+        if (currentRequestId !== requestIdRef.current) {
+          console.log('[AddressManagement] Stale response ignored:', currentRequestId);
+          return;
+        }
+
         setAddressString(newAddress);
         setSelectedLocation({ latitude: lat, longitude: lng });
-      } finally {
-        setIsReverseGeocoding(false);
+        setGeocodingState({ isLoading: false, error: null });
+
+      } catch (error: any) {
+        if (error?.name === 'AbortError') {
+          console.log('[AddressManagement] Request aborted');
+          return;
+        }
+
+        if (currentRequestId !== requestIdRef.current) return;
+
+        console.error('[AddressManagement] Reverse geocode error:', error);
+        setGeocodingState({ isLoading: false, error: 'Không thể xác định địa chỉ' });
       }
-    },
-    [selectedLocation, isMapReady]
-  );
+    }, DEBOUNCE_MS);
+  }, []);
 
   const onGoToMyLocation = async () => {
     try {
       const location = await locationService.getCurrentPosition();
+      
       cameraRef.current?.setCamera({
         centerCoordinate: [location.longitude, location.latitude],
         zoomLevel: 15,
         animationDuration: 1000,
       });
     } catch (error) {
-      console.log('Error getting location:', error);
+      console.log('[AddressManagement] Error getting location:', error);
+      setGeocodingState((prev) => ({ ...prev, error: 'Không thể lấy vị trí hiện tại' }));
     }
   };
 
   const onConfirm = () => {
     if (!selectedLocation) return;
+
+    console.log('[AddressManagement] CONFIRM button pressed:', {
+      lat: selectedLocation.latitude,
+      lng: selectedLocation.longitude,
+      address: addressString,
+    });
 
     dispatch(
       setDeliveryAddress({
@@ -158,20 +246,45 @@ export default function AddressManagementScreen() {
   };
 
   const handleMapReady = () => {
-    setIsMapReady(true);
+    console.log('[AddressManagement] Map ready');
+    setMapState('ready');
+    
+    // Set initial camera position imperatively instead of defaultSettings
+    // This prevents any "snap back" behavior from prop-based reactivity
+    if (initialRegion) {
+      cameraRef.current?.setCamera({
+        centerCoordinate: initialRegion,
+        zoomLevel: 15,
+        animationDuration: 0, // No animation on init
+      });
+    }
   };
+
+  const clearError = () => {
+    setGeocodingState((prev) => ({ ...prev, error: null }));
+  };
+
+  const isConfirmDisabled = !selectedLocation || geocodingState.isLoading;
+  const showMapLoading = mapState === 'loading' || !initialRegion;
 
   return (
     <View style={styles.container}>
+      {showMapLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
+          <Text style={styles.loadingText}>Đang tải bản đồ...</Text>
+        </View>
+      )}
+
       {initialRegion && (
         <GoongMapView
-          style={styles.map}
+          style={[styles.map, showMapLoading && styles.hiddenMap]}
           onRegionDidChange={onRegionDidChange}
           onMapReady={handleMapReady}
         >
           <Camera
             ref={cameraRef}
-            defaultSettings={{ centerCoordinate: initialRegion, zoomLevel: 15 }}
+            // No defaultSettings - camera position controlled via setCamera() only
           />
           <UserLocation visible={true} />
         </GoongMapView>
@@ -193,27 +306,43 @@ export default function AddressManagementScreen() {
         isLoading={isLoading}
         onSearch={onSearch}
         onSelectSuggestion={handleSelectSuggestion}
-        initialValue={addressString}
+        initialValue={searchBarValue}
       />
 
       <TouchableOpacity style={styles.myLocationBtn} onPress={onGoToMyLocation} activeOpacity={0.8}>
-        <AppIcon name="location" size={22} color={BRAND_COLORS.primary.xanhReu} />
+        <AppIcon name="location-sharp" size={22} color={BRAND_COLORS.primary.xanhReu} />
       </TouchableOpacity>
+
+      {geocodingState.error && (
+        <TouchableOpacity style={styles.errorToast} onPress={clearError} activeOpacity={0.9}>
+          <Text style={styles.errorText}>{geocodingState.error}</Text>
+          <Text style={styles.errorDismiss}>Nhấn để đóng</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.footer}>
         <View style={styles.addressPreview}>
           <Text style={styles.label}>ĐỊA CHỈ GIAO HÀNG</Text>
-          <Text style={styles.addressText} numberOfLines={2}>
-            {isReverseGeocoding
-              ? 'Đang xác định vị trí...'
-              : addressString || 'Di chuyển bản đồ để chọn địa chỉ'}
-          </Text>
+          <View style={styles.addressRow}>
+            <Text style={styles.addressText} numberOfLines={2}>
+              {geocodingState.isLoading
+                ? 'Đang xác định vị trí...'
+                : addressString || 'Di chuyển bản đồ để chọn địa chỉ'}
+            </Text>
+            {geocodingState.isLoading && (
+              <ActivityIndicator
+                size="small"
+                color={BRAND_COLORS.primary.xanhReu}
+                style={styles.addressLoader}
+              />
+            )}
+          </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.btnConfirm, (!selectedLocation || isReverseGeocoding) && styles.btnDisabled]}
+          style={[styles.btnConfirm, isConfirmDisabled && styles.btnDisabled]}
           onPress={onConfirm}
-          disabled={!selectedLocation || isReverseGeocoding}
+          disabled={isConfirmDisabled}
           activeOpacity={0.8}
         >
           <Text style={styles.btnText}>Xác nhận địa chỉ này</Text>
@@ -227,6 +356,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666666',
+  },
+  hiddenMap: {
+    opacity: 0,
   },
   map: {
     flex: 1,
@@ -252,8 +396,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginLeft: -16,
-    marginTop: -48,
+    marginLeft: -22,
+    marginTop: -54,
     zIndex: 5,
     alignItems: 'center',
   },
@@ -304,11 +448,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 6,
   },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   addressText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
     lineHeight: 22,
+  },
+  addressLoader: {
+    marginLeft: 8,
   },
   btnConfirm: {
     backgroundColor: BRAND_COLORS.primary.xanhReu,
@@ -340,5 +492,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     zIndex: 10,
+  },
+  errorToast: {
+    position: 'absolute',
+    top: 110,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    zIndex: 30,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorDismiss: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
