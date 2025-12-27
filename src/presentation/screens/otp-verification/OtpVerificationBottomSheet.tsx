@@ -4,9 +4,9 @@ import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, u
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TokenStorage } from '../../../infrastructure/storage/tokenStorage';
-import { clearPendingIntent, login } from '../../../state/slices/auth';
+import { clearPendingIntent } from '../../../state/slices/auth';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { useAuth } from '../../../utils/hooks/useAuth';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpInput } from './components/OtpInput';
 import { OtpTimer } from './components/OtpTimer';
@@ -41,6 +41,7 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
 
     const sheetRef = useRef<BottomSheetModal>(null);
     const isLoginSuccessRef = useRef(false);
+    const { verifyOtp, error, isLoading } = useAuth();
     const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const shakeTranslateX = useSharedValue(0);
@@ -172,30 +173,20 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
     };
 
     const handleOtpComplete = async (code: string) => {
-      if (state !== OtpVerificationStateEnum.IDLE) return;
+      if (state !== OtpVerificationStateEnum.IDLE || isLoading) return;
 
       setState(OtpVerificationStateEnum.VERIFYING);
 
-      setTimeout(async () => {
-        const result = OtpVerificationService.verifyOtpCode(code);
+      try {
+        const success = await verifyOtp(phoneNumber, code);
 
-        if (result.isValid && result.userType) {
+        if (success) {
           isLoginSuccessRef.current = true;
           setState(OtpVerificationStateEnum.SUCCESS);
-
-          await TokenStorage.saveTokens(`jwt_${Date.now()}`, `refresh_${Date.now()}`, `user_${Date.now()}`);
-
-          dispatch(
-            login({
-              phoneNumber: phoneNumber,
-              userId: `user_${Date.now()}`,
-            })
-          );
-
           sheetRef.current?.dismiss();
         } else {
           setState(OtpVerificationStateEnum.ERROR);
-          setErrorMessage(OTP_TEXT.ERROR_INVALID);
+          setErrorMessage(error || OTP_TEXT.ERROR_INVALID);
           triggerShake();
 
           setTimeout(() => {
@@ -203,7 +194,16 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
             setState(OtpVerificationStateEnum.IDLE);
           }, OTP_LAYOUT.SHAKE_DURATION);
         }
-      }, 500);
+      } catch {
+        setState(OtpVerificationStateEnum.ERROR);
+        setErrorMessage(OTP_TEXT.ERROR_INVALID);
+        triggerShake();
+
+        setTimeout(() => {
+          setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+          setState(OtpVerificationStateEnum.IDLE);
+        }, OTP_LAYOUT.SHAKE_DURATION);
+      }
     };
 
     const renderBackdrop = useCallback(
@@ -247,7 +247,7 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
               onDigitsChange={setDigits}
               onComplete={handleOtpComplete}
               shakeAnimatedStyle={shakeAnimatedStyle}
-              disabled={state === OtpVerificationStateEnum.VERIFYING || showMaxRetriesError}
+              disabled={isLoading || state === OtpVerificationStateEnum.VERIFYING}
             />
 
             {!showMaxRetriesError && (

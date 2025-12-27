@@ -1,4 +1,10 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AuthMapper, SerializableUser } from '../../application/mappers/AuthMapper';
+import { LoginUseCase } from '../../application/usecases/LoginUseCase';
+import { RegisterUseCase } from '../../application/usecases/RegisterUseCase';
+import { AppError } from '../../core/errors/AppErrors';
+import { authRepository } from '../../infrastructure/repositories/AuthRepositoryImpl';
+import { TokenStorage } from '../../infrastructure/storage/tokenStorage';
 
 export interface PendingIntent {
   intent: 'PURCHASE' | 'VIEW_STORE' | 'CLAIM_PROMO' | 'BROWSE_CATEGORY' | 'VIEW_COLLECTION';
@@ -8,7 +14,7 @@ export interface PendingIntent {
     promoCode?: string;
     categoryId?: string;
     collectionId?: string;
-    returnTo?: string; // Route to return after action
+    returnTo?: string;
   };
   expiresAt: number;
   timestamp: number;
@@ -16,41 +22,196 @@ export interface PendingIntent {
 
 interface AuthState {
   isAuthenticated: boolean;
+  isLoading: boolean;
+  user: SerializableUser | null;
   phoneNumber: string | null;
-  userId: string | null;
+  error: string | null;
   pendingIntent: PendingIntent | null;
+  otpSent: boolean;
+  otpPhone: string | null;
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
+  isLoading: false,
+  user: null,
   phoneNumber: null,
-  userId: null,
+  error: null,
   pendingIntent: null,
+  otpSent: false,
+  otpPhone: null,
 };
+
+// ============ Async Thunks ============
+
+export const registerUser = createAsyncThunk< { phone: string }, { phone: string }, { rejectValue: string } >('auth/register', async ({ phone }, { rejectWithValue }) => {
+  try {
+
+    const useCase = new RegisterUseCase(authRepository);
+    await useCase.execute(phone);
+    return { phone };
+
+  } catch (error) {
+
+    if (error instanceof AppError) {
+      return rejectWithValue(error.message);
+    }
+
+    return rejectWithValue('Đã có lỗi xảy ra khi gửi OTP');
+  }
+});
+
+
+export const loginWithOtp = createAsyncThunk< { user: SerializableUser; phone: string }, { phone: string; otp: string }, { rejectValue: string } >('auth/login', async ({ phone, otp }, { rejectWithValue }) => {
+  try {
+
+    const useCase = new LoginUseCase(authRepository);
+    const result = await useCase.execute(phone, otp);
+    const serializableUser = AuthMapper.toSerializable(result.user);
+
+    return { user: serializableUser, phone };
+
+  } catch (error) {
+
+    if (error instanceof AppError) {
+      return rejectWithValue(error.message);
+    }
+
+    return rejectWithValue('Đã có lỗi xảy ra khi đăng nhập');
+  }
+});
+
+export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>('auth/logout', async (_, { rejectWithValue }) => {
+    try {
+
+      await TokenStorage.clearTokens();
+
+    } catch {
+
+      return rejectWithValue('Đã có lỗi xảy ra khi đăng xuất');
+    }
+  }
+);
+
+export const checkAuthStatus = createAsyncThunk< { isAuthenticated: boolean; userId: string | null }, void, { rejectValue: string } >('auth/checkStatus', async (_, { rejectWithValue }) => {
+  try {
+    const { accessToken, userId } = await TokenStorage.getTokens();
+
+    return {
+      isAuthenticated: !!accessToken,
+      userId,
+    };
+
+  } catch {
+    return rejectWithValue('Không thể kiểm tra trạng thái đăng nhập');
+  }
+});
+
+// ============ Slice ============
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ phoneNumber: string; userId: string }>) => {
-      state.isAuthenticated = true;
-      state.phoneNumber = action.payload.phoneNumber;
-      state.userId = action.payload.userId;
+    clearError: (state) => {
+      state.error = null;
     },
-    logout: (state) => {
-      state.isAuthenticated = false;
-      state.phoneNumber = null;
-      state.userId = null;
-      state.pendingIntent = null;
+
+    resetOtpFlow: (state) => {
+      state.otpSent = false;
+      state.otpPhone = null;
+      state.error = null;
     },
+
     setPendingIntent: (state, action: PayloadAction<PendingIntent>) => {
       state.pendingIntent = action.payload;
     },
+
     clearPendingIntent: (state) => {
       state.pendingIntent = null;
     },
+
+    loginDirect: (
+      state,
+      action: PayloadAction<{ phoneNumber: string; userId: string }>
+    ) => {
+      state.isAuthenticated = true;
+      state.phoneNumber = action.payload.phoneNumber;
+    },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.otpSent = true;
+        state.otpPhone = action.payload.phone;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Đã có lỗi xảy ra';
+      });
+
+    builder
+      .addCase(loginWithOtp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginWithOtp.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.phoneNumber = action.payload.phone;
+        state.otpSent = false;
+        state.otpPhone = null;
+        state.error = null;
+      })
+      .addCase(loginWithOtp.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Đã có lỗi xảy ra';
+      });
+
+    builder
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        return { ...initialState };
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.isLoading = false;
+        return { ...initialState };
+      });
+
+    builder
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = action.payload.isAuthenticated;
+      })
+      .addCase(checkAuthStatus.rejected, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+      });
   },
 });
 
-export const { login, logout, setPendingIntent, clearPendingIntent } = authSlice.actions;
+export const {
+  clearError,
+  resetOtpFlow,
+  setPendingIntent,
+  clearPendingIntent,
+  loginDirect,
+} = authSlice.actions;
+
+export const login = loginDirect;
+export const logout = logoutUser;
+
 export default authSlice.reducer;

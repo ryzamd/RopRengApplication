@@ -1,10 +1,9 @@
-// src/state/slices/orderCart.ts - REPLACE with updated logic
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { randomUUID } from 'expo-crypto';
 import { Product } from '../../data/mockProducts';
 import { Store } from '../../data/mockStores';
 import { CartItem, CART_DEFAULTS } from '../../presentation/screens/order/OrderInterfaces';
-import { logout } from './auth';
+import { logoutUser } from './auth';
 
 interface OrderCartState {
   selectedStore: Store | null;
@@ -112,7 +111,7 @@ const orderCartSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(logout, (state) => {
+    builder.addCase(logoutUser.fulfilled, (state) => {
       state.selectedStore = null;
       state.items = [];
       state.totalItems = 0;
