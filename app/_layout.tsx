@@ -45,8 +45,15 @@ export default function RootLayout() {
                 <StatusBar style={Platform.OS === 'ios' ? 'dark' : 'auto'} />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="index" />
-                  <Stack.Screen name="login" />
                   <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="(auth)"
+                    options={{
+                      headerShown: false,
+                      presentation: 'transparentModal',
+                      animation: 'fade',
+                    }}
+                  />
                   <Stack.Screen
                     name="address-management"
                     options={{

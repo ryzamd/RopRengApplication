@@ -1,11 +1,24 @@
-
 import { AuthRepository, RegisterResult, LoginResult } from '../../domain/repositories/AuthRepository';
 import { httpClient } from '../http/HttpClient';
 import { AUTH_ENDPOINTS } from '../api/auth/AuthApiConfig';
 import { RegisterRequestDTO, RegisterResponseDTO, LoginRequestDTO, LoginResponseDTO } from '../../application/dto/AuthDTO';
-import { AuthError, NetworkError, OtpInvalidError } from '../../core/errors/AppErrors';
+import { AuthError, NetworkError, OtpInvalidError, PhoneExistedError, PhoneNotRegisteredError } from '../../core/errors/AppErrors';
 import { AxiosError } from 'axios';
 import { AuthMapper } from '../../application/mappers/AuthMapper';
+
+const ERROR_CODES = {
+  PHONE_EXISTED: 1101,
+  REGISTER_SUCCESS: 1100,
+  LOGIN_SUCCESS: 1000,
+  OTP_INVALID: 1006,
+  INVALID_CREDENTIAL: 1001,
+  USER_NOT_FOUND: 2001,
+};
+
+interface ApiErrorResponse {
+  code?: number;
+  message?: string;
+}
 
 export class AuthRepositoryImpl implements AuthRepository {
   private static instance: AuthRepositoryImpl;
@@ -46,11 +59,11 @@ export class AuthRepositoryImpl implements AuthRepository {
         request
       );
 
-      const user = AuthMapper.toUser(response.user);
+      const user = AuthMapper.toUser(response.data.user);
 
       return {
         user,
-        token: response.token,
+        token: response.data.token,
       };
     } catch (error) {
       throw this.handleError(error, 'login');
@@ -64,13 +77,32 @@ export class AuthRepositoryImpl implements AuthRepository {
       }
 
       const status = error.response.status;
-      const data = error.response.data as { message?: string } | undefined;
+      const data = error.response.data as ApiErrorResponse | undefined;
+      const errorCode = data?.code;
       const message = data?.message;
 
+      if (errorCode) {
+        switch (errorCode) {
+          case ERROR_CODES.PHONE_EXISTED:
+            return new PhoneExistedError();
+
+          case ERROR_CODES.OTP_INVALID:
+          case ERROR_CODES.INVALID_CREDENTIAL:
+            return new OtpInvalidError();
+
+          case ERROR_CODES.USER_NOT_FOUND:
+            return new PhoneNotRegisteredError();
+        }
+      }
+
+      // Fallback to HTTP status code handling
       switch (status) {
         case 400:
           if (operation === 'login' && message?.toLowerCase().includes('otp')) {
             return new OtpInvalidError();
+          }
+          if (message?.toLowerCase().includes('already registered')) {
+            return new PhoneExistedError();
           }
           return new AuthError(message || 'Dữ liệu không hợp lệ');
 
@@ -79,28 +111,31 @@ export class AuthRepositoryImpl implements AuthRepository {
 
         case 404:
           if (operation === 'login') {
-            return new AuthError('Số điện thoại chưa được đăng ký');
+            return new PhoneNotRegisteredError();
           }
           return new AuthError('Không tìm thấy tài nguyên');
 
+        case 409:
+          return new PhoneExistedError();
+
         case 429:
-          return new AuthError('Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau');
+          return new AuthError(
+            'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau'
+          );
 
         case 500:
         case 502:
         case 503:
-          return new AuthError('Máy chủ đang bảo trì. Vui lòng thử lại sau');
+          return new AuthError(
+            'Máy chủ đang bảo trì. Vui lòng thử lại sau'
+          );
 
         default:
           return new AuthError(message || 'Đã có lỗi xảy ra');
       }
     }
 
-    if (error instanceof Error) {
-      return new AuthError(error.message);
-    }
-
-    return new AuthError('Đã có lỗi không xác định');
+    return new AuthError('Đã có lỗi xảy ra');
   }
 }
 

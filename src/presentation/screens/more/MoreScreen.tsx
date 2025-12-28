@@ -17,7 +17,7 @@ export default function MoreScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const db = useSQLiteContext();
-  const { isAuthenticated, userId } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const accountMenuSection: MenuSectionData = useMemo(() => {
     if (isAuthenticated) {
@@ -37,22 +37,21 @@ export default function MoreScreen() {
     console.log('[MoreScreen] Processing logout...');
     
     // 1. Clear SQLite Cart (Side Effect)
-    if (userId) {
+    if (user?.uuid) {
         try {
             const cartRepo = new CartRepository(db);
-            await cartRepo.clearAllCartsForUser(userId);
+            await cartRepo.clearAllCartsForUser(user?.uuid);
             console.log('[MoreScreen] SQLite cart cleared');
         } catch (error) {
             console.error('[MoreScreen] Failed to clear SQLite cart', error);
         }
     }
 
-    // 2. Dispatch Logout (Redux will handle state clearing via extraReducers)
     dispatch(logout());
     
     // 3. Navigation (Optional: redirect to welcome or stay here)
     // router.replace('/');
-  }, [dispatch, userId, db]);
+  }, [dispatch, user?.uuid, db]);
 
   const handleMenuPress = useCallback((id: string) => {
     console.log(`[MoreScreen] Menu pressed: ${id}, Auth: ${isAuthenticated}`);
@@ -73,11 +72,11 @@ export default function MoreScreen() {
         break;
       
       case 'login':
-        router.push('/login');
+        router.push('../(auth)/login');
         break;
 
       case 'register':
-        router.push('/login');
+        router.push('../(auth)/register');
         break;
 
       case 'profile':

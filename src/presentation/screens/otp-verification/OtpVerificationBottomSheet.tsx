@@ -1,6 +1,6 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,180 +23,183 @@ export interface OtpVerificationRef {
 
 interface OtpVerificationScreenProps {
   phoneNumber: string;
+  onVerifyOtp?: (phone: string, otp: string) => Promise<boolean>;
+  onSuccess?: () => void;
+  onResendOtp?: (phone: string) => Promise<boolean>;
 }
 
-export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVerificationScreenProps>(
-  ({ phoneNumber }, ref) => {
-    const router = useRouter();
-    const dispatch = useAppDispatch();
-    const insets = useSafeAreaInsets();
-    const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
+export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVerificationScreenProps>(({ phoneNumber, onVerifyOtp, onSuccess, onResendOtp }, ref) => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
+  const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
 
-    const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-    const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
-    const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
-    const [hasClickedResendThisCycle, setHasClickedResendThisCycle] = useState(false);
-    const [totalRetryCount, setTotalRetryCount] = useState(0);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [digits, setDigits] = useState<string[]>(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+  const [state, setState] = useState<OtpVerificationStateEnum>(OtpVerificationStateEnum.IDLE);
+  const [timeRemaining, setTimeRemaining] = useState(OTP_CONFIG.TIMER_DURATION_SECONDS);
+  const [hasClickedResendThisCycle, setHasClickedResendThisCycle] = useState(false);
+  const [totalRetryCount, setTotalRetryCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const sheetRef = useRef<BottomSheetModal>(null);
-    const isLoginSuccessRef = useRef(false);
-    const { verifyOtp, error, isLoading } = useAuth();
-    const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const isLoginSuccessRef = useRef(false);
+  const shakeX = useSharedValue(0);
 
-    const shakeTranslateX = useSharedValue(0);
-    const snapPoints = useMemo(() => ['90%'], []);
+  const { verifyOtp: defaultVerifyOtp, sendOtp: defaultSendOtp, isLoading, error } = useAuth();
 
-    useImperativeHandle(ref, () => ({
-      present: () => {
-        setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-        setState(OtpVerificationStateEnum.IDLE);
-        setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
-        setHasClickedResendThisCycle(false);
-        setTotalRetryCount(0);
-        setErrorMessage(null);
-        isLoginSuccessRef.current = false;
-        sheetRef.current?.present();
-      },
-      dismiss: () => {
-        sheetRef.current?.dismiss();
-      },
-    }));
+  // Use custom or default verify function
+  const verifyOtp = onVerifyOtp || defaultVerifyOtp;
+  const resendOtp = onResendOtp || defaultSendOtp;
 
-    const processPendingIntent = useCallback(() => {
-      if (!pendingIntent) {
-        router.replace('/(tabs)');
-        return;
-      }
+  const snapPoints = useMemo(() => ['60%'], []);
 
-      const now = Date.now();
-      if (now >= pendingIntent.expiresAt) {
-        dispatch(clearPendingIntent());
-        router.replace('/(tabs)');
-        return;
-      }
-
-      const { intent, context } = pendingIntent;
-
-      try {
-        switch (intent) {
-          case 'PURCHASE':
-            if (!context.productId) throw new Error('Missing productId');
-            router.replace({
-              pathname: '/(tabs)/stores',
-              params: { productId: context.productId, mode: 'select' },
-            });
-            break;
-          case 'VIEW_STORE':
-            dispatch(clearPendingIntent());
-            router.replace({ pathname: '/(tabs)/stores', params: { storeId: context.storeId } });
-            break;
-          case 'BROWSE_CATEGORY':
-            dispatch(clearPendingIntent());
-            router.replace({ pathname: '/(tabs)/search', params: { categoryId: context.categoryId } });
-            break;
-          default:
-            dispatch(clearPendingIntent());
-            router.replace('/(tabs)');
-        }
-      } catch (error) {
-        console.error('[OTP] Error processing intent:', error);
-        dispatch(clearPendingIntent());
-        router.replace('/(tabs)');
-      }
-    }, [pendingIntent, dispatch, router]);
-
-    const triggerShake = useCallback(() => {
-      shakeTranslateX.value = withSequence(
-        withTiming(-6, { duration: 20 }),
-        withTiming(6, { duration: 25 }),
-        withTiming(0, { duration: 20 })
-      );
-    }, [shakeTranslateX]);
-
-    const shakeAnimatedStyle = useAnimatedStyle(() => ({
-      transform: [{ translateX: shakeTranslateX.value }],
-    }));
-
-    const handleDismiss = useCallback(() => {
-      // Clear timer
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-
-      if (isLoginSuccessRef.current) {
-        processPendingIntent();
-      } else {
-        if (router.canGoBack()) {
-          router.back();
-        }
-      }
-    }, [processPendingIntent, router]);
-
-    const handleClose = useCallback(() => {
-      dispatch(clearPendingIntent());
+  useImperativeHandle(ref, () => ({
+    present: () => {
+      isLoginSuccessRef.current = false;
+      setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+      setState(OtpVerificationStateEnum.IDLE);
+      setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+      setHasClickedResendThisCycle(false);
+      setTotalRetryCount(0);
+      setErrorMessage(null);
+      sheetRef.current?.present();
+    },
+    dismiss: () => {
       sheetRef.current?.dismiss();
-    }, [dispatch]);
+    },
+  }));
 
-    // Timer effect
-    React.useEffect(() => {
-      if (timeRemaining <= 0) {
-        setState(OtpVerificationStateEnum.EXPIRED);
-        setErrorMessage(OTP_TEXT.ERROR_EXPIRED);
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-          timerIntervalRef.current = null;
+  // Timer countdown
+  useEffect(() => {
+    if (timeRemaining <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeRemaining]);
+
+  const shakeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeX.value }],
+  }));
+
+  const triggerShake = () => {
+    shakeX.value = withSequence(
+      withTiming(-OTP_LAYOUT.SHAKE_AMPLITUDE, { duration: 50 }),
+      withTiming(OTP_LAYOUT.SHAKE_AMPLITUDE, { duration: 50 }),
+      withTiming(-OTP_LAYOUT.SHAKE_AMPLITUDE, { duration: 50 }),
+      withTiming(OTP_LAYOUT.SHAKE_AMPLITUDE, { duration: 50 }),
+      withTiming(0, { duration: 50 })
+    );
+  };
+
+  const handleDismiss = useCallback(() => {
+    if (isLoginSuccessRef.current) {
+      // Custom success handler or default navigation
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Default: handle pending intent navigation
+        if (pendingIntent) {
+          const now = Date.now();
+          if (now >= pendingIntent.expiresAt) {
+            dispatch(clearPendingIntent());
+            router.dismissAll();
+            router.replace('/(tabs)');
+            return;
+          }
+
+          const { intent, context } = pendingIntent;
+
+          switch (intent) {
+            case 'PURCHASE':
+              if (context.productId) {
+                router.dismissAll();
+                router.replace({
+                  pathname: '/(tabs)/stores',
+                  params: { productId: context.productId, mode: 'select' },
+                });
+              } else {
+                dispatch(clearPendingIntent());
+                router.dismissAll();
+                router.replace('/(tabs)');
+              }
+              break;
+
+            case 'VIEW_STORE':
+              dispatch(clearPendingIntent());
+              router.dismissAll();
+              router.replace({
+                pathname: '/(tabs)/stores',
+                params: { storeId: context.storeId },
+              });
+              break;
+
+            case 'BROWSE_CATEGORY':
+              dispatch(clearPendingIntent());
+              router.dismissAll();
+              router.replace({
+                pathname: '/(tabs)/search',
+                params: { categoryId: context.categoryId },
+              });
+              break;
+
+            default:
+              dispatch(clearPendingIntent());
+              router.dismissAll();
+              router.replace('/(tabs)');
+          }
+        } else {
+          router.dismissAll();
+          router.replace('/(tabs)');
         }
-        return;
       }
+    }
+  }, [pendingIntent, dispatch, router, onSuccess]);
 
-      timerIntervalRef.current = setInterval(() => {
-        setTimeRemaining((prev) => Math.max(0, prev - 1));
-      }, 1000);
+  const handleClose = () => {
+    sheetRef.current?.dismiss();
+  };
 
-      return () => {
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-          timerIntervalRef.current = null;
-        }
-      };
-    }, [timeRemaining]);
+  const handleResendClick = async () => {
+    if (
+      !OtpVerificationService.canClickResend(
+        timeRemaining,
+        hasClickedResendThisCycle
+      )
+    ) {
+      return;
+    }
 
-    const handleResendClick = () => {
-      if (!OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle)) return;
-      setHasClickedResendThisCycle(true);
-      setTotalRetryCount((prev) => prev + 1);
+    setHasClickedResendThisCycle(true);
+    setTotalRetryCount((prev) => prev + 1);
+
+    try {
+      await resendOtp(phoneNumber);
       setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
       setState(OtpVerificationStateEnum.IDLE);
       setErrorMessage(null);
-    };
+    } catch {
+      setErrorMessage('Không thể gửi lại mã OTP');
+    }
+  };
 
-    const handleOtpComplete = async (code: string) => {
-      if (state !== OtpVerificationStateEnum.IDLE || isLoading) return;
+  const handleOtpComplete = async (code: string) => {
+    if (state === OtpVerificationStateEnum.VERIFYING) return;
 
-      setState(OtpVerificationStateEnum.VERIFYING);
+    setState(OtpVerificationStateEnum.VERIFYING);
 
-      try {
-        const success = await verifyOtp(phoneNumber, code);
+    try {
+      const success = await verifyOtp(phoneNumber, code);
 
-        if (success) {
-          isLoginSuccessRef.current = true;
-          setState(OtpVerificationStateEnum.SUCCESS);
-          sheetRef.current?.dismiss();
-        } else {
-          setState(OtpVerificationStateEnum.ERROR);
-          setErrorMessage(error || OTP_TEXT.ERROR_INVALID);
-          triggerShake();
-
-          setTimeout(() => {
-            setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-            setState(OtpVerificationStateEnum.IDLE);
-          }, OTP_LAYOUT.SHAKE_DURATION);
-        }
-      } catch {
+      if (success) {
+        isLoginSuccessRef.current = true;
+        setState(OtpVerificationStateEnum.SUCCESS);
+        sheetRef.current?.dismiss();
+      } else {
         setState(OtpVerificationStateEnum.ERROR);
-        setErrorMessage(OTP_TEXT.ERROR_INVALID);
+        setErrorMessage(error || OTP_TEXT.ERROR_INVALID);
         triggerShake();
 
         setTimeout(() => {
@@ -204,84 +207,109 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
           setState(OtpVerificationStateEnum.IDLE);
         }, OTP_LAYOUT.SHAKE_DURATION);
       }
-    };
+    } catch {
+      setState(OtpVerificationStateEnum.ERROR);
+      setErrorMessage(OTP_TEXT.ERROR_INVALID);
+      triggerShake();
 
-    const renderBackdrop = useCallback(
-      (props: any) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} pressBehavior="close" />
-      ),
-      []
-    );
+      setTimeout(() => {
+        setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+        setState(OtpVerificationStateEnum.IDLE);
+      }, OTP_LAYOUT.SHAKE_DURATION);
+    }
+  };
 
-    const canClickResend = OtpVerificationService.canClickResend(timeRemaining, hasClickedResendThisCycle);
-    const showMaxRetriesError = totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && timeRemaining <= 0;
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
 
-    return (
-      <BottomSheetModal
-        ref={sheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        enableDynamicSizing={false}
-        backdropComponent={renderBackdrop}
-        onDismiss={handleDismiss}
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.indicator}
-      >
-        <BottomSheetView style={styles.contentWrapper}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
-          </TouchableOpacity>
+  const canClickResend = OtpVerificationService.canClickResend(
+    timeRemaining,
+    hasClickedResendThisCycle
+  );
+  
+  const showMaxRetriesError =  totalRetryCount >= OTP_CONFIG.MAX_RETRY_COUNT && timeRemaining <= 0;
 
-          <View style={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
-            <Text style={styles.title}>{OTP_TEXT.TITLE}</Text>
+  return (
+    <BottomSheetModal
+      ref={sheetRef}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+      onDismiss={handleDismiss}
+      backgroundStyle={styles.bottomSheetBackground}
+      handleIndicatorStyle={styles.indicator}
+    >
+      <BottomSheetView style={styles.contentWrapper}>
+        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+          <Text style={styles.closeButtonText}>{OTP_TEXT.CLOSE_BUTTON}</Text>
+        </TouchableOpacity>
 
-            <Text style={styles.subtitle}>
-              {OTP_TEXT.SUBTITLE_PREFIX}{' '}
-              {OtpVerificationService.formatPhoneForDisplay(phoneNumber)}
-            </Text>
+        <View style={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
+          <Text style={styles.title}>{OTP_TEXT.TITLE}</Text>
 
-            <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
+          <Text style={styles.subtitle}>
+            {OTP_TEXT.SUBTITLE_PREFIX}{' '}
+            {OtpVerificationService.formatPhoneForDisplay(phoneNumber)}
+          </Text>
 
-            <OtpInput
-              digits={digits}
-              onDigitsChange={setDigits}
-              onComplete={handleOtpComplete}
-              shakeAnimatedStyle={shakeAnimatedStyle}
-              disabled={isLoading || state === OtpVerificationStateEnum.VERIFYING}
+          <Text style={styles.inputLabel}>{OTP_TEXT.INPUT_LABEL}</Text>
+
+          <OtpInput
+            digits={digits}
+            onDigitsChange={setDigits}
+            onComplete={handleOtpComplete}
+            shakeAnimatedStyle={shakeAnimatedStyle}
+            disabled={
+              isLoading || state === OtpVerificationStateEnum.VERIFYING
+            }
+          />
+
+          {!showMaxRetriesError && (
+            <OtpTimer
+              timeRemaining={timeRemaining}
+              onResend={handleResendClick}
+              canClickResend={canClickResend}
             />
+          )}
 
-            {!showMaxRetriesError && (
-              <OtpTimer timeRemaining={timeRemaining} onResend={handleResendClick} canClickResend={canClickResend} />
-            )}
+          {errorMessage && !showMaxRetriesError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+              {timeRemaining <= 0 && (
+                <RetryButton
+                  onPress={() => {
+                    setTotalRetryCount((c) => c + 1);
+                    setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
+                    setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
+                    setState(OtpVerificationStateEnum.IDLE);
+                    setErrorMessage(null);
+                  }}
+                />
+              )}
+            </View>
+          )}
 
-            {errorMessage && !showMaxRetriesError && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
-                {timeRemaining <= 0 && (
-                  <RetryButton
-                    onPress={() => {
-                      setTotalRetryCount((c) => c + 1);
-                      setDigits(Array(OTP_CONFIG.CODE_LENGTH).fill(''));
-                      setTimeRemaining(OTP_CONFIG.TIMER_DURATION_SECONDS);
-                      setState(OtpVerificationStateEnum.IDLE);
-                      setErrorMessage(null);
-                    }}
-                  />
-                )}
-              </View>
-            )}
-
-            {showMaxRetriesError && (
-              <TouchableOpacity style={styles.okButton} onPress={handleClose}>
-                <Text style={styles.okButtonText}>{OTP_TEXT.BUTTON_OK}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </BottomSheetView>
-      </BottomSheetModal>
-    );
-  }
-);
+          {showMaxRetriesError && (
+            <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+              <Text style={styles.okButtonText}>{OTP_TEXT.BUTTON_OK}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+});
 
 OtpVerificationBottomSheet.displayName = 'OtpVerificationBottomSheet';
 

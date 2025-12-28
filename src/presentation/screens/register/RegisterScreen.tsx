@@ -1,23 +1,28 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
+import { clearError, loginWithOtp, registerUser } from '../../../state/slices/auth';
+import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
-import { OtpVerificationRef, OtpVerificationBottomSheet } from '../otp-verification/OtpVerificationBottomSheet';
-import { PhoneInput } from './components/PhoneInput';
-import { SocialButton } from './components/SocialButton';
-import { LOGIN_TEXT } from './LoginConstants';
-import { LoginProvider } from './LoginEnums';
-import { LOGIN_LAYOUT } from './LoginLayout';
-import { LoginUIService } from './LoginService';
+import { OtpVerificationBottomSheet, OtpVerificationRef } from '../otp-verification/OtpVerificationBottomSheet';
+import { RegisterPhoneInput } from './components/RegisterPhoneInput';
+import { REGISTER_TEXT } from './RegisterConstants';
+import { REGISTER_LAYOUT } from './RegisterLayout';
+import { RegisterUIService } from './RegisterService';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = React.useState('');
-  const [isSendingOtp, setIsSendingOtp] = React.useState(false);
+  const dispatch = useAppDispatch();
+  const { isLoading, error, otpSent, otpPhone } = useAppSelector(
+    (state) => state.auth
+  );
+
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [pendingOtp, setPendingOtp] = useState<string | null>(null);
   const otpModalRef = useRef<OtpVerificationRef>(null);
 
   const opacity = useSharedValue(0);
@@ -41,6 +46,42 @@ export default function LoginScreen() {
     startEntranceAnimation();
   }, [startEntranceAnimation]);
 
+  // Handle error from Redux
+  useEffect(() => {
+    if (error) {
+      if (RegisterUIService.isPhoneExistedError(error)) {
+        Alert.alert(
+          REGISTER_TEXT.PHONE_EXISTED_TITLE,
+          REGISTER_TEXT.PHONE_EXISTED_MESSAGE,
+          [
+            {
+              text: REGISTER_TEXT.PHONE_EXISTED_OK,
+              onPress: () => {
+                dispatch(clearError());
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Lỗi', error, [
+          {
+            text: 'OK',
+            onPress: () => {
+              dispatch(clearError());
+            },
+          },
+        ]);
+      }
+    }
+  }, [error, dispatch]);
+
+  // Handle OTP sent success
+  useEffect(() => {
+    if (otpSent && otpPhone === phoneNumber) {
+      otpModalRef.current?.present();
+    }
+  }, [otpSent, otpPhone, phoneNumber]);
+
   const animatedBackdropStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
@@ -50,24 +91,31 @@ export default function LoginScreen() {
     transform: [{ scale: contentScale.value }],
   }));
 
-  const isValidPhone = LoginUIService.validatePhoneNumber(phoneNumber);
+  const isValidPhone = RegisterUIService.validatePhoneNumber(phoneNumber);
 
-  const handleLogin = () => {
-    if (isValidPhone && !isSendingOtp) {
-      setIsSendingOtp(true);
-      setTimeout(() => {
-        setIsSendingOtp(false);
-        otpModalRef.current?.present();
-      }, LOGIN_LAYOUT.OTP_SENDING_DURATION);
+  const handleRegister = async () => {
+    if (isValidPhone && !isLoading) {
+      await dispatch(registerUser({ phone: phoneNumber }));
     }
   };
 
-  const handleSocialLogin = (provider: LoginProvider) => {
-    LoginUIService.handleSocialLogin(provider);
+  const handleNavigateToLogin = () => {
+    router.replace('../(auth)/login');
   };
 
-  const handleNavigateToRegister = () => {
-    router.replace('../(auth)/register');
+  // Custom verify function for OTP - calls /auth/login after OTP verification
+  const handleVerifyOtp = async (
+    phone: string,
+    otp: string
+  ): Promise<boolean> => {
+    const result = await dispatch(loginWithOtp({ phone, otp }));
+    return !loginWithOtp.rejected.match(result);
+  };
+
+  // Handle OTP verification success - navigate to home without pending intent
+  const handleOtpSuccess = () => {
+    router.dismissAll();
+    router.replace('/(tabs)');
   };
 
   return (
@@ -91,59 +139,46 @@ export default function LoginScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.closeButton}>
-                    {LOGIN_TEXT.CLOSE_BUTTON}
+                    {REGISTER_TEXT.CLOSE_BUTTON}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.heroContainer}>
                 <Text style={styles.heroPlaceholder}>
-                  {LOGIN_TEXT.IMAGE_PLACEHOLDER}
+                  {REGISTER_TEXT.IMAGE_PLACEHOLDER}
                 </Text>
               </View>
 
               <View style={styles.formContainer}>
                 <Text style={styles.welcomeText}>
-                  {LOGIN_TEXT.WELCOME_TEXT}
+                  {REGISTER_TEXT.WELCOME_TEXT}
                 </Text>
-                <Text style={styles.brandName}>{LOGIN_TEXT.BRAND_NAME}</Text>
+                <Text style={styles.brandName}>{REGISTER_TEXT.BRAND_NAME}</Text>
 
-                <PhoneInput
+                <RegisterPhoneInput
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
-                  onSubmit={handleLogin}
+                  onSubmit={handleRegister}
                   isValid={isValidPhone}
-                  isLoading={isSendingOtp}
-                  autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
+                  isLoading={isLoading}
+                  autoFocusDelay={REGISTER_LAYOUT.KEYBOARD_FOCUS_DELAY}
                 />
 
-                {/* Register Link */}
-                <View style={styles.registerLinkContainer}>
-                  <Text style={styles.noAccountText}>
-                    {LOGIN_TEXT.NO_ACCOUNT}
+                {/* Login Link */}
+                <View style={styles.loginLinkContainer}>
+                  <Text style={styles.hasAccountText}>
+                    {REGISTER_TEXT.HAS_ACCOUNT}
                   </Text>
                   <TouchableOpacity
-                    onPress={handleNavigateToRegister}
+                    onPress={handleNavigateToLogin}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.registerLinkText}>
-                      {LOGIN_TEXT.REGISTER_LINK}
+                    <Text style={styles.loginLinkText}>
+                      {REGISTER_TEXT.LOGIN_LINK}
                     </Text>
                   </TouchableOpacity>
                 </View>
-
-                <Text style={styles.divider}>{LOGIN_TEXT.DIVIDER_TEXT}</Text>
-
-                <SocialButton
-                  provider={LoginProvider.FACEBOOK}
-                  label={LOGIN_TEXT.FACEBOOK_LOGIN}
-                  onPress={() => handleSocialLogin(LoginProvider.FACEBOOK)}
-                />
-                <SocialButton
-                  provider={LoginProvider.GOOGLE}
-                  label={LOGIN_TEXT.GOOGLE_LOGIN}
-                  onPress={() => handleSocialLogin(LoginProvider.GOOGLE)}
-                />
               </View>
             </ScrollView>
           </SafeAreaView>
@@ -152,6 +187,8 @@ export default function LoginScreen() {
         <OtpVerificationBottomSheet
           ref={otpModalRef}
           phoneNumber={phoneNumber}
+          onVerifyOtp={handleVerifyOtp}
+          onSuccess={handleOtpSuccess}
         />
       </View>
     </BottomSheetModalProvider>
@@ -161,7 +198,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -171,90 +207,82 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalWrapper: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 50,
+    overflow: 'hidden',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.background.default,
   },
   scrollContent: {
     flexGrow: 1,
   },
   closeContainer: {
     position: 'absolute',
-    top: LOGIN_LAYOUT.CLOSE_BUTTON_TOP,
-    right: LOGIN_LAYOUT.CLOSE_BUTTON_RIGHT,
+    top: REGISTER_LAYOUT.CLOSE_BUTTON_TOP,
+    right: REGISTER_LAYOUT.CLOSE_BUTTON_RIGHT,
     zIndex: 10,
   },
   closeButtonWrapper: {
-    width: LOGIN_LAYOUT.CLOSE_BUTTON_SIZE,
-    height: LOGIN_LAYOUT.CLOSE_BUTTON_SIZE,
-    borderRadius: LOGIN_LAYOUT.CLOSE_BUTTON_BORDER_RADIUS,
-    marginTop: 12,
+    width: REGISTER_LAYOUT.CLOSE_BUTTON_SIZE,
+    height: REGISTER_LAYOUT.CLOSE_BUTTON_SIZE,
+    borderRadius: REGISTER_LAYOUT.CLOSE_BUTTON_BORDER_RADIUS,
     backgroundColor: 'rgba(96, 106, 55, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButton: {
-    fontSize: LOGIN_LAYOUT.CLOSE_BUTTON_FONT_SIZE,
-    marginBottom: 2,
+    fontSize: REGISTER_LAYOUT.CLOSE_BUTTON_FONT_SIZE,
     color: BRAND_COLORS.primary.xanhReu,
     fontFamily: 'SpaceGrotesk-Bold',
   },
   heroContainer: {
-    height: LOGIN_LAYOUT.HERO_HEIGHT,
-    backgroundColor: BRAND_COLORS.primary.beSua,
+    height: REGISTER_LAYOUT.HERO_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: BRAND_COLORS.primary.beSua,
   },
   heroPlaceholder: {
-    fontSize: LOGIN_LAYOUT.HERO_FONT_SIZE,
+    fontSize: REGISTER_LAYOUT.HERO_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
   },
   formContainer: {
-    flex: 1,
-    paddingHorizontal: LOGIN_LAYOUT.FORM_PADDING_HORIZONTAL,
-    paddingTop: LOGIN_LAYOUT.FORM_PADDING_TOP,
+    paddingHorizontal: REGISTER_LAYOUT.FORM_PADDING_HORIZONTAL,
+    paddingTop: REGISTER_LAYOUT.FORM_PADDING_TOP,
   },
   welcomeText: {
-    fontSize: LOGIN_LAYOUT.WELCOME_FONT_SIZE,
+    fontSize: REGISTER_LAYOUT.WELCOME_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    marginBottom: LOGIN_LAYOUT.WELCOME_TEXT_MARGIN_BOTTOM,
+    marginBottom: REGISTER_LAYOUT.WELCOME_MARGIN_BOTTOM,
   },
   brandName: {
-    fontSize: LOGIN_LAYOUT.BRAND_NAME_FONT_SIZE,
+    fontSize: REGISTER_LAYOUT.BRAND_NAME_FONT_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    marginBottom: LOGIN_LAYOUT.BRAND_NAME_MARGIN_BOTTOM,
-    letterSpacing: LOGIN_LAYOUT.BRAND_NAME_LETTER_SPACING,
+    marginBottom: REGISTER_LAYOUT.BRAND_NAME_MARGIN_BOTTOM,
   },
-  divider: {
-    fontSize: LOGIN_LAYOUT.DIVIDER_FONT_SIZE,
-    fontFamily: 'SpaceGrotesk-Medium',
-    color: '#999999',
-    textAlign: 'center',
-    marginVertical: LOGIN_LAYOUT.DIVIDER_MARGIN_VERTICAL,
-  },
-  registerLinkContainer: {
+  loginLinkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: REGISTER_LAYOUT.LINK_MARGIN_TOP,
     gap: 4,
   },
-  noAccountText: {
-    fontSize: 14,
+  hasAccountText: {
+    fontSize: REGISTER_LAYOUT.LINK_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
   },
-  registerLinkText: {
-    fontSize: 14,
+  loginLinkText: {
+    fontSize: REGISTER_LAYOUT.LINK_FONT_SIZE,
     fontFamily: 'SpaceGrotesk-Bold',
     color: BRAND_COLORS.primary.xanhReu,
     textDecorationLine: 'underline',

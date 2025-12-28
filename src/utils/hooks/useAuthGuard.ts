@@ -19,7 +19,7 @@ export function useAuthGuard<T extends any[]>(action: (...args: T) => void, inte
             timestamp: Date.now(),
           }));
         }
-        router.push('/login');
+        router.push('../(auth)/login');
       } else {
         action(...args);
       }
