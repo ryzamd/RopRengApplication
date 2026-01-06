@@ -1,5 +1,3 @@
-import { Redirect } from 'expo-router';
+import RegisterScreen from "@/src/presentation/screens/register/RegisterScreen";
 
-export default function RegisterRedirect() {
-  return <Redirect href="/(auth)/register" />;
-}
+export default RegisterScreen;

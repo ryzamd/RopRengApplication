@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
 import { MapView, Camera } from '@maplibre/maplibre-react-native';
 import { GOONG_CONFIG } from '../../../infrastructure/api/goong/GoongConfig';
@@ -6,6 +6,8 @@ import * as MapLibreGL from '@maplibre/maplibre-react-native';
 
 MapLibreGL.setAccessToken(null);
 MapLibreGL.setConnected(true);
+
+const CACHE_SIZE_MB = 100;
 
 interface GoongMapViewProps extends ViewProps {
   centerCoordinate?: [number, number];
@@ -17,17 +19,22 @@ interface GoongMapViewProps extends ViewProps {
 
 const DEFAULT_CENTER: [number, number] = [106.6297, 10.8231];
 
-export const GoongMapView: React.FC<GoongMapViewProps> = ({
-  centerCoordinate = DEFAULT_CENTER,
-  zoomLevel = 14,
-  onMapReady,
-  onRegionDidChange,
-  children,
-  style,
-  ...props
-}) => {
+export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DEFAULT_CENTER, zoomLevel = 14, onMapReady, onRegionDidChange, children, style, ...props}) => {
   const styleUrl = `${GOONG_CONFIG.STYLE_URL}?api_key=${GOONG_CONFIG.MAP_TILES_KEY}`;
   const hasChildren = React.Children.count(children) > 0;
+
+  useEffect(() => {
+    const initCache = async () => {
+      try {
+        await MapLibreGL.OfflineManager.setMaximumAmbientCacheSize(CACHE_SIZE_MB * 1024 * 1024);
+        console.log(`[GoongMap] Cache size set to ${CACHE_SIZE_MB}MB`);
+
+      } catch (error) {
+        console.warn('[GoongMap] Failed to set cache size:', error);
+      }
+    };
+    initCache();
+  }, []);
 
   return (
     <View style={[styles.container, style]} {...props}>

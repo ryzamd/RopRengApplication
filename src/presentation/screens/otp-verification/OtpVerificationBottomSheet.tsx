@@ -51,7 +51,7 @@ export const OtpVerificationBottomSheet = forwardRef<OtpVerificationRef, OtpVeri
   const verifyOtp = onVerifyOtp || defaultVerifyOtp;
   const resendOtp = onResendOtp || defaultSendOtp;
 
-  const snapPoints = useMemo(() => ['60%'], []);
+  const snapPoints = useMemo(() => ['80%'], []);
 
   useImperativeHandle(ref, () => ({
     present: () => {
