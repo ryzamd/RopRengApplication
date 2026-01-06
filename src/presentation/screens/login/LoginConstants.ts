@@ -11,6 +11,8 @@ export const LOGIN_TEXT = {
   PHONE_REQUIRED: 'Vui lòng nhập số điện thoại',
   CLOSE_BUTTON: '✕',
   SENDING_OTP: 'Đang gửi mã...',
+  NO_ACCOUNT: 'Chưa có tài khoản?',
+  REGISTER_LINK: 'Đăng ký',
 };
 
 export const LOGIN_PHONE_CONFIG = {

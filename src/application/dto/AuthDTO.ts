@@ -33,6 +33,10 @@ export interface RegisterResponseDTO {
 }
 
 export interface LoginResponseDTO {
-  user: UserResponseDTO;
-  token: string;
+  code: number;
+  message: string;
+  data: {
+    user: UserResponseDTO;
+    token: string;
+  };
 }

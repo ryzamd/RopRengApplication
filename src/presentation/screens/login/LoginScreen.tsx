@@ -66,6 +66,10 @@ export default function LoginScreen() {
     LoginUIService.handleSocialLogin(provider);
   };
 
+  const handleNavigateToRegister = () => {
+    router.replace('../(auth)/register');
+  };
+
   return (
     <BottomSheetModalProvider>
       <View style={styles.container}>
@@ -86,7 +90,9 @@ export default function LoginScreen() {
                   onPress={handleDismiss}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.closeButton}>{LOGIN_TEXT.CLOSE_BUTTON}</Text>
+                  <Text style={styles.closeButton}>
+                    {LOGIN_TEXT.CLOSE_BUTTON}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -97,7 +103,9 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.formContainer}>
-                <Text style={styles.welcomeText}>{LOGIN_TEXT.WELCOME_TEXT}</Text>
+                <Text style={styles.welcomeText}>
+                  {LOGIN_TEXT.WELCOME_TEXT}
+                </Text>
                 <Text style={styles.brandName}>{LOGIN_TEXT.BRAND_NAME}</Text>
 
                 <PhoneInput
@@ -108,6 +116,21 @@ export default function LoginScreen() {
                   isLoading={isSendingOtp}
                   autoFocusDelay={LOGIN_LAYOUT.KEYBOARD_FOCUS_DELAY}
                 />
+
+                {/* Register Link */}
+                <View style={styles.registerLinkContainer}>
+                  <Text style={styles.noAccountText}>
+                    {LOGIN_TEXT.NO_ACCOUNT}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleNavigateToRegister}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.registerLinkText}>
+                      {LOGIN_TEXT.REGISTER_LINK}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
                 <Text style={styles.divider}>{LOGIN_TEXT.DIVIDER_TEXT}</Text>
 
@@ -126,7 +149,10 @@ export default function LoginScreen() {
           </SafeAreaView>
         </Animated.View>
 
-        <OtpVerificationBottomSheet ref={otpModalRef} phoneNumber={phoneNumber} />
+        <OtpVerificationBottomSheet
+          ref={otpModalRef}
+          phoneNumber={phoneNumber}
+        />
       </View>
     </BottomSheetModalProvider>
   );
@@ -135,8 +161,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Transparent background handled by navigation presentation usually,
-    // but explicit transparent helps ensure overlay effect.
     backgroundColor: 'transparent',
   },
   backdrop: {
@@ -216,5 +240,23 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'center',
     marginVertical: LOGIN_LAYOUT.DIVIDER_MARGIN_VERTICAL,
+  },
+  registerLinkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 4,
+  },
+  noAccountText: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.primary.xanhReu,
+  },
+  registerLinkText: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: BRAND_COLORS.primary.xanhReu,
+    textDecorationLine: 'underline',
   },
 });

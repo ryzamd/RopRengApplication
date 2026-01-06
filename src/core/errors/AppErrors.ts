@@ -54,6 +54,12 @@ export class PhoneNotRegisteredError extends AppError {
   }
 }
 
+export class PhoneExistedError extends AppError {
+  constructor() {
+    super('Số điện thoại đã được đăng ký', 'PHONE_EXISTED');
+  }
+}
+
 export class SessionExpiredError extends AppError {
   constructor() {
     super('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại', 'SESSION_EXPIRED');

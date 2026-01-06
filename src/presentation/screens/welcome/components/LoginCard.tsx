@@ -10,7 +10,7 @@ export function LoginCard() {
   const router = useRouter();
 
   const handleLoginPress = () => {
-    router.push('/login');
+    router.push('../(auth)/login');
   };
 
   const handleLoyaltyPress = () => {
