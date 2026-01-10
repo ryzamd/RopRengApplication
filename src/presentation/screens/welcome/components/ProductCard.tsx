@@ -1,7 +1,7 @@
+import { Product } from '@/src/domain/entities/Product';
 import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Product } from '../../../../data/mockProducts';
 import { BRAND_COLORS } from '../../../theme/colors';
 
 interface ProductCardProps {
@@ -31,7 +31,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           </View>
         )}
       </View>
-      
+
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
         <View style={styles.priceRow}>

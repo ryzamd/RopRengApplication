@@ -4,6 +4,7 @@ import { persistReducer, persistStore } from 'redux-persist';
 import auth from './slices/auth';
 import deliveryReducer from './slices/delivery';
 import orderCart from './slices/orderCart';
+import homeReducer from './slices/homeSlice';
 
 // Persist config for auth slice only
 const authPersistConfig = {
@@ -19,6 +20,7 @@ export const store = configureStore({
     auth: persistedAuthReducer,
     orderCart,
     delivery: deliveryReducer,
+    home: homeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
