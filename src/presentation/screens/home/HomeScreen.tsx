@@ -6,25 +6,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
-import { ProductCard, } from '../welcome/components/ProductCard';
+import { ProductCard, ProductCardData } from '../welcome/components/ProductCard';
 import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { AuthenticatedPromoBanner } from './components/AuthenticatedPromoBanner';
 import { HomeBrandSelector } from './components/HomeBrandSelector';
 import { HomeCategoryScroll } from './components/HomeCategoryGrid';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
+
+// Theme
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
-import { useHomeData } from '@/src/utils/hooks/useHomeData';
-import { Product } from '@/src/domain/entities/Product';
 
+// Types
+import { CategoryItem } from '../welcome/components/CategoryScroll';
+import { useHomeData } from '@/src/utils/hooks/useHomeData';
+
+// Config
 const DEFAULT_LOCATION = { lat: 10.9674038, lng: 107.207539 };
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
 
-// Category icons (client-side mapping)
+// Category icons mapping (client-side, until API provides icons)
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
   '2': 'leaf-outline',
@@ -34,6 +39,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
+  // useHomeData hook
   const {
     products,
     vouchers,
@@ -50,31 +56,38 @@ export default function HomeScreen() {
     limit: PAGE_LIMIT,
   });
 
+  // Auth state
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { phoneNumber } = useAppSelector((state) => state.auth);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
+
+  // Local state
   const [showPreOrder, setShowPreOrder] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
   }, [refresh]);
 
-  const handleProductPress = useCallback((product: Product) => {
+  // Product press - use ProductCardData type to match ProductCard component
+  const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[HomeScreen] Product pressed:', product.id);
+    // TODO: Navigate to product detail or add to cart
   }, []);
 
+  // Retry on error
   const handleRetry = useCallback(() => {
     clearError();
     refresh();
   }, [clearError, refresh]);
 
   // Build categories from products
-  const categories = React.useMemo(() => {
-    const map = new Map<string, { id: string; name: string; icon: string }>();
+  const categories: CategoryItem[] = React.useMemo(() => {
+    const map = new Map<string, CategoryItem>();
     products.forEach((p) => {
       if (!map.has(p.categoryId)) {
         map.set(p.categoryId, {
@@ -90,11 +103,13 @@ export default function HomeScreen() {
   const voucherCount = vouchers.length;
   const showMiniCart = isAuthenticated && totalItems > 0;
 
+  // Render product - products from useHomeData already match ProductCardData interface
   const renderProduct: ListRenderItem<typeof products[0]> = useCallback(
     ({ item }) => <ProductCard product={item} onPress={handleProductPress} />,
     [handleProductPress]
   );
 
+  // Header
   const ListHeader = useCallback(
     () => (
       <>
@@ -112,7 +127,7 @@ export default function HomeScreen() {
           <HomeSearchBar />
         </View>
         {categories.length > 0 && (
-          <HomeCategoryScroll categories={categories as any} />
+          <HomeCategoryScroll categories={categories} />
         )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{HOME_TEXT.PRODUCT_SECTION_TITLE}</Text>
@@ -122,6 +137,7 @@ export default function HomeScreen() {
     [categories]
   );
 
+  // Footer (loading more indicator)
   const ListFooter = useCallback(
     () =>
       isLoadingMore ? (
@@ -139,6 +155,7 @@ export default function HomeScreen() {
     [isLoadingMore, hasMore, products.length]
   );
 
+  // Empty
   const ListEmpty = useCallback(
     () =>
       error ? (
@@ -166,6 +183,7 @@ export default function HomeScreen() {
       ]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon} />
@@ -185,6 +203,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Content */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
@@ -215,8 +234,10 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* Mini Cart */}
       {showMiniCart && <MiniCartButton onPress={() => setShowPreOrder(true)} />}
 
+      {/* Pre-order */}
       <PreOrderBottomSheet
         visible={showPreOrder}
         onClose={() => setShowPreOrder(false)}

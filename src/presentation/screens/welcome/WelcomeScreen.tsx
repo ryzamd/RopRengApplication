@@ -1,25 +1,45 @@
-import { Product } from '@/src/domain/entities/Product';
-import { useHomeData } from '@/src/utils/hooks/useHomeData';
+/**
+ * Welcome Screen - useHomeData hook + infinite scroll
+ */
+
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  ListRenderItem,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+
+// Components
 import { AppIcon } from '../../components/shared/AppIcon';
-import { BRAND_COLORS } from '../../theme/colors';
-import { HEADER_ICONS } from '../../theme/iconConstants';
 import { BrandSelector } from './components/BrandSelector';
 import { CategoryScroll } from './components/CategoryScroll';
 import { LoginCard } from './components/LoginCard';
-import { ProductCard } from './components/ProductCard';
+import { ProductCard, ProductCardData } from './components/ProductCard';
 import { PromoBanner } from './components/PromoBanner';
 import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
-import { WELCOME_TEXT } from './WelcomeConstants';
 
+// Theme
+import { useHomeData } from '@/src/utils/hooks/useHomeData';
+import { BRAND_COLORS } from '../../theme/colors';
+import { HEADER_ICONS } from '../../theme/iconConstants';
+import { WELCOME_TEXT } from './WelcomeConstants';
+import { CategoryItem } from './components/CategoryScroll';
+
+// Config
 const DEFAULT_LOCATION = { lat: 10.9674038, lng: 107.207539 };
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
 
+// Category icons mapping (client-side, until API provides icons)
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
   '2': 'leaf-outline',
@@ -45,6 +65,7 @@ export default function WelcomeScreen() {
     limit: PAGE_LIMIT,
   });
 
+  // Local state
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
@@ -62,7 +83,7 @@ export default function WelcomeScreen() {
   }, [clearError, refresh]);
 
   // Product press
-  const handleProductPress = useCallback((product: Product) => {
+  const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[WelcomeScreen] Product:', product.id);
   }, []);
 
@@ -71,9 +92,9 @@ export default function WelcomeScreen() {
     setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
   }, []);
 
-  // Build categories
-  const categories = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; icon: string }>();
+  // Build categories from products
+  const categories: CategoryItem[] = useMemo(() => {
+    const map = new Map<string, CategoryItem>();
     products.forEach((p) => {
       if (!map.has(p.categoryId)) {
         map.set(p.categoryId, {
