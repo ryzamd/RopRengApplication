@@ -1,9 +1,11 @@
+import { permissionService } from "@/src/infrastructure/services/PermissionService";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -11,7 +13,6 @@ import { TamaguiProvider } from 'tamagui';
 import { DatabaseProvider } from '../src/infrastructure/db/sqlite/provider';
 import { persistor, store } from '../src/state/store';
 import config from '../tamagui.config';
-import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +31,21 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    const initAppPermissions = async () => {
+      const permissions = await permissionService.requestInitialPermissions();
+      console.log('App Permissions Status:', permissions);
+      
+      // TODO: Nếu permissions.location là false, có thể set state global để disable tính năng map
+      if (!permissions.location) {
+         // Handle location limited functionality
+         return;
+      }
+    };
+
+    initAppPermissions();
+  }, []);
 
   if (!fontsLoaded) {
     return null;

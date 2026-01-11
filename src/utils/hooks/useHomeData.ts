@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import {
-    clearHomeError, fetchHomeMenu, fetchHomeMenuMore, fetchVouchers, resetHomeData, selectCurrentPage,
-    selectHasMoreProducts, selectProducts, selectProductsError, selectProductsLoading, selectProductsLoadingMore,
-    selectStoreId, selectVouchers, //selectVouchersLoading,
+  clearHomeError, fetchHomeMenu, fetchHomeMenuMore, fetchVouchers, resetHomeData, selectCurrentPage,
+  selectHasMoreProducts, selectProducts, selectProductsError, selectProductsLoading, selectProductsLoadingMore,
+  selectStoreId, selectVouchers,
 } from '../../state/slices/homeSlice';
 import { useAppDispatch, useAppSelector } from '../../utils/hooks';
 
@@ -46,9 +46,7 @@ export function useHomeData({lat, lng, limit = 10, enabled = true}: UseHomeDataP
   const currentPage = useAppSelector(selectCurrentPage);
   const storeId = useAppSelector(selectStoreId);
   const vouchers = useAppSelector(selectVouchers);
-  //const vouchersLoading = useAppSelector(selectVouchersLoading);
 
-  // Initial fetch
   useEffect(() => {
     if (!enabled || !lat || !lng) return;
 
@@ -61,8 +59,10 @@ export function useHomeData({lat, lng, limit = 10, enabled = true}: UseHomeDataP
   const refresh = useCallback(async () => {
     if (isRefreshingRef.current) return;
     isRefreshingRef.current = true;
-
+    
+    dispatch(clearHomeError());
     dispatch(resetHomeData());
+    
     await Promise.all([
       dispatch(fetchHomeMenu({ lat, lng, limit, page: 0 })),
       dispatch(fetchVouchers({ lat, lng, limit: 20, page: 0 })),
@@ -71,10 +71,23 @@ export function useHomeData({lat, lng, limit = 10, enabled = true}: UseHomeDataP
     isRefreshingRef.current = false;
   }, [dispatch, lat, lng, limit]);
 
-  // infinite scroll)
+  // infinite scroll
   const loadMore = useCallback(() => {
-    // Prevent duplicate fetch
-    if (isFetchingMoreRef.current || productsLoadingMore || !hasMore) return;
+    // CRITICAL FIX: Ngăn chặn vòng lặp vô hạn
+    // 1. isFetchingMoreRef.current: Đang fetch dở
+    // 2. productsLoadingMore: Redux báo đang fetch
+    // 3. !hasMore: Server báo hết hàng
+    // 4. products.length === 0: QUAN TRỌNG NHẤT. Nếu list rỗng, không bao giờ loadMore.
+    // 5. productsError: Nếu đang có lỗi (vd 404), ngừng load thêm.
+    if (
+        isFetchingMoreRef.current || 
+        productsLoadingMore || 
+        !hasMore || 
+        products.length === 0 || 
+        productsError
+    ) {
+        return;
+    }
 
     isFetchingMoreRef.current = true;
     const nextPage = currentPage + 1;
@@ -82,7 +95,7 @@ export function useHomeData({lat, lng, limit = 10, enabled = true}: UseHomeDataP
     dispatch(fetchHomeMenuMore({ lat, lng, limit, page: nextPage })).finally(() => {
       isFetchingMoreRef.current = false;
     });
-  }, [dispatch, lat, lng, limit, currentPage, hasMore, productsLoadingMore]);
+  }, [dispatch, lat, lng, limit, currentPage, hasMore, productsLoadingMore, products.length, productsError]);
 
   // Clear error
   const clearError = useCallback(() => {

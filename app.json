@@ -55,6 +55,19 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Ứng dụng cần camera để quét mã QR hoặc chụp ảnh đại diện."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Ứng dụng cần truy cập thư viện ảnh để tải ảnh lên.",
+          "savePhotosPermission": "Ứng dụng cần quyền để lưu ảnh vào máy."
+        }
+      ],
+      [
         "@maplibre/maplibre-react-native"
       ],
       "expo-secure-store"

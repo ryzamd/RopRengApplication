@@ -1,45 +1,26 @@
-/**
- * Welcome Screen - useHomeData hook + infinite scroll
- */
-
+import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  ListRenderItem,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import * as Location from 'expo-location';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-
-// Components
+import { permissionService } from '../../../infrastructure/services/PermissionService';
 import { AppIcon } from '../../components/shared/AppIcon';
+import { BRAND_COLORS } from '../../theme/colors';
+import { HEADER_ICONS } from '../../theme/iconConstants';
 import { BrandSelector } from './components/BrandSelector';
-import { CategoryScroll } from './components/CategoryScroll';
+import { CategoryItem, CategoryScroll } from './components/CategoryScroll';
 import { LoginCard } from './components/LoginCard';
 import { ProductCard, ProductCardData } from './components/ProductCard';
 import { PromoBanner } from './components/PromoBanner';
 import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
-
-// Theme
-import { useHomeData } from '@/src/utils/hooks/useHomeData';
-import { BRAND_COLORS } from '../../theme/colors';
-import { HEADER_ICONS } from '../../theme/iconConstants';
 import { WELCOME_TEXT } from './WelcomeConstants';
-import { CategoryItem } from './components/CategoryScroll';
 
-// Config
 const DEFAULT_LOCATION = { lat: 10.9674038, lng: 107.207539 };
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
 
-// Category icons mapping (client-side, until API provides icons)
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
   '2': 'leaf-outline',
@@ -48,8 +29,37 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  
+  // REFACTOR: State Location
+  const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION);
+  const [isLocationReady, setIsLocationReady] = useState(false);
 
-  // useHomeData hook
+  useEffect(() => {
+    const initLocation = async () => {
+        try {
+            const hasPermission = await permissionService.checkOrRequestLocation();
+            if (hasPermission) {
+                const location = await Location.getCurrentPositionAsync({ 
+                    accuracy: Location.Accuracy.Balanced,
+                });
+                
+                console.log('📍 Got real location:', location.coords.latitude, location.coords.longitude);
+                
+                setCurrentLocation({
+                    lat: location.coords.latitude,
+                    lng: location.coords.longitude
+                });
+            }
+        } catch (e) {
+            console.error('⚠️ Location Error Details:', e); 
+            console.log('WelcomeScreen: Using default location');
+        } finally {
+            setIsLocationReady(true);
+        }
+    };
+    initLocation();
+  }, []);
+
   const {
     products,
     isLoading,
@@ -60,39 +70,34 @@ export default function WelcomeScreen() {
     loadMore,
     clearError,
   } = useHomeData({
-    lat: DEFAULT_LOCATION.lat,
-    lng: DEFAULT_LOCATION.lng,
+    lat: currentLocation.lat,
+    lng: currentLocation.lng,
     limit: PAGE_LIMIT,
+    enabled: isLocationReady,
   });
 
-  // Local state
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  // Refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
   }, [refresh]);
 
-  // Retry
   const handleRetry = useCallback(() => {
     clearError();
     refresh();
   }, [clearError, refresh]);
 
-  // Product press
   const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[WelcomeScreen] Product:', product.id);
   }, []);
 
-  // Category press
   const handleCategoryPress = useCallback((categoryId: string) => {
     setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
   }, []);
 
-  // Build categories from products
   const categories: CategoryItem[] = useMemo(() => {
     const map = new Map<string, CategoryItem>();
     products.forEach((p) => {
@@ -107,19 +112,16 @@ export default function WelcomeScreen() {
     return Array.from(map.values());
   }, [products]);
 
-  // Filter by category
   const filteredProducts = useMemo(() => {
     if (!selectedCategoryId) return products;
     return products.filter((p) => p.categoryId === selectedCategoryId);
   }, [products, selectedCategoryId]);
 
-  // Render product
   const renderProduct: ListRenderItem<typeof products[0]> = useCallback(
     ({ item }) => <ProductCard product={item} onPress={handleProductPress} />,
     [handleProductPress]
   );
 
-  // Header
   const ListHeader = useCallback(
     () => (
       <>
@@ -160,7 +162,6 @@ export default function WelcomeScreen() {
     [categories, selectedCategoryId, handleCategoryPress]
   );
 
-  // Footer
   const ListFooter = useCallback(
     () =>
       isLoadingMore ? (
@@ -178,7 +179,6 @@ export default function WelcomeScreen() {
     [isLoadingMore, hasMore, products.length]
   );
 
-  // Empty
   const ListEmpty = useCallback(
     () =>
       error ? (
@@ -196,6 +196,8 @@ export default function WelcomeScreen() {
     [error, handleRetry]
   );
 
+  const isInitialLoading = !isLocationReady || (isLoading && products.length === 0);
+
   return (
     <LinearGradient
       colors={[
@@ -206,7 +208,6 @@ export default function WelcomeScreen() {
       ]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon} />
@@ -219,8 +220,7 @@ export default function WelcomeScreen() {
         </View>
       </View>
 
-      {/* Content */}
-      {isLoading ? (
+      {isInitialLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
           <Text style={styles.loadingText}>Đang tải...</Text>

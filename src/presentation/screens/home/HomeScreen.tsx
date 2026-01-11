@@ -1,35 +1,31 @@
+import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View, ListRenderItem } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { permissionService } from '../../../infrastructure/services/PermissionService';
 import { useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
-import { ProductCard, ProductCardData } from '../welcome/components/ProductCard';
+import { BRAND_COLORS } from '../../theme/colors';
+import { HEADER_ICONS } from '../../theme/iconConstants';
 import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
+import { CategoryItem } from '../welcome/components/CategoryScroll';
+import { ProductCard, ProductCardData } from '../welcome/components/ProductCard';
 import { AuthenticatedPromoBanner } from './components/AuthenticatedPromoBanner';
 import { HomeBrandSelector } from './components/HomeBrandSelector';
 import { HomeCategoryScroll } from './components/HomeCategoryGrid';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
-
-// Theme
-import { BRAND_COLORS } from '../../theme/colors';
-import { HEADER_ICONS } from '../../theme/iconConstants';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
 
-// Types
-import { CategoryItem } from '../welcome/components/CategoryScroll';
-import { useHomeData } from '@/src/utils/hooks/useHomeData';
-
-// Config
-const DEFAULT_LOCATION = { lat: 10.9674038, lng: 107.207539 };
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
+const FALLBACK_LOCATION = { lat: 10.826588, lng: 106.706525 }; 
 
-// Category icons mapping (client-side, until API provides icons)
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
   '2': 'leaf-outline',
@@ -39,7 +35,38 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
-  // useHomeData hook
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initLocation = async () => {
+      try {
+        const hasPermission = await permissionService.checkOrRequestLocation();
+
+        if (!hasPermission) {
+          setLocationError('Quyền truy cập vị trí bị từ chối');
+          setCurrentLocation(FALLBACK_LOCATION);
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+        });
+        
+        setCurrentLocation({
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+        });
+
+      } catch (error) {
+        console.log('[HomeScreen] Error getting location:', error);
+        setCurrentLocation(FALLBACK_LOCATION);
+      }
+    };
+
+    initLocation();
+  }, []);
+
   const {
     products,
     vouchers,
@@ -51,41 +78,42 @@ export default function HomeScreen() {
     loadMore,
     clearError,
   } = useHomeData({
-    lat: DEFAULT_LOCATION.lat,
-    lng: DEFAULT_LOCATION.lng,
+    lat: currentLocation?.lat || 0,
+    lng: currentLocation?.lng || 0,
     limit: PAGE_LIMIT,
+    enabled: !!currentLocation,
   });
 
-  // Auth state
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { phoneNumber } = useAppSelector((state) => state.auth);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
 
-  // Local state
   const [showPreOrder, setShowPreOrder] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
+    if (!currentLocation) {
+        const hasPermission = await permissionService.checkOrRequestLocation();
+        if (hasPermission) {
+            const location = await Location.getCurrentPositionAsync({});
+            setCurrentLocation({ lat: location.coords.latitude, lng: location.coords.longitude });
+        }
+    }
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-  }, [refresh]);
+  }, [refresh, currentLocation]);
 
-  // Product press - use ProductCardData type to match ProductCard component
   const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[HomeScreen] Product pressed:', product.id);
-    // TODO: Navigate to product detail or add to cart
   }, []);
 
-  // Retry on error
   const handleRetry = useCallback(() => {
     clearError();
     refresh();
   }, [clearError, refresh]);
 
-  // Build categories from products
   const categories: CategoryItem[] = React.useMemo(() => {
     const map = new Map<string, CategoryItem>();
     products.forEach((p) => {
@@ -103,16 +131,21 @@ export default function HomeScreen() {
   const voucherCount = vouchers.length;
   const showMiniCart = isAuthenticated && totalItems > 0;
 
-  // Render product - products from useHomeData already match ProductCardData interface
   const renderProduct: ListRenderItem<typeof products[0]> = useCallback(
     ({ item }) => <ProductCard product={item} onPress={handleProductPress} />,
     [handleProductPress]
   );
 
-  // Header
   const ListHeader = useCallback(
     () => (
       <>
+        {locationError && (
+             <View style={{ padding: 8, backgroundColor: '#FFF4F4', marginBottom: 8, borderRadius: 4 }}>
+                 <Text style={{ color: 'red', fontSize: 12, textAlign: 'center' }}>
+                    {locationError} - Đang hiển thị menu mặc định
+                 </Text>
+             </View>
+        )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
           <HomeBrandSelector />
@@ -134,10 +167,9 @@ export default function HomeScreen() {
         </View>
       </>
     ),
-    [categories]
+    [categories, locationError]
   );
 
-  // Footer (loading more indicator)
   const ListFooter = useCallback(
     () =>
       isLoadingMore ? (
@@ -155,12 +187,13 @@ export default function HomeScreen() {
     [isLoadingMore, hasMore, products.length]
   );
 
-  // Empty
   const ListEmpty = useCallback(
     () =>
       error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>
+             {error.includes('404') ? 'Không tìm thấy cửa hàng ở khu vực này' : error}
+          </Text>
           <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
             <Text style={styles.retryText}>Thử lại</Text>
           </TouchableOpacity>
@@ -173,6 +206,8 @@ export default function HomeScreen() {
     [error, handleRetry]
   );
 
+  const isInitialLoading = (isLoading && products.length === 0) || !currentLocation;
+
   return (
     <LinearGradient
       colors={[
@@ -183,7 +218,6 @@ export default function HomeScreen() {
       ]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon} />
@@ -203,11 +237,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Content */}
-      {isLoading ? (
+      {isInitialLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
-          <Text style={styles.loadingText}>Đang tải menu...</Text>
+          <Text style={styles.loadingText}>
+              {!currentLocation ? 'Đang xác định vị trí...' : 'Đang tải menu...'}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -228,16 +263,14 @@ export default function HomeScreen() {
               tintColor={BRAND_COLORS.primary.xanhReu}
             />
           }
-          onEndReached={loadMore}
+          onEndReached={(!error && products.length > 0) ? loadMore : null}
           onEndReachedThreshold={LOAD_MORE_THRESHOLD}
           showsVerticalScrollIndicator={false}
         />
       )}
 
-      {/* Mini Cart */}
       {showMiniCart && <MiniCartButton onPress={() => setShowPreOrder(true)} />}
 
-      {/* Pre-order */}
       <PreOrderBottomSheet
         visible={showPreOrder}
         onClose={() => setShowPreOrder(false)}
@@ -248,6 +281,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ... (Giữ nguyên styles cũ)
   container: { flex: 1 },
   header: {
     flexDirection: 'row',
