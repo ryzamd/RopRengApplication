@@ -47,6 +47,7 @@ export interface PreOrderFooterProps {
   totalItems: number;
   totalPrice: number;
   onPlaceOrder: () => void;
+  isLoading?: boolean;
 }
 
 // TODO: API Integration - Define Order creation DTO

@@ -5,6 +5,7 @@ import auth from './slices/auth';
 import deliveryReducer from './slices/delivery';
 import orderCart from './slices/orderCart';
 import homeReducer from './slices/homeSlice';
+import preOrderReducer from './slices/preOrder';
 
 // Persist config for auth slice only
 const authPersistConfig = {
@@ -21,6 +22,7 @@ export const store = configureStore({
     orderCart,
     delivery: deliveryReducer,
     home: homeReducer,
+    preOrder: preOrderReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

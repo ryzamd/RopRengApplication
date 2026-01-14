@@ -7,7 +7,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import { PreOrderItem } from '../../../domain/entities/PreOrder';
 import { clearCart } from '../../../state/slices/orderCart';
+import { createPreOrder } from '../../../state/slices/preOrder';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { Toast } from '../../components/shared/Toast';
@@ -38,6 +40,10 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
   const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+
+  const user = useAppSelector((state) => state.auth.user);
+  const cartItems = useAppSelector((state) => state.orderCart.items);
+  const { isLoading: isCreatingOrder } = useAppSelector((state) => state.preOrder);
   
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
     orderType: OrderType.TAKEAWAY,
@@ -129,30 +135,104 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     Alert.alert('Coming Soon', PREORDER_TEXT.COMING_SOON_MESSAGE);
   }, []);
 
-  const handlePlaceOrder = useCallback(() => {
+  // const handlePlaceOrder = useCallback(() => {
+  //   if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
+  //     Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
+  //     return;
+  //   }
+    
+  //   const validation = PreOrderService.validateOrder(totalItems, selectedStore?.id || null, preOrderState.paymentMethod);
+
+  //   if (!validation.valid) {
+  //     Alert.alert('Lỗi', validation.error);
+  //     return;
+  //   }
+
+  //   Alert.alert(PREORDER_TEXT.ORDER_SUCCESS_TITLE, PREORDER_TEXT.ORDER_SUCCESS_MESSAGE, [
+  //     {
+  //       text: 'OK',
+  //       onPress: () => {
+  //         dispatch(clearCart());
+  //         bottomSheetRef.current?.dismiss();
+  //         onOrderSuccess();
+  //       },
+  //     },
+  //   ]);
+  // }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress]);
+
+  const handlePlaceOrder = useCallback(async () => {
     if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
       Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
       return;
     }
     
-    const validation = PreOrderService.validateOrder(totalItems, selectedStore?.id || null, preOrderState.paymentMethod);
+    const validation = PreOrderService.validateOrder(
+      totalItems, 
+      selectedStore?.id || null, 
+      preOrderState.paymentMethod
+    );
 
     if (!validation.valid) {
       Alert.alert('Lỗi', validation.error);
       return;
     }
 
-    Alert.alert(PREORDER_TEXT.ORDER_SUCCESS_TITLE, PREORDER_TEXT.ORDER_SUCCESS_MESSAGE, [
-      {
-        text: 'OK',
-        onPress: () => {
-          dispatch(clearCart());
-          bottomSheetRef.current?.dismiss();
-          onOrderSuccess();
-        },
-      },
-    ]);
-  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress]);
+    if (!user?.uuid) {
+      Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
+      return;
+    }
+
+    if (!selectedStore) {
+      Alert.alert('Lỗi', 'Không tìm thấy thông tin cửa hàng');
+      return;
+    }
+
+    try {
+      const items: PreOrderItem[] = cartItems.map(item => ({
+        menuItemId: item.product.id,
+        quantity: item.quantity,
+        size: item.customizations.size,
+        ice: item.customizations.ice,
+        sweetness: item.customizations.sweetness,
+        toppings: item.customizations.toppings,
+      }));
+
+      const result = await dispatch(createPreOrder({
+        userId: user.uuid,
+        orderType: preOrderState.orderType === OrderType.DELIVERY ? 'DELIVERY' : 'TAKEAWAY',
+        paymentMethod: preOrderState.paymentMethod,
+        storeId: parseInt(selectedStore.id, 10),
+        items,
+        promotions: [],
+      })).unwrap();
+
+      Alert.alert(
+        PREORDER_TEXT.ORDER_SUCCESS_TITLE,
+        `${PREORDER_TEXT.ORDER_SUCCESS_MESSAGE}\nMã đơn: ${result.preorderId}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              dispatch(clearCart());
+              bottomSheetRef.current?.dismiss();
+              onOrderSuccess();
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Lỗi', error as string || 'Không thể tạo đơn hàng');
+    }
+  }, [
+    totalItems,
+    selectedStore,
+    preOrderState,
+    dispatch,
+    onOrderSuccess,
+    deliveryAddress,
+    user,
+    cartItems,
+  ]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
@@ -171,10 +251,11 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
           totalItems={totalItems}
           totalPrice={finalTotal}
           onPlaceOrder={handlePlaceOrder}
+          isLoading={isCreatingOrder}
         />
       </BottomSheetFooter>
     ),
-    [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder]
+    [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder, isCreatingOrder]
   );
 
   return (
