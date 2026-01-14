@@ -1,4 +1,5 @@
 import { Product } from '../entities/Product';
+import { Store } from '../entities/Store';
 import { Voucher } from '../entities/Voucher';
 
 export interface HomeMenuParams {
@@ -10,6 +11,7 @@ export interface HomeMenuParams {
 
 export interface HomeMenuResult {
   storeId: number;
+  store: Store;
   menuId: number;
   products: Product[];
 }

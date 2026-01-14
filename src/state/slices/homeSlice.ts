@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { GetHomeMenuUseCase } from '../../application/usecases/GetHomeMenuUseCase';
 import { GetVouchersUseCase } from '../../application/usecases/GetVouchersUseCase';
 import { Product } from '../../domain/entities/Product';
+import { Store } from '../../domain/entities/Store';
 import { Voucher } from '../../domain/entities/Voucher';
 import { homeRepository } from '../../infrastructure/repositories/HomeRepositoryImpl';
 
@@ -26,6 +27,26 @@ interface SerializableProduct {
   isAvailable: boolean;
 }
 
+interface SerializableStore {
+  id: number;
+  regionId: number;
+  name: string;
+  slug: string | null;
+  address: string | null;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
+  phone: string | null;
+  email: string | null;
+  timezone: string;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string | null;
+  deletedAt: string | null;
+  currentLoyaltyPoint: number;
+}
+
 interface SerializableVoucher {
   id: number;
   code: string;
@@ -40,6 +61,7 @@ interface SerializableVoucher {
 
 interface HomeState {
   storeId: number | null;
+  store: SerializableStore | null;
   menuId: number | null;
   products: SerializableProduct[];
   productsLoading: boolean;
@@ -77,6 +99,23 @@ const toSerializableProduct = (p: Product): SerializableProduct => ({
   isAvailable: p.isAvailable,
 });
 
+const toSerializableStore = (s: Store): SerializableStore => ({
+  id: s.id,
+  regionId: s.regionId,
+  name: s.name,
+  slug: s.slug,
+  address: s.address,
+  location: s.location,
+  phone: s.phone,
+  email: s.email,
+  timezone: s.timezone,
+  isActive: s.isActive,
+  createdAt: s.createdAt,
+  updatedAt: s.updatedAt,
+  deletedAt: s.deletedAt,
+  currentLoyaltyPoint: s.currentLoyaltyPoint,
+});
+
 const toSerializableVoucher = (v: Voucher): SerializableVoucher => ({
   id: v.id,
   code: v.code,
@@ -98,8 +137,10 @@ export const fetchHomeMenu = createAsyncThunk(
     try {
       const result = await getHomeMenuUseCase.execute(params);
       const products = result.products.map(toSerializableProduct);
+      const store = toSerializableStore(result.store);
       return {
         storeId: result.storeId,
+        store,
         menuId: result.menuId,
         products,
         page: params.page ?? 0,
@@ -144,6 +185,7 @@ export const fetchVouchers = createAsyncThunk(
 // Initial state
 const initialState: HomeState = {
   storeId: null,
+  store: null,
   menuId: null,
   products: [],
   productsLoading: false,
@@ -182,6 +224,7 @@ const homeSlice = createSlice({
       .addCase(fetchHomeMenu.fulfilled, (state, action) => {
         state.productsLoading = false;
         state.storeId = action.payload.storeId;
+        state.store = action.payload.store;
         state.menuId = action.payload.menuId;
         state.products = action.payload.products;
         state.currentPage = action.payload.page;
@@ -231,6 +274,7 @@ const homeSlice = createSlice({
 export const { clearHomeError, resetHomeData } = homeSlice.actions;
 export default homeSlice.reducer;
 
+export const selectStore = (state: { home: HomeState }) => state.home.store;
 export const selectProducts = (state: { home: HomeState }) => state.home.products;
 export const selectProductsLoading = (state: { home: HomeState }) => state.home.productsLoading;
 export const selectProductsLoadingMore = (state: { home: HomeState }) => state.home.productsLoadingMore;
