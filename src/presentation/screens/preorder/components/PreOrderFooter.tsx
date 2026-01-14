@@ -8,7 +8,7 @@ import { PreOrderFooterProps } from '../PreOrderInterfaces';
 import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderService } from '../PreOrderService';
 
-export function PreOrderFooter({orderType, totalItems, totalPrice, onPlaceOrder}: PreOrderFooterProps) {
+export function PreOrderFooter({orderType, totalItems, totalPrice, onPlaceOrder, isLoading = false}: PreOrderFooterProps) {
   const insets = useSafeAreaInsets();
   const orderTypeLabel = ORDER_TYPE_LABELS[orderType];
   
@@ -29,11 +29,12 @@ export function PreOrderFooter({orderType, totalItems, totalPrice, onPlaceOrder}
       </View>
       
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, isLoading && styles.orderButtonDisabled]}
         onPress={onPlaceOrder}
         activeOpacity={0.8}
+        disabled={isLoading}
       >
-        <Text style={styles.buttonText}>{PREORDER_TEXT.PLACE_ORDER_BUTTON}</Text>
+        <Text style={styles.buttonText}>{isLoading ? 'Đang xử lý...' : PREORDER_TEXT.PLACE_ORDER_BUTTON}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -85,5 +86,8 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
     color: BRAND_COLORS.text.inverse,
     letterSpacing: 1,
+  },
+  orderButtonDisabled: {
+    opacity: 0.6,
   },
 });

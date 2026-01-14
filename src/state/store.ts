@@ -3,14 +3,15 @@ import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import auth from './slices/auth';
 import deliveryReducer from './slices/delivery';
-import orderCart from './slices/orderCart';
 import homeReducer from './slices/homeSlice';
+import orderCart from './slices/orderCart';
+import preOrderReducer from './slices/preOrder';
 
 // Persist config for auth slice only
 const authPersistConfig = {
   key: 'auth',
   storage: AsyncStorage,
-  whitelist: ['isAuthenticated', 'phoneNumber', 'userId', 'pendingIntent'],
+  whitelist: ['isAuthenticated', 'user', 'phoneNumber', 'userId', 'pendingIntent'],
 };
 
 const persistedAuthReducer = persistReducer(authPersistConfig, auth);
@@ -21,6 +22,7 @@ export const store = configureStore({
     orderCart,
     delivery: deliveryReducer,
     home: homeReducer,
+    preOrder: preOrderReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

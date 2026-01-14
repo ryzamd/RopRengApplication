@@ -21,10 +21,11 @@ import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
+import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
-const FALLBACK_LOCATION = { lat: 10.826588, lng: 106.706525 }; 
+const FALLBACK_LOCATION = { lat: 10.826588, lng: 106.706525 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
@@ -34,6 +35,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const handleAddToCart = useAddToCart();
 
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -107,7 +109,20 @@ export default function HomeScreen() {
 
   const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[HomeScreen] Product pressed:', product.id);
-  }, []);
+    
+    const productForCart = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      categoryId: product.categoryId,
+      originalPrice: product.originalPrice,
+      badge: product.badge,
+      discount: product.discount,
+    };
+    
+    handleAddToCart(productForCart);
+  }, [handleAddToCart]);
 
   const handleRetry = useCallback(() => {
     clearError();
