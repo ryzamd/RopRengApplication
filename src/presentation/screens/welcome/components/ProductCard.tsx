@@ -1,27 +1,49 @@
-import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Product } from '../../../../data/mockProducts';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
+import { WELCOME_LAYOUT } from '../WelcomeLayout';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2;
+
+export interface ProductCardData {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  categoryId: string;
+  originalPrice?: number;
+  badge?: 'NEW' | 'HOT';
+  discount?: string;
+}
 
 interface ProductCardProps {
-  product: Product;
-  onPress?: (product: Product) => void;
+  product: ProductCardData;
+  onPress?: (product: ProductCardData) => void;
 }
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
-  const handleAddPress = () => {
-    if (onPress) {
-      onPress(product);
-    }
-  };
+  const formattedPrice = `${product.price.toLocaleString('vi-VN')}đ`;
+  const formattedOriginalPrice = product.originalPrice
+    ? `${product.originalPrice.toLocaleString('vi-VN')}đ`
+    : null;
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => onPress?.(product)}
+      activeOpacity={0.8}
+    >
       <View style={styles.imageContainer}>
         <Image source={{ uri: product.imageUrl }} style={styles.image} />
         {product.badge && (
-          <View style={styles.badge}>
+          <View
+            style={[
+              styles.badge,
+              product.badge === 'NEW' ? styles.badgeNew : styles.badgeHot,
+            ]}
+          >
             <Text style={styles.badgeText}>{product.badge}</Text>
           </View>
         )}
@@ -31,33 +53,34 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           </View>
         )}
       </View>
-      
+
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+        <Text style={styles.name} numberOfLines={2}>
+          {product.name}
+        </Text>
         <View style={styles.priceRow}>
-          <View>
-            <Text style={styles.price}>{product.price.toLocaleString('vi-VN')}đ</Text>
-            {product.originalPrice && (
-              <Text style={styles.originalPrice}>
-                {product.originalPrice.toLocaleString('vi-VN')}đ
-              </Text>
-            )}
-          </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
-            <AppIcon name="add" size={'xs'} style={styles.addIcon} />
+          <Text style={styles.price}>{formattedPrice}</Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => onPress?.(product)}
+          >
+            <AppIcon name="add" size="xs" style={styles.addIcon} />
           </TouchableOpacity>
         </View>
+        {formattedOriginalPrice && (
+          <Text style={styles.originalPrice}>{formattedOriginalPrice}</Text>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: '48%',
-    backgroundColor: BRAND_COLORS.background.default,
-    borderRadius: 12,
-    marginBottom: 16,
+  container: {
+    width: CARD_WIDTH,
+    backgroundColor: '#FFFFFF',
+    borderRadius: WELCOME_LAYOUT.PRODUCT_CARD_BORDER_RADIUS,
+    marginBottom: WELCOME_LAYOUT.PRODUCT_CARD_MARGIN_BOTTOM,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -66,82 +89,82 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: BRAND_COLORS.primary.beSua,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
   },
   image: {
     width: '100%',
-    height: '100%',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    aspectRatio: WELCOME_LAYOUT.PRODUCT_IMAGE_ASPECT_RATIO,
+    borderTopLeftRadius: WELCOME_LAYOUT.PRODUCT_CARD_BORDER_RADIUS,
+    borderTopRightRadius: WELCOME_LAYOUT.PRODUCT_CARD_BORDER_RADIUS,
   },
   badge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: BRAND_COLORS.secondary.hongSua,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    top: WELCOME_LAYOUT.PRODUCT_BADGE_TOP,
+    left: WELCOME_LAYOUT.PRODUCT_BADGE_LEFT,
+    paddingHorizontal: WELCOME_LAYOUT.PRODUCT_BADGE_PADDING_HORIZONTAL,
+    paddingVertical: WELCOME_LAYOUT.PRODUCT_BADGE_PADDING_VERTICAL,
+    borderRadius: WELCOME_LAYOUT.PRODUCT_BADGE_BORDER_RADIUS,
+  },
+  badgeNew: {
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
+  },
+  badgeHot: {
+    backgroundColor: '#FF6B6B',
   },
   badgeText: {
-    fontSize: 11,
-    fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.default,
+    fontSize: WELCOME_LAYOUT.PRODUCT_BADGE_TEXT_SIZE,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: '#FFFFFF',
   },
   discountBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: BRAND_COLORS.secondary.nauEspresso,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    top: WELCOME_LAYOUT.PRODUCT_BADGE_TOP,
+    right: WELCOME_LAYOUT.PRODUCT_BADGE_RIGHT,
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: WELCOME_LAYOUT.PRODUCT_DISCOUNT_BADGE_PADDING_HORIZONTAL,
+    paddingVertical: WELCOME_LAYOUT.PRODUCT_DISCOUNT_BADGE_PADDING_VERTICAL,
+    borderRadius: WELCOME_LAYOUT.PRODUCT_DISCOUNT_BADGE_BORDER_RADIUS,
   },
   discountText: {
-    fontSize: 11,
-    fontFamily: 'Phudu-Bold',
-    color: BRAND_COLORS.background.default,
+    fontSize: WELCOME_LAYOUT.PRODUCT_BADGE_TEXT_SIZE,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: '#FFFFFF',
   },
   info: {
-    padding: 12,
+    padding: WELCOME_LAYOUT.PRODUCT_CARD_INFO_PADDING,
   },
   name: {
-    fontSize: 14,
+    fontSize: WELCOME_LAYOUT.PRODUCT_NAME_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.primary.xanhReu,
-    marginBottom: 8,
-    minHeight: 40,
+    color: BRAND_COLORS.text.primary,
+    marginBottom: WELCOME_LAYOUT.PRODUCT_NAME_MARGIN_BOTTOM,
+    minHeight: WELCOME_LAYOUT.PRODUCT_NAME_MIN_HEIGHT,
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   price: {
-    fontSize: 16,
+    fontSize: WELCOME_LAYOUT.PRODUCT_PRICE_SIZE,
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
   },
   originalPrice: {
-    fontSize: 12,
-    fontFamily: 'SpaceGrotesk-Medium',
-    color: '#999999',
+    fontSize: WELCOME_LAYOUT.PRODUCT_ORIGINAL_PRICE_SIZE,
+    fontFamily: 'SpaceGrotesk-Regular',
+    color: BRAND_COLORS.text.secondary,
     textDecorationLine: 'line-through',
-    marginTop: 2,
+    marginTop: WELCOME_LAYOUT.PRODUCT_ORIGINAL_PRICE_MARGIN_TOP,
   },
   addButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: BRAND_COLORS.secondary.nauEspresso,
-    borderRadius: 16,
+    width: WELCOME_LAYOUT.PRODUCT_ADD_BUTTON_SIZE,
+    height: WELCOME_LAYOUT.PRODUCT_ADD_BUTTON_SIZE,
+    borderRadius: WELCOME_LAYOUT.PRODUCT_ADD_BUTTON_BORDER_RADIUS,
+    backgroundColor: BRAND_COLORS.primary.xanhReu,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addIcon: {
-    color: BRAND_COLORS.background.default,
+    color: '#FFFFFF',
   },
 });

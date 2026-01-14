@@ -1,13 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Category } from '../../../../data/mockProducts';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
+import { CategoryItem } from '../../welcome/components/CategoryScroll';
 import { HOME_LAYOUT } from '../HomeLayout';
 
 interface HomeCategoryScrollProps {
-  categories: Category[];
+  categories: CategoryItem[];
 }
 
 export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
@@ -23,12 +23,16 @@ export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
 
   const chunkedCategories = useMemo(() => {
     const chunkSize = 2;
-    const chunks = [];
+    const chunks: CategoryItem[][] = [];
     for (let i = 0; i < categories.length; i += chunkSize) {
       chunks.push(categories.slice(i, i + chunkSize));
     }
     return chunks;
   }, [categories]);
+
+  if (categories.length === 0) {
+    return null;
+  }
 
   return (
     <View style={styles.gridContainer}>
@@ -38,11 +42,11 @@ export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
         bounces={false}
         contentContainerStyle={styles.scrollContent}
         overScrollMode="never"
-        decelerationRate={Platform.OS === 'ios' ? 0.8 : 'normal'}
+        decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.9}
       >
-        {chunkedCategories.map((column, colIndex) => (
-          <View key={`col-${colIndex}`} style={styles.columnWrapper}>
-            {column.map((category) => (
+        {chunkedCategories.map((chunk, chunkIndex) => (
+          <View key={`chunk-${chunkIndex}`} style={styles.column}>
+            {chunk.map((category) => (
               <TouchableOpacity
                 key={category.id}
                 style={styles.categoryItem}
@@ -50,7 +54,7 @@ export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
                 activeOpacity={0.7}
               >
                 <View style={styles.iconContainer}>
-                  <AppIcon name={category.icon} size="md" />
+                  <AppIcon name={category.icon as any} size="lg" />
                 </View>
                 <Text style={styles.label} numberOfLines={2}>
                   {category.name}
@@ -66,46 +70,37 @@ export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
 
 const styles = StyleSheet.create({
   gridContainer: {
-    borderWidth: 2,
-    borderColor: BRAND_COLORS.primary.xanhReu,
-    backgroundColor: 'transparent',
-    padding: 10,
-    borderRadius: 12,
-    marginHorizontal: HOME_LAYOUT.SECTION_PADDING_HORIZONTAL,
     marginBottom: HOME_LAYOUT.SECTION_MARGIN_BOTTOM,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   scrollContent: {
-    gap: 15,
+    paddingHorizontal: HOME_LAYOUT.SECTION_PADDING_HORIZONTAL,
+    gap: HOME_LAYOUT.HOME_CATEGORY_SCROLL_GAP,
   },
-  columnWrapper: {
-    gap: 15,
-    justifyContent: 'space-between',
+  column: {
+    gap: HOME_LAYOUT.HOME_CATEGORY_SCROLL_GAP,
   },
   categoryItem: {
     alignItems: 'center',
-    width: 70,
-    justifyContent: 'flex-start',
+    width: HOME_LAYOUT.HOME_CATEGORY_ITEM_WIDTH,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
+    width: HOME_LAYOUT.HOME_CATEGORY_ICON_SIZE,
+    height: HOME_LAYOUT.HOME_CATEGORY_ICON_SIZE,
     backgroundColor: BRAND_COLORS.primary.beSua,
-    borderWidth: 2,
-    borderColor: BRAND_COLORS.primary.xanhReu,
-    borderRadius: 12,
+    borderRadius: HOME_LAYOUT.HOME_CATEGORY_ICON_BORDER_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: HOME_LAYOUT.HOME_CATEGORY_ICON_MARGIN_BOTTOM,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   label: {
-    fontSize: 11,
+    fontSize: HOME_LAYOUT.HOME_CATEGORY_LABEL_SIZE,
     fontFamily: 'SpaceGrotesk-Medium',
     color: BRAND_COLORS.primary.xanhReu,
     textAlign: 'center',
-    lineHeight: 14,
   },
 });
