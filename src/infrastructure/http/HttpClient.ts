@@ -40,29 +40,28 @@ class HttpClient {
 
   private logRequest = (config: InternalAxiosRequestConfig) => {
     console.log(' ');
-    console.log(`🚀 [API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
     
     if (config.params) {
       console.log('   🔹 Params:', JSON.stringify(config.params, null, 2));
     }
     
     if (config.data) {
-       // Cắt ngắn nếu base64 quá dài để tránh spam log
        const dataLog = JSON.stringify(config.data, null, 2);
-       console.log('   📦 Body:', dataLog.length > 2000 ? '[Data too long]' : dataLog);
+       console.log('Body:', dataLog.length > 2000 ? '[Data too long]' : dataLog);
     }
     
     return config;
   };
 
   private logResponse = (response: AxiosResponse) => {
-    console.log(`✅ [API RESPONSE] ${response.status} ${response.config.url}`);
-    // console.log('   Headers:', JSON.stringify(response.headers)); // Uncomment nếu cần xem header
+    console.log(`[API RESPONSE] ${response.status} ${response.config.url}`);
+    console.log(' Headers:', JSON.stringify(response.headers));
     
     if (response.data) {
         const responseData = JSON.stringify(response.data, null, 2);
         const shouldTruncate = responseData.length > 5000;
-        console.log('   📩 Data:', shouldTruncate ? responseData.substring(0, 5000) + '... [TRUNCATED]' : responseData);
+        console.log('Data:', shouldTruncate ? responseData.substring(0, 5000) + '... [TRUNCATED]' : responseData);
     }
     console.log(' ');
     
@@ -72,13 +71,13 @@ class HttpClient {
   private logError = (error: AxiosError) => {
     console.log(' ');
     if (error.response) {
-      console.log(`❌ [API ERROR] ${error.response.status} ${error.config?.url}`);
-      console.log('   ⚠️ Message:', JSON.stringify(error.response.data, null, 2));
+      console.log(`[API ERROR] ${error.response.status} ${error.config?.url}`);
+      console.log('Message:', JSON.stringify(error.response.data, null, 2));
     } else if (error.request) {
-      console.log(`❌ [API ERROR] No Response received from ${error.config?.url}`);
-      console.log('   ⚠️ Request:', error.request);
+      console.log(`[API ERROR] No Response received from ${error.config?.url}`);
+      console.log('Request:', error.request);
     } else {
-      console.log('❌ [API ERROR] Request Setup Error:', error.message);
+      console.log('[API ERROR] Request Setup Error:', error.message);
     }
     console.log(' ');
     
@@ -118,3 +117,4 @@ class HttpClient {
 export const httpClient = HttpClient.getInstance();
 
 export { HttpClient };
+

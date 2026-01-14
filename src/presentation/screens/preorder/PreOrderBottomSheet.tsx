@@ -40,6 +40,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
   const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const user = useAppSelector((state) => state.auth.user);
   const cartItems = useAppSelector((state) => state.orderCart.items);
@@ -135,40 +136,21 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     Alert.alert('Coming Soon', PREORDER_TEXT.COMING_SOON_MESSAGE);
   }, []);
 
-  // const handlePlaceOrder = useCallback(() => {
-  //   if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
-  //     Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
-  //     return;
-  //   }
-    
-  //   const validation = PreOrderService.validateOrder(totalItems, selectedStore?.id || null, preOrderState.paymentMethod);
-
-  //   if (!validation.valid) {
-  //     Alert.alert('Lỗi', validation.error);
-  //     return;
-  //   }
-
-  //   Alert.alert(PREORDER_TEXT.ORDER_SUCCESS_TITLE, PREORDER_TEXT.ORDER_SUCCESS_MESSAGE, [
-  //     {
-  //       text: 'OK',
-  //       onPress: () => {
-  //         dispatch(clearCart());
-  //         bottomSheetRef.current?.dismiss();
-  //         onOrderSuccess();
-  //       },
-  //     },
-  //   ]);
-  // }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress]);
-
   const handlePlaceOrder = useCallback(async () => {
+    console.log('=== PRE-ORDER DEBUG ===');
+    console.log('User:', JSON.stringify(user, null, 2));
+    console.log('User UUID:', user?.uuid);
+    console.log('Selected Store:', selectedStore);
+    console.log('Cart Items Count:', cartItems.length);
+    
     if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
       Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
       return;
     }
     
     const validation = PreOrderService.validateOrder(
-      totalItems, 
-      selectedStore?.id || null, 
+      totalItems,
+      selectedStore?.id || null,
       preOrderState.paymentMethod
     );
 
@@ -178,7 +160,10 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     }
 
     if (!user?.uuid) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
+      Alert.alert(
+        'Debug User Info',
+        `User: ${JSON.stringify(user, null, 2)}\n\nAuth: ${isAuthenticated}`
+      );
       return;
     }
 
@@ -197,18 +182,26 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         toppings: item.customizations.toppings,
       }));
 
-      const result = await dispatch(createPreOrder({
+      const preOrderPayload = {
         userId: user.uuid,
-        orderType: preOrderState.orderType === OrderType.DELIVERY ? 'DELIVERY' : 'TAKEAWAY',
+        orderType: (preOrderState.orderType === OrderType.DELIVERY ? 'DELIVERY' : 'TAKEAWAY') as 'DELIVERY' | 'TAKEAWAY',
         paymentMethod: preOrderState.paymentMethod,
-        storeId: parseInt(selectedStore.id, 10),
+        storeId: typeof selectedStore.id === 'string' ? parseInt(selectedStore.id, 10) : selectedStore.id,
         items,
         promotions: [],
-      })).unwrap();
+      };
 
+            console.log('=== PRE-ORDER PAYLOAD ===');
+      console.log(JSON.stringify(preOrderPayload, null, 2));
+      
+      const result = await dispatch(createPreOrder(preOrderPayload)).unwrap();
+      
+      console.log('=== PRE-ORDER RESPONSE ===');
+      console.log(JSON.stringify(result, null, 2));
+      
       Alert.alert(
-        PREORDER_TEXT.ORDER_SUCCESS_TITLE,
-        `${PREORDER_TEXT.ORDER_SUCCESS_MESSAGE}\nMã đơn: ${result.preorderId}`,
+        'Success',
+        'Your order has been sending successfully',
         [
           {
             text: 'OK',
@@ -223,16 +216,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     } catch (error) {
       Alert.alert('Lỗi', error as string || 'Không thể tạo đơn hàng');
     }
-  }, [
-    totalItems,
-    selectedStore,
-    preOrderState,
-    dispatch,
-    onOrderSuccess,
-    deliveryAddress,
-    user,
-    cartItems,
-  ]);
+  }, [totalItems, selectedStore, preOrderState, dispatch,   onOrderSuccess, deliveryAddress, user, cartItems, isAuthenticated]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
