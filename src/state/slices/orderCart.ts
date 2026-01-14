@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { randomUUID } from 'expo-crypto';
 import { Product } from '../../data/mockProducts';
 import { Store } from '../../data/mockStores';
-import { CartItem, CART_DEFAULTS } from '../../presentation/screens/order/OrderInterfaces';
+import { CART_DEFAULTS, CartItem } from '../../presentation/screens/order/OrderInterfaces';
 import { logoutUser } from './auth';
 
 interface OrderCartState {
@@ -39,6 +39,7 @@ const orderCartSlice = createSlice({
       const newStoreId = action.payload.id;
       const oldStoreId = state.selectedStore?.id;
 
+      // Clear cart when switching stores
       if (oldStoreId && oldStoreId !== newStoreId) {
         state.items = [];
         state.totalItems = 0;
@@ -46,6 +47,13 @@ const orderCartSlice = createSlice({
       }
 
       state.selectedStore = action.payload;
+      
+      // TODO: Persist selected store to AsyncStorage for app restart
+      // Implementation: AsyncStorage.setItem('selected_store', JSON.stringify(action.payload))
+      
+      // TODO: Re-fetch menu if new store is outside current lat/lng range
+      // Check if new store coordinates differ significantly from current menu fetch
+      // If difference > threshold, dispatch fetchHomeMenu with new coordinates
     },
 
     addToCart: (state, action: PayloadAction<Product>) => {

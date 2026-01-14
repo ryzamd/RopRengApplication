@@ -1,10 +1,11 @@
+import { selectStore } from '@/src/state/slices/homeSlice';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_STORES, Store } from '../../../data/mockStores';
 import { setSelectedStore } from '../../../state/slices/orderCart';
-import { useAppDispatch } from '../../../utils/hooks';
+import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
 import { StoreSection } from './components/StoreSection';
 import { StoresHeader } from './components/StoresHeader';
@@ -20,13 +21,37 @@ export default function StoresScreen() {
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
   
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const { selectedStore, totalItems } = useAppSelector((state) => ({
+    selectedStore: state.orderCart.selectedStore,
+    totalItems: state.orderCart.totalItems,
+  }));
 
+  const apiStore = useAppSelector(selectStore);
+
+  // TODO: Replace MOCK_STORES with API store list when backend ready
+  // Expected endpoint: GET /stores/nearby?lat={lat}&lng={lng}&limit=20
   const baseStores = useMemo(() => {
+    if (!apiStore) return MOCK_STORES;
+    
+    // Convert API Store to Mock Store UI format
+    const uiStore: Store = {
+      id: String(apiStore.id),
+      name: apiStore.name,
+      brandName: 'Rốp Rẻng',
+      address: apiStore.address || 'Chưa có địa chỉ',
+      imageUrl: 'https://via.placeholder.com/150',
+      latitude: apiStore.location.coordinates[0],
+      longitude: apiStore.location.coordinates[1],
+      distanceKm: 0, // TODO: Calculate from user location
+    };
+
     if (params.mode === 'select' && params.productId) {
-      return StoresUIService.getAvailableStoresForProduct(MOCK_STORES, params.productId);
+      return [uiStore];
     }
-    return MOCK_STORES;
-  }, [params.mode, params.productId]);
+    
+    return [uiStore]; // TODO: Replace with full list from API
+  }, [apiStore, params.mode, params.productId]);
 
   const filteredStores = useMemo(
     () => StoresUIService.filterStores(baseStores, searchQuery),
@@ -43,21 +68,43 @@ export default function StoresScreen() {
     [filteredStores]
   );
 
-  const handleStorePress = (store: Store) => {
+  const handleStorePress = useCallback((store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
     
-    if (params.mode === 'select') {
-      console.log(`[StoresScreen] Select mode - setting store and navigating to Order`);
-      
-      dispatch(setSelectedStore(store));
-      
-      console.log(`[StoresScreen] Navigating to OrderScreen...`);
-      router.replace('/(tabs)/order');
-    } else {
-      // Browse mode logic (Future impl)
-      // router.push(`/store-detail/${store.id}`);
+    // Check if switching stores with cart items
+    if (selectedStore && selectedStore.id !== store.id && totalItems > 0) {
+      Alert.alert(
+        'Đổi cửa hàng',
+        `Bạn đang có ${totalItems} sản phẩm trong giỏ hàng. Đổi cửa hàng sẽ xóa toàn bộ giỏ hàng hiện tại. Bạn có chắc chắn muốn tiếp tục?`,
+        [
+          {
+            text: 'Không',
+            style: 'cancel',
+            onPress: () => console.log('[StoresScreen] User cancelled store switch'),
+          },
+          {
+            text: 'Đồng ý',
+            style: 'destructive',
+            onPress: () => {
+              console.log('[StoresScreen] User confirmed, clearing cart and switching store');
+              dispatch(setSelectedStore(store));
+              
+              if (params.mode === 'select') {
+                router.replace('/(tabs)/order');
+              }
+            },
+          },
+        ]
+      );
+      return;
     }
-  };
+    
+    if (params.mode === 'select') {
+      console.log('[StoresScreen] Setting store and navigating to Order');
+      dispatch(setSelectedStore(store));
+      router.replace('/(tabs)/order');
+    }
+  }, [selectedStore, totalItems, dispatch, router, params.mode]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -98,24 +145,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
-  },
-  productContext: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: BRAND_COLORS.primary.beSua,
-    borderBottomWidth: 1,
-    borderBottomColor: BRAND_COLORS.secondary.nauCaramel,
-  },
-  productContextLabel: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Medium',
-    color: BRAND_COLORS.secondary.reuDam,
-    marginBottom: 4,
-  },
-  storeCount: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Bold',
-    color: BRAND_COLORS.primary.xanhReu,
   },
   emptyState: {
     flex: 1,

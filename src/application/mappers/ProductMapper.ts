@@ -1,6 +1,7 @@
 import { Product, ProductBadge } from '../../domain/entities/Product';
+import { Store } from '../../domain/entities/Store';
 import { HomeMenuResult } from '../../domain/repositories/HomeRepository';
-import { HomeMenuResponseDTO, ProductDTO } from '../dto/HomeMenuDTO';
+import { HomeMenuResponseDTO, ProductDTO, StoreDTO } from '../dto/HomeMenuDTO';
 
 export class ProductMapper {
   static toEntity(dto: ProductDTO): Product {
@@ -26,9 +27,29 @@ export class ProductMapper {
     return dtos.map(dto => ProductMapper.toEntity(dto));
   }
 
+  static toStoreEntity(dto: StoreDTO): Store {
+    return new Store(
+      dto.id,
+      dto.region_id,
+      dto.name,
+      dto.slug,
+      dto.address,
+      dto.location,
+      dto.phone,
+      dto.email,
+      dto.timezone,
+      dto.is_active,
+      dto.created_at,
+      dto.updated_at,
+      dto.deleted_at,
+      dto.current_loyalty_point
+    );
+  }
+
   static toHomeMenuResult(response: HomeMenuResponseDTO): HomeMenuResult {
     return {
       storeId: response.data.store_id,
+      store: ProductMapper.toStoreEntity(response.data.store),
       menuId: response.data.menu_id,
       products: ProductMapper.toEntityList(response.data.products),
     };

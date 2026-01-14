@@ -1,3 +1,4 @@
+import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
@@ -21,7 +22,6 @@ import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
-import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
@@ -39,6 +39,13 @@ export default function HomeScreen() {
 
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [userAddress, setUserAddress] = useState<string>('');
+
+  const { isAuthenticated, totalItems, phoneNumber } = useAppSelector((state) => ({
+    isAuthenticated: state.auth.isAuthenticated,
+    totalItems: state.orderCart.totalItems,
+    phoneNumber: state.auth.phoneNumber,
+  }));
 
   useEffect(() => {
     const initLocation = async () => {
@@ -86,9 +93,6 @@ export default function HomeScreen() {
     enabled: !!currentLocation,
   });
 
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const totalItems = useAppSelector((state) => state.orderCart.totalItems);
-  const { phoneNumber } = useAppSelector((state) => state.auth);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
 
   const [showPreOrder, setShowPreOrder] = useState(false);
@@ -151,6 +155,21 @@ export default function HomeScreen() {
     [handleProductPress]
   );
 
+  useEffect(() => {
+    const getAddress = async () => {
+      if (currentLocation) {
+        const address = await Location.reverseGeocodeAsync({
+          latitude: currentLocation.lat,
+          longitude: currentLocation.lng,
+        });
+        if (address[0]) {
+          setUserAddress(`${address[0].street}, ${address[0].district}, ${address[0].city}`);
+        }
+      }
+    };
+    getAddress();
+  }, [currentLocation]);
+
   const ListHeader = useCallback(
     () => (
       <>
@@ -161,6 +180,13 @@ export default function HomeScreen() {
                  </Text>
              </View>
         )}
+
+        {userAddress && (
+          <View style={styles.userLocationInfo}>
+            <Text style={styles.userLocationText}>📍 {userAddress}</Text>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
           <HomeBrandSelector />
@@ -182,7 +208,7 @@ export default function HomeScreen() {
         </View>
       </>
     ),
-    [categories, locationError]
+    [categories, locationError, userAddress]
   );
 
   const ListFooter = useCallback(
@@ -404,5 +430,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'SpaceGrotesk-Regular',
     color: BRAND_COLORS.text.secondary,
+  },
+  userLocationInfo: {
+  padding: 12,
+  backgroundColor: BRAND_COLORS.primary.beSua,
+  marginBottom: 8,
+  borderRadius: 8,
+  },
+  storeName: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: BRAND_COLORS.primary.xanhReu,
+  },
+  userLocationText: {
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk-Regular',
+    color: BRAND_COLORS.secondary.reuDam,
+    marginTop: 4,
   },
 });
