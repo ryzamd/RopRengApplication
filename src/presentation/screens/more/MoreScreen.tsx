@@ -85,6 +85,14 @@ export default function MoreScreen() {
         }
         break;
 
+      case 'history':
+        if (isAuthenticated) {
+          router.push('../order-history');
+        } else {
+          router.push('../(auth)/login');
+        }
+        break;
+
       default:
         break;
     }
@@ -94,7 +102,7 @@ export default function MoreScreen() {
     <View style={styles.container}>
       <MoreHeader />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <UtilityGrid />
+        <UtilityGrid onItemPress={handleMenuPress} />
         <MenuSection section={SUPPORT_MENU} onItemPress={handleMenuPress} />
         <MenuSection section={accountMenuSection} onItemPress={handleMenuPress} />
         <VersionFooter />

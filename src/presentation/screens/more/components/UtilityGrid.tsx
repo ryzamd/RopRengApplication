@@ -4,10 +4,15 @@ import { UTILITIES } from '../MoreConstants';
 import { styles } from '../styles';
 import { UtilityItem } from './UtilityItem';
 
-export const UtilityGrid = () => {
+interface UtilityGridProps {
+  onItemPress?: (id: string) => void;
+}
+
+export function UtilityGrid({ onItemPress }: UtilityGridProps) {
   const handlePress = (id: string) => {
-    console.log('Utility pressed:', id);
-    // Xử lý navigate tại đây nếu cần
+    if (onItemPress) {
+      onItemPress(id);
+    }
   };
 
   return (
