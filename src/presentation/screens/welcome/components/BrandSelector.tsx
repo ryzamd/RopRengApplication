@@ -5,7 +5,7 @@ import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
 
 export function BrandSelector() {
-   const handleBrandPress = useAuthGuard(
+  const handleBrandPress = useAuthGuard(
     (brandId: string, brandName: string) => {
       console.log(`Clicked: ${brandName} (${brandId})`);
       // TODO: Switch brand context

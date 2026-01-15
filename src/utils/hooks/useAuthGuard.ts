@@ -1,29 +1,28 @@
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { PendingIntent, setPendingIntent } from '../../state/slices/auth';
+import { AuthActionContext, AuthActionService, AuthActionType } from '../../domain/services/AuthActionService';
+import { setPendingAction } from '../../state/slices/auth';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-export function useAuthGuard<T extends any[]>(action: (...args: T) => void, intentFactory?: (...args: T) => Omit<PendingIntent, 'expiresAt' | 'timestamp'>) {
+export function useAuthGuard<TArgs extends any[]>(action: (...args: TArgs) => void, authActionType?: AuthActionType, authActionContextFactory?: (...args: TArgs) => AuthActionContext)
+{
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   return useCallback(
-    (...args: T) => {
+    (...args: TArgs) => {
       if (!isAuthenticated) {
-        if (intentFactory) {
-          const intent = intentFactory(...args);
-          dispatch(setPendingIntent({
-            ...intent,
-            expiresAt: Date.now() + 5 * 60 * 1000,
-            timestamp: Date.now(),
-          }));
+        if (authActionType && authActionContextFactory) {
+          const context = authActionContextFactory(...args);
+          const pendingAction = AuthActionService.create(authActionType, context);
+          dispatch(setPendingAction(pendingAction));
         }
         router.push('../(auth)/login');
       } else {
         action(...args);
       }
     },
-    [isAuthenticated, router, dispatch, action, intentFactory]
+    [isAuthenticated, router, dispatch, action, authActionType, authActionContextFactory]
   );
 }

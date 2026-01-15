@@ -1,9 +1,9 @@
+import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../../welcome/WelcomeConstants';
 import { HOME_LAYOUT } from '../HomeLayout';
-import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 
 export function HomeBrandSelector() {
   const handleBrandPress = useAuthGuard(
@@ -11,24 +11,15 @@ export function HomeBrandSelector() {
       console.log(`Clicked: ${brandName} (${brandId})`);
       // TODO: Switch brand context
     },
-    (brandId: string) => ({
-      intent: 'BROWSE_CATEGORY',
-      context: { 
-        categoryId: brandId, 
-        returnTo: '/welcome' 
-      },
-    })
+    'BROWSE_CATEGORY',
+    (brandId: string) => ({ categoryId: brandId, returnTo: '/welcome' })
   );
 
   return (
     <View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {WELCOME_TEXT.BRAND_SECTION.BRANDS.map((brand) => (
-          <TouchableOpacity
-            key={brand.id}
-            style={styles.brandCard}
-            onPress={() => handleBrandPress(brand.id, brand.name)}
-          >
+          <TouchableOpacity key={brand.id} style={styles.brandCard} onPress={() => handleBrandPress(brand.id, brand.name)}>
             <View style={styles.brandPlaceholder}>
               <Text style={styles.brandPlaceholderText}>{brand.name}</Text>
             </View>

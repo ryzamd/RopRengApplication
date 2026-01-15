@@ -5,7 +5,7 @@ import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
-import { clearPendingIntent } from '../../../state/slices/auth';
+import { clearPendingAction } from '../../../state/slices/auth';
 import { addToCart } from '../../../state/slices/orderCart';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
@@ -21,31 +21,31 @@ export default function OrderScreen() {
   const dispatch = useAppDispatch();
   const handleAddToCart = useAddToCart();
   const [showPreOrder, setShowPreOrder] = useState(false);
-  
-  const pendingIntent = useAppSelector((state) => state.auth.pendingIntent);
+
+  const pendingAction = useAppSelector((state) => state.auth.pendingAction);
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
 
-  const processedIntentRef = useRef<string | null>(null);
+  const processedActionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    console.log('[OrderScreen] Store or Intent changed, checking conditions...');
+    console.log('[OrderScreen] Store or Action changed, checking conditions...');
     console.log(`[OrderScreen] selectedStore: ${selectedStore?.name || 'null'}`);
-    console.log(`[OrderScreen] pendingIntent: ${pendingIntent ? JSON.stringify(pendingIntent) : 'null'}`);
+    console.log(`[OrderScreen] pendingAction: ${pendingAction ? JSON.stringify(pendingAction) : 'null'}`);
 
-    if (!pendingIntent) {
-      console.log('[OrderScreen] No pending intent');
+    if (!pendingAction) {
+      console.log('[OrderScreen] No pending action');
       return;
     }
 
-    if (pendingIntent.intent !== 'PURCHASE') {
-      console.log('[OrderScreen] Intent is not PURCHASE');
+    if (pendingAction.type !== 'PURCHASE') {
+      console.log('[OrderScreen] Action is not PURCHASE');
       return;
     }
 
-    if (!pendingIntent.context.productId) {
-      console.log('[OrderScreen] No productId in intent');
+    if (!pendingAction.context.productId) {
+      console.log('[OrderScreen] No productId in action');
       return;
     }
 
@@ -54,34 +54,34 @@ export default function OrderScreen() {
       return;
     }
 
-    const intentKey = `${pendingIntent.context.productId}-${pendingIntent.timestamp}`;
-    if (processedIntentRef.current === intentKey) {
-      console.log('[OrderScreen] Intent already processed, skipping');
+    const actionKey = `${pendingAction.context.productId}-${pendingAction.timestamp}`;
+    if (processedActionRef.current === actionKey) {
+      console.log('[OrderScreen] Action already processed, skipping');
       return;
     }
 
-    console.log(`[OrderScreen] All conditions met! Auto-adding product: ${pendingIntent.context.productId}`);
+    console.log(`[OrderScreen] All conditions met! Auto-adding product: ${pendingAction.context.productId}`);
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === pendingIntent.context.productId);
-    
+    const product = MOCK_PRODUCTS.find((p) => p.id === pendingAction.context.productId);
+
     if (!product) {
-      console.error(`[OrderScreen] Product not found: ${pendingIntent.context.productId}`);
+      console.error(`[OrderScreen] Product not found: ${pendingAction.context.productId}`);
       Alert.alert('Lỗi', 'Sản phẩm trong yêu cầu không tồn tại');
-      dispatch(clearPendingIntent());
-      processedIntentRef.current = intentKey;
+      dispatch(clearPendingAction());
+      processedActionRef.current = actionKey;
       return;
     }
 
     console.log(`[OrderScreen] Found product: ${product.name}, adding to cart...`);
     dispatch(addToCart(product));
-    
-    console.log('[OrderScreen] Product added, clearing pending intent');
-    dispatch(clearPendingIntent());
-    
-    processedIntentRef.current = intentKey;
+
+    console.log('[OrderScreen] Product added, clearing pending action');
+    dispatch(clearPendingAction());
+
+    processedActionRef.current = actionKey;
 
     Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
-  }, [selectedStore, pendingIntent, dispatch]);
+  }, [selectedStore, pendingAction, dispatch]);
 
   const handleMiniCartPress = useCallback(() => {
     console.log('[OrderScreen] Opening PreOrder sheet');
@@ -107,10 +107,10 @@ export default function OrderScreen() {
   return (
     <View style={[orderStyles.container, { paddingTop: insets.top }]}>
       <OrderHeader />
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <OrderCategoryScroll />
-        
+
         {MOCK_COMBOS.map((combo) => (
           <OrderPromoSection
             key={combo.id}
@@ -120,7 +120,7 @@ export default function OrderScreen() {
             onProductPress={handleAddToCart}
           />
         ))}
-        
+
         {productsByCategory.map((section, index) => (
           <OrderProductSection
             key={index}
@@ -129,19 +129,13 @@ export default function OrderScreen() {
             onAddPress={handleAddToCart}
           />
         ))}
-        
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {showMiniCart && (
-        <MiniCartButton onPress={handleMiniCartPress} />
-      )}
+      {showMiniCart && <MiniCartButton onPress={handleMiniCartPress} />}
 
-      <PreOrderBottomSheet
-        visible={showPreOrder}
-        onClose={handlePreOrderClose}
-        onOrderSuccess={handleOrderSuccess}
-      />
+      <PreOrderBottomSheet visible={showPreOrder} onClose={handlePreOrderClose} onOrderSuccess={handleOrderSuccess} />
     </View>
   );
 }

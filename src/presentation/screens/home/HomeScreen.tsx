@@ -20,6 +20,7 @@ import { HomeBrandSelector } from './components/HomeBrandSelector';
 import { HomeCategoryScroll } from './components/HomeCategoryGrid';
 import { HomeQuickActions } from './components/HomeQuickActions';
 import { HomeSearchBar } from './components/HomeSearchBar';
+import { LocationBanner } from './components/LocationBanner';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
 
@@ -41,11 +42,12 @@ export default function HomeScreen() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [userAddress, setUserAddress] = useState<string>('');
 
-  const { isAuthenticated, totalItems, phoneNumber } = useAppSelector((state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
-    totalItems: state.orderCart.totalItems,
-    phoneNumber: state.auth.phoneNumber,
-  }));
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const totalItems = useAppSelector((state) => state.orderCart.totalItems);
+  const phoneNumber = useAppSelector((state) => state.auth.phoneNumber);
+  const [showPreOrder, setShowPreOrder] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const userName = phoneNumber?.replace('+84', '0') || 'User';
 
   useEffect(() => {
     const initLocation = async () => {
@@ -93,10 +95,6 @@ export default function HomeScreen() {
     enabled: !!currentLocation,
   });
 
-  const userName = phoneNumber?.replace('+84', '0') || 'User';
-
-  const [showPreOrder, setShowPreOrder] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     if (!currentLocation) {
@@ -163,29 +161,34 @@ export default function HomeScreen() {
           longitude: currentLocation.lng,
         });
         if (address[0]) {
-          setUserAddress(`${address[0].street}, ${address[0].district}, ${address[0].city}`);
+          const parts = [
+            address[0].street,
+            address[0].district,
+            address[0].subregion,
+            address[0].city,
+            address[0].region,
+          ].filter(Boolean);
+
+          setUserAddress(parts.join(', '));
         }
       }
     };
     getAddress();
   }, [currentLocation]);
 
+  const handleLocationPress = useCallback(() => {
+    console.log('[HomeScreen] Location banner pressed');
+    // TODO: Navigate to address selection or show location modal
+  }, []);
+
   const ListHeader = useCallback(
     () => (
       <>
-        {locationError && (
-             <View style={{ padding: 8, backgroundColor: '#FFF4F4', marginBottom: 8, borderRadius: 4 }}>
-                 <Text style={{ color: 'red', fontSize: 12, textAlign: 'center' }}>
-                    {locationError} - Đang hiển thị menu mặc định
-                 </Text>
-             </View>
-        )}
-
-        {userAddress && (
-          <View style={styles.userLocationInfo}>
-            <Text style={styles.userLocationText}>📍 {userAddress}</Text>
-          </View>
-        )}
+        <LocationBanner
+          userAddress={userAddress}
+          locationError={locationError}
+          onPress={handleLocationPress}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lựa chọn thương hiệu</Text>
@@ -208,7 +211,7 @@ export default function HomeScreen() {
         </View>
       </>
     ),
-    [categories, locationError, userAddress]
+    [categories, locationError, userAddress, handleLocationPress]
   );
 
   const ListFooter = useCallback(
