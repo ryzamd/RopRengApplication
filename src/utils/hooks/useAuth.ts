@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
+import { PendingAuthAction } from '../../domain/services/AuthActionService';
+import { clearError, clearPendingAction, loginWithOtp, logoutUser, registerUser, resetOtpFlow, setPendingAction } from '../../state/slices/auth';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { registerUser, loginWithOtp, logoutUser, clearError, resetOtpFlow, setPendingIntent, clearPendingIntent, PendingIntent } from '../../state/slices/auth';
 
 export function useAuth() {
   const dispatch = useAppDispatch();
@@ -34,15 +35,15 @@ export function useAuth() {
     dispatch(resetOtpFlow());
   }, [dispatch]);
 
-  const savePendingIntent = useCallback(
-    (intent: PendingIntent) => {
-      dispatch(setPendingIntent(intent));
+  const savePendingAction = useCallback(
+    (action: PendingAuthAction) => {
+      dispatch(setPendingAction(action));
     },
     [dispatch]
   );
 
-  const removePendingIntent = useCallback(() => {
-    dispatch(clearPendingIntent());
+  const removePendingAction = useCallback(() => {
+    dispatch(clearPendingAction());
   }, [dispatch]);
 
   return {
@@ -53,14 +54,14 @@ export function useAuth() {
     error: auth.error,
     otpSent: auth.otpSent,
     otpPhone: auth.otpPhone,
-    pendingIntent: auth.pendingIntent,
+    pendingAction: auth.pendingAction,
 
     sendOtp,
     verifyOtp,
     logout,
     clearAuthError,
     resetOtp,
-    savePendingIntent,
-    removePendingIntent,
+    savePendingAction,
+    removePendingAction,
   };
 }

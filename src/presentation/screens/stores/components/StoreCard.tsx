@@ -14,14 +14,13 @@ export function StoreCard({ store, onPress }: StoreCardProps) {
       console.log(`[StoreCard] Viewing: ${store.name}`);
       // TODO: Navigate to store detail
     },
-    // {
-    //   intent: 'VIEW_STORE',
-    //   context: {
-    //     storeId: store.id,
-    //     returnTo: '/(tabs)/stores',
-    //   },
-    // }
+    'VIEW_STORE',
+    () => ({
+      storeId: store.id,
+      returnTo: '/(tabs)/stores',
+    })
   );
+  
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
       <Image source={{ uri: store.imageUrl }} style={styles.image} />

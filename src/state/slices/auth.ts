@@ -3,22 +3,9 @@ import { AuthMapper, SerializableUser } from '../../application/mappers/AuthMapp
 import { LoginUseCase } from '../../application/usecases/LoginUseCase';
 import { RegisterUseCase } from '../../application/usecases/RegisterUseCase';
 import { AppError } from '../../core/errors/AppErrors';
+import { PendingAuthAction } from '../../domain/services/AuthActionService';
 import { authRepository } from '../../infrastructure/repositories/AuthRepositoryImpl';
 import { TokenStorage } from '../../infrastructure/storage/tokenStorage';
-
-export interface PendingIntent {
-  intent: 'PURCHASE' | 'VIEW_STORE' | 'CLAIM_PROMO' | 'BROWSE_CATEGORY' | 'VIEW_COLLECTION';
-  context: {
-    productId?: string;
-    storeId?: string;
-    promoCode?: string;
-    categoryId?: string;
-    collectionId?: string;
-    returnTo?: string;
-  };
-  expiresAt: number;
-  timestamp: number;
-}
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -26,7 +13,7 @@ interface AuthState {
   user: SerializableUser | null;
   phoneNumber: string | null;
   error: string | null;
-  pendingIntent: PendingIntent | null;
+  pendingAction: PendingAuthAction | null;
   otpSent: boolean;
   otpPhone: string | null;
 }
@@ -37,77 +24,60 @@ const initialState: AuthState = {
   user: null,
   phoneNumber: null,
   error: null,
-  pendingIntent: null,
+  pendingAction: null,
   otpSent: false,
   otpPhone: null,
 };
 
-// ============ Async Thunks ============
-
-export const registerUser = createAsyncThunk< { phone: string }, { phone: string }, { rejectValue: string } >('auth/register', async ({ phone }, { rejectWithValue }) => {
+export const registerUser = createAsyncThunk<{ phone: string }, { phone: string }, { rejectValue: string }>('auth/register', async ({ phone }, { rejectWithValue }) => {
   try {
-
     const useCase = new RegisterUseCase(authRepository);
     await useCase.execute(phone);
     return { phone };
 
   } catch (error) {
-
     if (error instanceof AppError) {
       return rejectWithValue(error.message);
     }
-
     return rejectWithValue('Đã có lỗi xảy ra khi gửi OTP');
   }
 });
 
-
-export const loginWithOtp = createAsyncThunk< { user: SerializableUser; phone: string }, { phone: string; otp: string }, { rejectValue: string } >('auth/login', async ({ phone, otp }, { rejectWithValue }) => {
+export const loginWithOtp = createAsyncThunk<{ user: SerializableUser; phone: string }, { phone: string; otp: string }, { rejectValue: string }>('auth/login', async ({ phone, otp }, { rejectWithValue }) => {
   try {
-
     const useCase = new LoginUseCase(authRepository);
     const result = await useCase.execute(phone, otp);
     const serializableUser = AuthMapper.toSerializable(result.user);
-
     return { user: serializableUser, phone };
 
   } catch (error) {
-
     if (error instanceof AppError) {
       return rejectWithValue(error.message);
     }
-
     return rejectWithValue('Đã có lỗi xảy ra khi đăng nhập');
   }
 });
 
 export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>('auth/logout', async (_, { rejectWithValue }) => {
     try {
-
       await TokenStorage.clearTokens();
-
     } catch {
-
       return rejectWithValue('Đã có lỗi xảy ra khi đăng xuất');
     }
   }
 );
 
-export const checkAuthStatus = createAsyncThunk< { isAuthenticated: boolean; userId: string | null }, void, { rejectValue: string } >('auth/checkStatus', async (_, { rejectWithValue }) => {
+export const checkAuthStatus = createAsyncThunk<{ isAuthenticated: boolean; userId: string | null }, void, { rejectValue: string }>('auth/checkStatus', async (_, { rejectWithValue }) => {
   try {
     const { accessToken, userId } = await TokenStorage.getTokens();
-
     return {
       isAuthenticated: !!accessToken,
       userId,
     };
-
   } catch {
     return rejectWithValue('Không thể kiểm tra trạng thái đăng nhập');
   }
 });
-
-// ============ Slice ============
 
 const authSlice = createSlice({
   name: 'auth',
@@ -123,12 +93,12 @@ const authSlice = createSlice({
       state.error = null;
     },
 
-    setPendingIntent: (state, action: PayloadAction<PendingIntent>) => {
-      state.pendingIntent = action.payload;
+    setPendingAction: (state, action: PayloadAction<PendingAuthAction>) => {
+      state.pendingAction = action.payload;
     },
 
-    clearPendingIntent: (state) => {
-      state.pendingIntent = null;
+    clearPendingAction: (state) => {
+      state.pendingAction = null;
     },
 
     loginDirect: (
@@ -206,8 +176,8 @@ const authSlice = createSlice({
 export const {
   clearError,
   resetOtpFlow,
-  setPendingIntent,
-  clearPendingIntent,
+  setPendingAction,
+  clearPendingAction,
   loginDirect,
 } = authSlice.actions;
 

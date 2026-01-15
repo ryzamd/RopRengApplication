@@ -1,10 +1,10 @@
+import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthGuard } from '../../../../utils/hooks/useAuthGuard';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../WelcomeConstants';
-import { router } from 'expo-router';
 
 export function QuickActions() {
   const handleActionPress = useAuthGuard(
@@ -12,10 +12,8 @@ export function QuickActions() {
       console.log(`Clicked: ${label} (${actionId})`);
       router.push('/(tabs)/order');
     },
-    (actionId: string) => ({
-      intent: 'PURCHASE',
-      context: { actionId, returnTo: '/welcome' },
-    })
+    'PURCHASE',
+    (actionId: string) => ({ actionId, returnTo: '/welcome' })
   );
 
   return (

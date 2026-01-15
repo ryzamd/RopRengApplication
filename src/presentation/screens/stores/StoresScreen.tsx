@@ -22,10 +22,8 @@ export default function StoresScreen() {
   
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { selectedStore, totalItems } = useAppSelector((state) => ({
-    selectedStore: state.orderCart.selectedStore,
-    totalItems: state.orderCart.totalItems,
-  }));
+  const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
+  const totalItems = useAppSelector((state) => state.orderCart.totalItems);
 
   const apiStore = useAppSelector(selectStore);
 

@@ -1,3 +1,4 @@
+import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
@@ -30,7 +31,6 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   
-  // REFACTOR: State Location
   const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION);
   const [isLocationReady, setIsLocationReady] = useState(false);
 
@@ -39,7 +39,7 @@ export default function WelcomeScreen() {
         try {
             const hasPermission = await permissionService.checkOrRequestLocation();
             if (hasPermission) {
-                const location = await Location.getCurrentPositionAsync({ 
+                const location = await Location.getCurrentPositionAsync({
                     accuracy: Location.Accuracy.Balanced,
                 });
                 
@@ -51,7 +51,7 @@ export default function WelcomeScreen() {
                 });
             }
         } catch (e) {
-            console.error('⚠️ Location Error Details:', e); 
+            console.error('⚠️ Location Error Details:', e);
             console.log('WelcomeScreen: Using default location');
         } finally {
             setIsLocationReady(true);
@@ -90,9 +90,14 @@ export default function WelcomeScreen() {
     refresh();
   }, [clearError, refresh]);
 
-  const handleProductPress = useCallback((product: ProductCardData) => {
-    console.log('[WelcomeScreen] Product:', product.id);
-  }, []);
+    const handleProductPress = useAuthGuard(
+      (product: ProductCardData) => {
+        console.log('[WelcomeScreen] Navigating to product:', product.id);
+        // TODO: Navigate to product detail
+      },
+      'PURCHASE',
+      (product: ProductCardData) => ({ productId: product.id })
+    );
 
   const handleCategoryPress = useCallback((categoryId: string) => {
     setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
