@@ -1,10 +1,12 @@
-import { selectStore } from '@/src/state/slices/homeSlice';
+import { setSelectedStore } from '@/src/state/slices/orderCart';
+import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_STORES, Store } from '../../../data/mockStores';
-import { setSelectedStore } from '../../../state/slices/orderCart';
+import { Store } from '../../../data/mockStores';
+import { permissionService } from '../../../infrastructure/services/PermissionService';
+import { clearStoresError, fetchStores, fetchStoresByProduct } from '../../../state/slices/storesSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
 import { StoreSection } from './components/StoreSection';
@@ -12,6 +14,8 @@ import { StoresHeader } from './components/StoresHeader';
 import { StoresSearchBar } from './components/StoresSearchBar';
 import { STORES_TEXT } from './StoresConstants';
 import { StoresUIService } from './StoresService';
+
+const FALLBACK_LOCATION = { lat: 10.8086020983386, lng: 106.66489979229742 };
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
@@ -21,39 +25,64 @@ export default function StoresScreen() {
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
+  const { stores: apiStores, loading, error } = useAppSelector((state) => state.stores);
 
-  const apiStore = useAppSelector(selectStore);
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        const hasPermission = await permissionService.checkOrRequestLocation();
+        let location = FALLBACK_LOCATION;
 
-  // TODO: Replace MOCK_STORES with API store list when backend ready
-  // Expected endpoint: GET /stores/nearby?lat={lat}&lng={lng}&limit=20
-  const baseStores = useMemo(() => {
-    if (!apiStore) return MOCK_STORES;
-    
-    // Convert API Store to Mock Store UI format
-    const uiStore: Store = {
-      id: String(apiStore.id),
-      name: apiStore.name,
-      brandName: 'Rốp Rẻng',
-      address: apiStore.address || 'Chưa có địa chỉ',
-      imageUrl: 'https://via.placeholder.com/150',
-      latitude: apiStore.location.coordinates[0],
-      longitude: apiStore.location.coordinates[1],
-      distanceKm: 0, // TODO: Calculate from user location
+        if (hasPermission) {
+          const geoLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          location = {
+            lat: geoLocation.coords.latitude,
+            lng: geoLocation.coords.longitude,
+          };
+        }
+
+        setUserLocation(location);
+
+        if (params.mode === 'select' && params.productId) {
+          console.log('[StoresScreen] Fetching stores by product:', params.productId);
+          dispatch(
+            fetchStoresByProduct({
+              lat: location.lat,
+              lng: location.lng,
+              productId: Number(params.productId),
+              page: 0,
+              limit: 20,
+              refresh: true,
+            })
+          );
+        } else {
+          dispatch(fetchStores({ page: 1, refresh: true }));
+        }
+      } catch (error) {
+        console.log('[StoresScreen] Error initializing:', error);
+        setUserLocation(FALLBACK_LOCATION);
+        dispatch(fetchStores({ page: 1, refresh: true }));
+      }
     };
 
-    if (params.mode === 'select' && params.productId) {
-      return [uiStore];
-    }
-    
-    return [uiStore]; // TODO: Replace with full list from API
-  }, [apiStore, params.mode, params.productId]);
+    initData();
+  }, [dispatch, params.mode, params.productId]);
+
+  const uiStores = useMemo<Store[]>(() => {
+    return apiStores.map(apiStore => 
+      StoresUIService.mapApiStoreToUIStore(apiStore, userLocation)
+    );
+  }, [apiStores, userLocation]);
 
   const filteredStores = useMemo(
-    () => StoresUIService.filterStores(baseStores, searchQuery),
-    [baseStores, searchQuery]
+    () => StoresUIService.filterStores(uiStores, searchQuery),
+    [uiStores, searchQuery]
   );
 
   const nearestStore = useMemo(
@@ -69,19 +98,18 @@ export default function StoresScreen() {
   const handleStorePress = useCallback((store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
     
-    // Check if switching stores with cart items
     if (selectedStore && selectedStore.id !== store.id && totalItems > 0) {
       Alert.alert(
-        'Đổi cửa hàng',
-        `Bạn đang có ${totalItems} sản phẩm trong giỏ hàng. Đổi cửa hàng sẽ xóa toàn bộ giỏ hàng hiện tại. Bạn có chắc chắn muốn tiếp tục?`,
+        STORES_TEXT.ALERT_TITLE,
+        STORES_TEXT.ALERT_MESSAGE(totalItems),
         [
           {
-            text: 'Không',
+            text: STORES_TEXT.ALERT_CANCEL,
             style: 'cancel',
             onPress: () => console.log('[StoresScreen] User cancelled store switch'),
           },
           {
-            text: 'Đồng ý',
+            text: STORES_TEXT.ALERT_CONFIRM,
             style: 'destructive',
             onPress: () => {
               console.log('[StoresScreen] User confirmed, clearing cart and switching store');
@@ -104,6 +132,68 @@ export default function StoresScreen() {
     }
   }, [selectedStore, totalItems, dispatch, router, params.mode]);
 
+  useEffect(() => {
+    const loadStores = async () => {
+      if (params.mode === 'select' && params.productId && userLocation) {
+        dispatch(fetchStoresByProduct({
+          productId: Number(params.productId),
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          limit: 20,
+        }));
+      } else {
+        dispatch(fetchStores({ page: 1, refresh: true }));
+      }
+    };
+
+    loadStores();
+  }, [dispatch, params.mode, params.productId, userLocation]);
+
+  const handleRetry = useCallback(() => {
+    dispatch(clearStoresError());
+    
+    if (params.mode === 'select' && params.productId && userLocation) {
+      dispatch(
+        fetchStoresByProduct({
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          productId: Number(params.productId),
+          page: 0,
+          limit: 20,
+          refresh: true,
+        })
+      );
+    } else {
+      dispatch(fetchStores({ page: 1, refresh: true }));
+    }
+  }, [dispatch, params.mode, params.productId, userLocation]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StoresHeader />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
+          <Text style={styles.loadingText}>{STORES_TEXT.LOADING_MESSAGE}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StoresHeader />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.retryButton} onPress={handleRetry}>
+            {STORES_TEXT.RETRY_BUTTON}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StoresHeader />
@@ -114,7 +204,9 @@ export default function StoresScreen() {
         {filteredStores.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              {params.mode === 'select' ? 'Không có cửa hàng nào có sản phẩm này' : 'Không tìm thấy cửa hàng'}
+              {params.mode === 'select' 
+                ? STORES_TEXT.EMPTY_MESSAGE_SELECT 
+                : STORES_TEXT.EMPTY_MESSAGE_BROWSE}
             </Text>
           </View>
         ) : (
@@ -143,6 +235,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: BRAND_COLORS.primary.xanhReu,
+    marginTop: 12,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: '#D32F2F',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  retryButton: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Bold',
+    color: BRAND_COLORS.primary.xanhReu,
   },
   emptyState: {
     flex: 1,
