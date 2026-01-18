@@ -1,3 +1,4 @@
+import { ConfirmOrder } from '../entities/ConfirmOrder';
 import { Order } from '../entities/Order';
 
 export interface OrderRepository {
@@ -10,4 +11,5 @@ export interface OrderRepository {
   }>;
   
   getOrderDetail(orderId: number): Promise<Order>;
+  confirmOrder(payload: ConfirmOrder): Promise<Order>;
 }
