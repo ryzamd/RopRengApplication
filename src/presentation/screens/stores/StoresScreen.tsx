@@ -1,11 +1,9 @@
 import { setSelectedStore } from '@/src/state/slices/orderCart';
-import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Store } from '../../../data/mockStores';
-import { permissionService } from '../../../infrastructure/services/PermissionService';
 import { clearStoresError, fetchStores, fetchStoresByProduct } from '../../../state/slices/storesSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -14,8 +12,8 @@ import { StoresHeader } from './components/StoresHeader';
 import { StoresSearchBar } from './components/StoresSearchBar';
 import { STORES_TEXT } from './StoresConstants';
 import { StoresUIService } from './StoresService';
-
-const FALLBACK_LOCATION = { lat: 10.8086020983386, lng: 106.66489979229742 };
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { locationService } from '@/src/infrastructure/services';
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
@@ -34,27 +32,18 @@ export default function StoresScreen() {
   useEffect(() => {
     const initData = async () => {
       try {
-        const hasPermission = await permissionService.checkOrRequestLocation();
-        let location = FALLBACK_LOCATION;
-
-        if (hasPermission) {
-          const geoLocation = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          location = {
-            lat: geoLocation.coords.latitude,
-            lng: geoLocation.coords.longitude,
-          };
-        }
-
-        setUserLocation(location);
+        const location = await locationService.getCurrentPosition();
+        
+        setUserLocation({
+          lat: location.latitude,
+          lng: location.longitude,
+        });
 
         if (params.mode === 'select' && params.productId) {
-          console.log('[StoresScreen] Fetching stores by product:', params.productId);
           dispatch(
             fetchStoresByProduct({
-              lat: location.lat,
-              lng: location.lng,
+              lat: location.latitude,
+              lng: location.longitude,
               productId: Number(params.productId),
               page: 0,
               limit: 20,
@@ -65,8 +54,11 @@ export default function StoresScreen() {
           dispatch(fetchStores({ page: 1, refresh: true }));
         }
       } catch (error) {
-        console.log('[StoresScreen] Error initializing:', error);
-        setUserLocation(FALLBACK_LOCATION);
+        console.log('[StoresScreen] Error:', error);
+        setUserLocation({
+          lat: APP_DEFAULT_LOCATION.latitude,
+          lng: APP_DEFAULT_LOCATION.longitude,
+        });
         dispatch(fetchStores({ page: 1, refresh: true }));
       }
     };
@@ -75,7 +67,7 @@ export default function StoresScreen() {
   }, [dispatch, params.mode, params.productId]);
 
   const uiStores = useMemo<Store[]>(() => {
-    return apiStores.map(apiStore => 
+    return apiStores.map(apiStore =>
       StoresUIService.mapApiStoreToUIStore(apiStore, userLocation)
     );
   }, [apiStores, userLocation]);

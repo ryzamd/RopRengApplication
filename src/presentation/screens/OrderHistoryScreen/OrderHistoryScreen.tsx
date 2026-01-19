@@ -1,23 +1,22 @@
-import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { Order } from '../../../domain/entities/Order';
-import { useAppSelector } from '../../../utils/hooks';
-
-import { ITEMS_PER_PAGE, ORDER_HISTORY_STRINGS, STATUS_CHIPS } from './OrderHistoryConstants';
-import { OrderStatus } from './OrderHistoryEnums';
-import { StatusChipData } from './OrderHistoryInterfaces';
-import { OrderHistoryLayout } from './OrderHistoryLayout';
-import { OrderHistoryService } from './OrderHistoryService';
-import { OrderHistoryItem } from './components/OrderHistoryItem';
-import { OrderStatusChip } from './components/OrderStatusChip';
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Order } from "../../../domain/entities/Order";
+import { useAppSelector } from "../../../utils/hooks";
+import { ITEMS_PER_PAGE, ORDER_HISTORY_STRINGS, STATUS_CHIPS } from "./OrderHistoryConstants";
+import { OrderStatus } from "./OrderHistoryEnums";
+import { StatusChipData } from "./OrderHistoryInterfaces";
+import { OrderHistoryLayout } from "./OrderHistoryLayout";
+import { OrderHistoryService } from "./OrderHistoryService";
+import { OrderHistoryItem } from "./components/OrderHistoryItem";
+import { OrderStatusChip } from "./components/OrderStatusChip";
 
 export default function OrderHistoryScreen() {
   const router = useRouter();
   const { user } = useAppSelector((state) => state.auth);
   const service = useMemo(() => new OrderHistoryService(), []);
-  
-  const [orders, setOrders] = useState<Order[]>([]);
+
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
@@ -25,44 +24,41 @@ export default function OrderHistoryScreen() {
   const [page, setPage] = useState<number>(0);
   const [selectedStatuses, setSelectedStatuses] = useState<StatusChipData[]>(STATUS_CHIPS);
 
-   const activeStatuses = useMemo(
-      () =>
-        selectedStatuses
-          .filter((chip) => chip.isSelected && chip.status !== OrderStatus.ALL)
-          .map((chip) => chip.status),
-      [selectedStatuses]
-    );
+  const activeStatuses = useMemo(
+    () =>
+      selectedStatuses.filter((chip) => chip.isSelected && chip.status !== OrderStatus.ALL).map((chip) => chip.status),
+    [selectedStatuses],
+  );
+
+  const filteredOrders = useMemo(() => {
+    if (activeStatuses.length === 0) {
+      return allOrders;
+    }
+    return allOrders.filter((order) => activeStatuses.includes(order.orderStatus as OrderStatus));
+  }, [allOrders, activeStatuses]);
 
   const loadOrders = useCallback(
     async (pageNum: number, append: boolean = false) => {
       if (!user?.uuid) {
-        console.log('[OrderHistory] No user UUID');
+        console.log("[OrderHistory] No user UUID");
         return;
       }
 
       try {
-        const statusFilter =
-          activeStatuses.length > 0 ? activeStatuses : undefined;
+        const result = await service.loadOrders(user.uuid, pageNum, ITEMS_PER_PAGE, undefined);
 
-        const result = await service.loadOrders(
-          user.uuid,
-          pageNum,
-          ITEMS_PER_PAGE,
-          statusFilter
-        );
-
-        setOrders((prev) => (append ? [...prev, ...result.orders] : result.orders));
+        setAllOrders((prev) => (append ? [...prev, ...result.orders] : result.orders));
         setHasMore(result.hasMore);
         setPage(pageNum);
       } catch (error) {
-        console.error('[OrderHistory] Load error:', error);
+        console.error("[OrderHistory] Load error:", error);
       } finally {
         setLoading(false);
         setRefreshing(false);
         setLoadingMore(false);
       }
     },
-    [user?.uuid, activeStatuses, service]
+    [user?.uuid, service],
   );
 
   useEffect(() => {
@@ -100,9 +96,7 @@ export default function OrderHistoryScreen() {
         return chip;
       });
 
-      const anySelected = newChips.some(
-        (c) => c.isSelected && c.status !== OrderStatus.ALL
-      );
+      const anySelected = newChips.some((c) => c.isSelected && c.status !== OrderStatus.ALL);
       if (!anySelected) {
         return newChips.map((chip) => ({
           ...chip,
@@ -117,11 +111,11 @@ export default function OrderHistoryScreen() {
   const handleOrderPress = useCallback(
     (order: Order) => {
       router.push({
-        pathname: '../order-detail',
+        pathname: "../order-detail",
         params: { orderId: order.id },
       });
     },
-    [router]
+    [router],
   );
 
   const renderStatusChips = useCallback(() => {
@@ -150,9 +144,7 @@ export default function OrderHistoryScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyTitle}>{ORDER_HISTORY_STRINGS.EMPTY_TITLE}</Text>
-        <Text style={styles.emptyMessage}>
-          {ORDER_HISTORY_STRINGS.EMPTY_MESSAGE}
-        </Text>
+        <Text style={styles.emptyMessage}>{ORDER_HISTORY_STRINGS.EMPTY_MESSAGE}</Text>
       </View>
     );
   }, [loading]);
@@ -181,70 +173,64 @@ export default function OrderHistoryScreen() {
     <OrderHistoryLayout>
       {renderStatusChips()}
       <FlatList
-        data={orders}
+        data={filteredOrders}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <OrderHistoryItem order={item} onPress={() => handleOrderPress(item)} />
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={['#606A37']}
-          />
-        }
+        renderItem={({ item }) => <OrderHistoryItem order={item} onPress={() => handleOrderPress(item)} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#606A37"]} />}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={orders.length === 0 ? styles.emptyList : undefined}
+        contentContainerStyle={filteredOrders.length === 0 ? styles.emptyList : undefined}
       />
     </OrderHistoryLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#666666",
+  },
   chipsContainer: {
     paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#F0F0F0",
   },
   chipsContent: {
     paddingHorizontal: 16,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666666',
-  },
-  emptyList: {
-    flexGrow: 1,
-  },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
+    paddingTop: 80,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333333',
+    fontWeight: "600",
+    color: "#333333",
     marginBottom: 8,
   },
   emptyMessage: {
     fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
+    color: "#666666",
+    textAlign: "center",
     lineHeight: 20,
   },
+  emptyList: {
+    flexGrow: 1,
+  },
   footerLoader: {
-    paddingVertical: 20,
-    alignItems: 'center',
+    paddingVertical: 16,
+    alignItems: "center",
   },
 });
