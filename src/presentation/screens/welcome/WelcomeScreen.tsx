@@ -1,11 +1,9 @@
 import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { permissionService } from '../../../infrastructure/services/PermissionService';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
@@ -17,8 +15,9 @@ import { PromoBanner } from './components/PromoBanner';
 import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
 import { WELCOME_TEXT } from './WelcomeConstants';
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { locationService } from '@/src/infrastructure/services';
 
-const DEFAULT_LOCATION = { lat: 10.9674038, lng: 107.207539 };
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
 
@@ -31,32 +30,27 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   
-  const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION);
+  const [currentLocation, setCurrentLocation] = useState({
+    lat: APP_DEFAULT_LOCATION.latitude,
+    lng: APP_DEFAULT_LOCATION.longitude,
+  });
   const [isLocationReady, setIsLocationReady] = useState(false);
 
   useEffect(() => {
     const initLocation = async () => {
-        try {
-            const hasPermission = await permissionService.checkOrRequestLocation();
-            if (hasPermission) {
-                const location = await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.Balanced,
-                });
-                
-                console.log('📍 Got real location:', location.coords.latitude, location.coords.longitude);
-                
-                setCurrentLocation({
-                    lat: location.coords.latitude,
-                    lng: location.coords.longitude
-                });
-            }
-        } catch (e) {
-            console.error('⚠️ Location Error Details:', e);
-            console.log('WelcomeScreen: Using default location');
-        } finally {
-            setIsLocationReady(true);
-        }
+      try {
+        const location = await locationService.getCurrentPosition();
+        setCurrentLocation({
+          lat: location.latitude,
+          lng: location.longitude,
+        });
+      } catch (error) {
+        console.error('⚠️ Location Error:', error);
+      } finally {
+        setIsLocationReady(true);
+      }
     };
+
     initLocation();
   }, []);
 

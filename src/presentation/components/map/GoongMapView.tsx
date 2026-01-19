@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
-import { MapView, Camera } from '@maplibre/maplibre-react-native';
-import { GOONG_CONFIG } from '../../../infrastructure/api/goong/GoongConfig';
-import * as MapLibreGL from '@maplibre/maplibre-react-native';
+import * as MapLibreGL from "@maplibre/maplibre-react-native";
+import { Camera, MapView } from "@maplibre/maplibre-react-native";
+import React, { useEffect } from "react";
+import { StyleSheet, View, ViewProps } from "react-native";
+import { GOONG_CONFIG } from "../../../infrastructure/api/goong/GoongConfig";
 
 MapLibreGL.setAccessToken(null);
 MapLibreGL.setConnected(true);
@@ -28,9 +28,8 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DE
       try {
         await MapLibreGL.OfflineManager.setMaximumAmbientCacheSize(CACHE_SIZE_MB * 1024 * 1024);
         console.log(`[GoongMap] Cache size set to ${CACHE_SIZE_MB}MB`);
-
       } catch (error) {
-        console.warn('[GoongMap] Failed to set cache size:', error);
+        console.warn("[GoongMap] Failed to set cache size:", error);
       }
     };
     initCache();
@@ -45,12 +44,13 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DE
         attributionEnabled={true}
         onDidFinishLoadingMap={onMapReady}
         onRegionDidChange={onRegionDidChange}
+        surfaceView={true}
       >
         {!hasChildren && (
           <Camera
             zoomLevel={zoomLevel}
             centerCoordinate={centerCoordinate}
-            animationMode={'flyTo'}
+            animationMode={"flyTo"}
             animationDuration={500}
           />
         )}
@@ -63,7 +63,7 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DE
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   map: {
     flex: 1,

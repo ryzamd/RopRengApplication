@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { permissionService } from '../../../infrastructure/services/PermissionService';
 import { useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
@@ -23,10 +22,11 @@ import { HomeSearchBar } from './components/HomeSearchBar';
 import { LocationBanner } from './components/LocationBanner';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { locationService } from '@/src/infrastructure/services';
 
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
-const FALLBACK_LOCATION = { lat: 10.826588, lng: 106.706525 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   '1': 'cafe',
@@ -39,7 +39,7 @@ export default function HomeScreen() {
   const handleAddToCart = useAddToCart();
 
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationError] = useState<string | null>(null);
   const [userAddress, setUserAddress] = useState<string>('');
 
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -52,26 +52,17 @@ export default function HomeScreen() {
   useEffect(() => {
     const initLocation = async () => {
       try {
-        const hasPermission = await permissionService.checkOrRequestLocation();
-
-        if (!hasPermission) {
-          setLocationError('Quyền truy cập vị trí bị từ chối');
-          setCurrentLocation(FALLBACK_LOCATION);
-          return;
-        }
-
-        const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-        });
-        
+        const location = await locationService.getCurrentPosition();
         setCurrentLocation({
-          lat: location.coords.latitude,
-          lng: location.coords.longitude,
+          lat: location.latitude,
+          lng: location.longitude,
         });
-
       } catch (error) {
-        console.log('[HomeScreen] Error getting location:', error);
-        setCurrentLocation(FALLBACK_LOCATION);
+        console.error('[HomeScreen] Location error:', error);
+        setCurrentLocation({
+          lat: APP_DEFAULT_LOCATION.latitude,
+          lng: APP_DEFAULT_LOCATION.longitude,
+        });
       }
     };
 
@@ -98,11 +89,11 @@ export default function HomeScreen() {
 
   const handleRefresh = useCallback(async () => {
     if (!currentLocation) {
-        const hasPermission = await permissionService.checkOrRequestLocation();
-        if (hasPermission) {
-            const location = await Location.getCurrentPositionAsync({});
-            setCurrentLocation({ lat: location.coords.latitude, lng: location.coords.longitude });
-        }
+      const location = await locationService.getCurrentPosition();
+      setCurrentLocation({
+        lat: location.latitude,
+        lng: location.longitude
+      });
     }
     setRefreshing(true);
     await refresh();

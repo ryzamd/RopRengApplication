@@ -1,6 +1,6 @@
-import { Stack } from 'expo-router';
-import { ORDER_HISTORY_STRINGS } from '../src/presentation/screens/OrderHistoryScreen/OrderHistoryConstants';
-import OrderHistoryScreen from '../src/presentation/screens/OrderHistoryScreen/OrderHistoryScreen';
+import { Stack } from "expo-router";
+import { ORDER_HISTORY_STRINGS } from "../src/presentation/screens/OrderHistoryScreen/OrderHistoryConstants";
+import OrderHistoryScreen from "../src/presentation/screens/OrderHistoryScreen/OrderHistoryScreen";
 
 export default function OrderHistoryRoute() {
   return (
@@ -9,7 +9,7 @@ export default function OrderHistoryRoute() {
         options={{
           headerShown: true,
           title: ORDER_HISTORY_STRINGS.TITLE,
-          // headerBackTitle: 'Quay lại',
+          headerTitleAlign: "center",
         }}
       />
       <OrderHistoryScreen />

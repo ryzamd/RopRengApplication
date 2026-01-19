@@ -1,5 +1,6 @@
-import * as Location from 'expo-location';
-import { AppError } from '../../core/errors/AppErrors';
+import { APP_DEFAULT_LOCATION } from "@/src/core/config/locationConstants";
+import * as Location from "expo-location";
+import { PermissionService } from "./PermissionService";
 
 export interface ILocationCoordinate {
   latitude: number;
@@ -7,36 +8,54 @@ export interface ILocationCoordinate {
 }
 
 export class LocationService {
+  private permissionService: PermissionService;
 
-  async requestPermissions(): Promise<boolean> {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
-    } catch (error) {
-      console.error('Lỗi khi xin quyền vị trí:', error);
-      return false;
-    }
+  constructor(permissionService: PermissionService) {
+    this.permissionService = permissionService;
   }
 
-  async getCurrentPosition(): Promise<ILocationCoordinate> {
-    const hasPermission = await this.requestPermissions();
-    
-    if (!hasPermission) {
-      throw new AppError('Vui lòng cấp quyền truy cập vị trí để sử dụng tính năng này', 'PERMISSION_DENIED');
-    }
-
+  async getCurrentPosition(accuracy: Location.Accuracy = Location.Accuracy.Balanced): Promise<ILocationCoordinate> {
     try {
-      // Accuracy.High giúp lấy vị trí chính xác cho việc giao hàng
+      const hasPermission = await this.permissionService.checkOrRequestLocation();
+
+      if (!hasPermission) {
+        console.log("[LocationService] Permission denied → Using fallback");
+        return APP_DEFAULT_LOCATION;
+      }
+
+      console.log("[LocationService] Fetching GPS location...");
+
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy,
+        timeInterval: 5000,
+        distanceInterval: 10,
       });
 
-      return {
+      const coords = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
-    } catch (error) {
-      throw new AppError('Không thể lấy vị trí hiện tại. Vui lòng kiểm tra GPS.', 'LOCATION_SERVICE_ERROR');
+
+      console.log("[LocationService] ✅ GPS location:", coords);
+      return coords;
+    } catch (error: any) {
+      console.warn("[LocationService] GPS Error:", error?.message || error);
+
+      if (
+        error?.message?.includes("DEADLINE_EXCEEDED") ||
+        error?.message?.includes("No address associated") ||
+        error?.message?.includes("Location provider") ||
+        error?.message?.includes("Network")
+      ) {
+        console.log("[LocationService] Network/GPS issue → Using fallback");
+      }
+
+      return APP_DEFAULT_LOCATION;
     }
+  }
+
+  async requestPermissions(): Promise<boolean> {
+    console.warn("[LocationService] DEPRECATED: Use permissionService.checkOrRequestLocation()");
+    return this.permissionService.checkOrRequestLocation();
   }
 }

@@ -1,10 +1,10 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { GetHomeMenuUseCase } from '../../application/usecases/GetHomeMenuUseCase';
-import { GetVouchersUseCase } from '../../application/usecases/GetVouchersUseCase';
-import { Product } from '../../domain/entities/Product';
-import { Store } from '../../domain/entities/Store';
-import { Voucher } from '../../domain/entities/Voucher';
-import { homeRepository } from '../../infrastructure/repositories/HomeRepositoryImpl';
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { GetHomeMenuUseCase } from "../../application/usecases/GetHomeMenuUseCase";
+import { GetVouchersUseCase } from "../../application/usecases/GetVouchersUseCase";
+import { Product } from "../../domain/entities/Product";
+import { Store } from "../../domain/entities/Store";
+import { Voucher } from "../../domain/entities/Voucher";
+import { homeRepository } from "../../infrastructure/repositories/HomeRepositoryImpl";
 
 const getHomeMenuUseCase = new GetHomeMenuUseCase(homeRepository);
 const getVouchersUseCase = new GetVouchersUseCase(homeRepository);
@@ -18,9 +18,9 @@ interface SerializableProduct {
   imageUrl: string;
   categoryId: string;
   originalPrice?: number;
-  badge?: 'NEW' | 'HOT';
+  badge?: "NEW" | "HOT";
   discount?: string;
-  status: 'AVAILABLE' | 'OUT_OF_STOCK';
+  status: "AVAILABLE" | "OUT_OF_STOCK";
   hasDiscount: boolean;
   discountPercentage: number;
   formattedPrice: string;
@@ -51,7 +51,7 @@ interface SerializableVoucher {
   id: number;
   code: string;
   name: string;
-  type: 'fixed' | 'percent';
+  type: "fixed" | "percent";
   description: string | null;
   rules: { amount?: number; percent?: number };
   canCombine: boolean;
@@ -131,30 +131,27 @@ const toSerializableVoucher = (v: Voucher): SerializableVoucher => ({
 // Async Thunks
 
 /** Initial fetch - replaces products */
-export const fetchHomeMenu = createAsyncThunk(
-  'home/fetchMenu',
-  async (params: FetchParams, { rejectWithValue }) => {
-    try {
-      const result = await getHomeMenuUseCase.execute(params);
-      const products = result.products.map(toSerializableProduct);
-      const store = toSerializableStore(result.store);
-      return {
-        storeId: result.storeId,
-        store,
-        menuId: result.menuId,
-        products,
-        page: params.page ?? 0,
-        hasMore: products.length === (params.limit ?? 10),
-      };
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Không thể tải menu');
-    }
+export const fetchHomeMenu = createAsyncThunk("home/fetchMenu", async (params: FetchParams, { rejectWithValue }) => {
+  try {
+    const result = await getHomeMenuUseCase.execute(params);
+    const products = result.products.map(toSerializableProduct);
+    const store = toSerializableStore(result.store);
+    return {
+      storeId: result.storeId,
+      store,
+      menuId: result.menuId,
+      products,
+      page: params.page ?? 0,
+      hasMore: products.length === (params.limit ?? 10),
+    };
+  } catch (error) {
+    return rejectWithValue(error instanceof Error ? error.message : "Không thể tải menu");
   }
-);
+});
 
 /** Load more - appends products */
 export const fetchHomeMenuMore = createAsyncThunk(
-  'home/fetchMenuMore',
+  "home/fetchMenuMore",
   async (params: FetchParams, { rejectWithValue }) => {
     try {
       const result = await getHomeMenuUseCase.execute(params);
@@ -165,21 +162,21 @@ export const fetchHomeMenuMore = createAsyncThunk(
         hasMore: products.length === (params.limit ?? 10),
       };
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Không thể tải thêm');
+      return rejectWithValue(error instanceof Error ? error.message : "Không thể tải thêm");
     }
-  }
+  },
 );
 
 export const fetchVouchers = createAsyncThunk(
-  'home/fetchVouchers',
+  "home/fetchVouchers",
   async (params: FetchParams, { rejectWithValue }) => {
     try {
       const result = await getVouchersUseCase.execute(params);
       return result.vouchers.map(toSerializableVoucher);
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Không thể tải voucher');
+      return rejectWithValue(error instanceof Error ? error.message : "Không thể tải voucher");
     }
-  }
+  },
 );
 
 // Initial state
@@ -200,7 +197,7 @@ const initialState: HomeState = {
 
 // Slice
 const homeSlice = createSlice({
-  name: 'home',
+  name: "home",
   initialState,
   reducers: {
     clearHomeError: (state) => {
