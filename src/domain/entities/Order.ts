@@ -1,47 +1,40 @@
-export class Order {
-  constructor(
-    public readonly id: number,
-    public readonly orderCode: string,
-    public readonly userId: number,
-    public readonly storeId: number,
-    public readonly source: string,
-    public readonly subtotal: string,
-    public readonly totalAmount: string,
-    public readonly deliveryFee: string,
-    public readonly discountAmount: string,
-    public readonly finalAmount: string,
-    public readonly paymentMethod: string,
-    public readonly paymentStatus: string,
-    public readonly orderStatus: string,
-    public readonly address: string | null,
-    public readonly contactName: string | null,
-    public readonly contactPhone: string | null,
-    public readonly note: string | null,
-    public readonly createdAt: string,
-    public readonly updatedAt: string | null,
-    public readonly deletedAt: string | null,
-    public readonly items: OrderItem[]
-  ) {}
+import { OrderItemOptions } from './shared/OrderTypes';
+
+export type { OrderItemOptions };
+
+export interface Order {
+  readonly id: number;
+  readonly orderCode: string;
+  readonly userId: number;
+  readonly storeId: number;
+  readonly source: string;
+  readonly subtotal: number;
+  readonly totalAmount: number;
+  readonly deliveryFee: number;
+  readonly discountAmount: number;
+  readonly finalAmount: number;
+  readonly paymentMethod: string;
+  readonly paymentStatus: string;
+  readonly orderStatus: string;
+  readonly address: string | null;
+  readonly contactName: string | null;
+  readonly contactPhone: string | null;
+  readonly note: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string | null;
+  readonly deletedAt: string | null;
+  readonly items: OrderItem[];
 }
 
-export class OrderItem {
-  constructor(
-    public readonly id: number,
-    public readonly orderId: number,
-    public readonly productId: number | null,
-    public readonly menuItemId: number,
-    public readonly name: string,
-    public readonly qty: number,
-    public readonly unitPrice: string,
-    public readonly totalPrice: string,
-    public readonly options: OrderItemOptions,
-    public readonly createdAt: string
-  ) {}
-}
-
-export interface OrderItemOptions {
-  ice: string;
-  size: string;
-  toppings: string[];
-  sweetness: string;
+export interface OrderItem {
+  readonly id: number;
+  readonly orderId: number;
+  readonly productId: number | null;
+  readonly menuItemId: number;
+  readonly name: string;
+  readonly qty: number;
+  readonly unitPrice: number;
+  readonly totalPrice: number;
+  readonly options: OrderItemOptions;
+  readonly createdAt: string;
 }

@@ -3,43 +3,43 @@ import { OrderDTO, OrderItemDTO } from '../dto/OrderDTO';
 
 export class OrderMapper {
   static toDomain(dto: OrderDTO): Order {
-    return new Order(
-      dto.id,
-      dto.order_code,
-      dto.user_id,
-      dto.store_id,
-      dto.source,
-      dto.subtotal,
-      dto.total_amount,
-      dto.delivery_fee,
-      dto.discount_amount,
-      dto.final_amount,
-      dto.payment_method,
-      dto.payment_status,
-      dto.order_status,
-      dto.address,
-      dto.contact_name,
-      dto.contact_phone,
-      dto.note,
-      dto.created_at,
-      dto.updated_at,
-      dto.deleted_at,
-      dto.order_items.map((item) => OrderMapper.itemToDomain(item))
-    );
+    return {
+      id: dto.id,
+      orderCode: dto.order_code,
+      userId: dto.user_id,
+      storeId: dto.store_id,
+      source: dto.source,
+      subtotal: parseFloat(dto.subtotal),
+      totalAmount: parseFloat(dto.total_amount),
+      deliveryFee: parseFloat(dto.delivery_fee),
+      discountAmount: parseFloat(dto.discount_amount),
+      finalAmount: parseFloat(dto.final_amount),
+      paymentMethod: dto.payment_method,
+      paymentStatus: dto.payment_status,
+      orderStatus: dto.order_status,
+      address: dto.address,
+      contactName: dto.contact_name,
+      contactPhone: dto.contact_phone,
+      note: dto.note,
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
+      deletedAt: dto.deleted_at,
+      items: (dto.order_items ?? []).map((item) => OrderMapper.itemToDomain(item)),
+    };
   }
 
   static itemToDomain(dto: OrderItemDTO): OrderItem {
-    return new OrderItem(
-      dto.id,
-      dto.order_id,
-      dto.product_id,
-      dto.menu_item_id,
-      dto.name,
-      dto.qty,
-      dto.unit_price,
-      dto.total_price,
-      dto.options,
-      dto.created_at
-    );
+    return {
+      id: dto.id,
+      orderId: dto.order_id,
+      productId: dto.product_id,
+      menuItemId: dto.menu_item_id,
+      name: dto.name,
+      qty: dto.qty,
+      unitPrice: parseFloat(dto.unit_price),
+      totalPrice: parseFloat(dto.total_price),
+      options: dto.options,
+      createdAt: dto.created_at,
+    };
   }
 }

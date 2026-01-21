@@ -9,67 +9,17 @@ import { homeRepository } from "../../infrastructure/repositories/HomeRepository
 const getHomeMenuUseCase = new GetHomeMenuUseCase(homeRepository);
 const getVouchersUseCase = new GetVouchersUseCase(homeRepository);
 
-interface SerializableProduct {
-  id: string;
-  menuItemId: number;
-  productId: number;
-  name: string;
-  price: number;
-  imageUrl: string;
-  categoryId: string;
-  originalPrice?: number;
-  badge?: "NEW" | "HOT";
-  discount?: string;
-  status: "AVAILABLE" | "OUT_OF_STOCK";
-  hasDiscount: boolean;
-  discountPercentage: number;
-  formattedPrice: string;
-  isAvailable: boolean;
-}
-
-interface SerializableStore {
-  id: number;
-  regionId: number;
-  name: string;
-  slug: string | null;
-  address: string | null;
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
-  phone: string | null;
-  email: string | null;
-  timezone: string;
-  isActive: number;
-  createdAt: string;
-  updatedAt: string | null;
-  deletedAt: string | null;
-  currentLoyaltyPoint: number;
-}
-
-interface SerializableVoucher {
-  id: number;
-  code: string;
-  name: string;
-  type: "fixed" | "percent";
-  description: string | null;
-  rules: { amount?: number; percent?: number };
-  canCombine: boolean;
-  startAt: string;
-  endAt: string;
-}
-
 interface HomeState {
   storeId: number | null;
-  store: SerializableStore | null;
+  store: Store | null;
   menuId: number | null;
-  products: SerializableProduct[];
+  products: Product[];
   productsLoading: boolean;
   productsLoadingMore: boolean;
   productsError: string | null;
   currentPage: number;
   hasMore: boolean;
-  vouchers: SerializableVoucher[];
+  vouchers: Voucher[];
   vouchersLoading: boolean;
   vouchersError: string | null;
 }
@@ -81,85 +31,31 @@ interface FetchParams {
   page?: number;
 }
 
-const toSerializableProduct = (p: Product): SerializableProduct => ({
-  id: p.id,
-  menuItemId: p.menuItemId,
-  productId: p.productId,
-  name: p.name,
-  price: p.price,
-  imageUrl: p.imageUrl,
-  categoryId: p.categoryId,
-  originalPrice: p.originalPrice,
-  badge: p.badge,
-  discount: p.discount,
-  status: p.status,
-  hasDiscount: p.hasDiscount,
-  discountPercentage: p.discountPercentage,
-  formattedPrice: p.formattedPrice,
-  isAvailable: p.isAvailable,
-});
-
-const toSerializableStore = (s: Store): SerializableStore => ({
-  id: s.id,
-  regionId: s.regionId,
-  name: s.name,
-  slug: s.slug,
-  address: s.address,
-  location: s.location,
-  phone: s.phone,
-  email: s.email,
-  timezone: s.timezone,
-  isActive: s.isActive,
-  createdAt: s.createdAt,
-  updatedAt: s.updatedAt,
-  deletedAt: s.deletedAt,
-  currentLoyaltyPoint: s.currentLoyaltyPoint,
-});
-
-const toSerializableVoucher = (v: Voucher): SerializableVoucher => ({
-  id: v.id,
-  code: v.code,
-  name: v.name,
-  type: v.type,
-  description: v.description,
-  rules: v.rules,
-  canCombine: v.canCombine,
-  startAt: v.startAt.toISOString(),
-  endAt: v.endAt.toISOString(),
-});
-
-// Async Thunks
-
-/** Initial fetch - replaces products */
 export const fetchHomeMenu = createAsyncThunk("home/fetchMenu", async (params: FetchParams, { rejectWithValue }) => {
   try {
     const result = await getHomeMenuUseCase.execute(params);
-    const products = result.products.map(toSerializableProduct);
-    const store = toSerializableStore(result.store);
     return {
       storeId: result.storeId,
-      store,
+      store: result.store,
       menuId: result.menuId,
-      products,
+      products: result.products,
       page: params.page ?? 0,
-      hasMore: products.length === (params.limit ?? 10),
+      hasMore: result.products.length === (params.limit ?? 10),
     };
   } catch (error) {
     return rejectWithValue(error instanceof Error ? error.message : "Không thể tải menu");
   }
 });
 
-/** Load more - appends products */
 export const fetchHomeMenuMore = createAsyncThunk(
   "home/fetchMenuMore",
   async (params: FetchParams, { rejectWithValue }) => {
     try {
       const result = await getHomeMenuUseCase.execute(params);
-      const products = result.products.map(toSerializableProduct);
       return {
-        products,
+        products: result.products,
         page: params.page ?? 0,
-        hasMore: products.length === (params.limit ?? 10),
+        hasMore: result.products.length === (params.limit ?? 10),
       };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Không thể tải thêm");
@@ -172,14 +68,13 @@ export const fetchVouchers = createAsyncThunk(
   async (params: FetchParams, { rejectWithValue }) => {
     try {
       const result = await getVouchersUseCase.execute(params);
-      return result.vouchers.map(toSerializableVoucher);
+      return result.vouchers;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Không thể tải voucher");
     }
   },
 );
 
-// Initial state
 const initialState: HomeState = {
   storeId: null,
   store: null,
@@ -195,7 +90,6 @@ const initialState: HomeState = {
   vouchersError: null,
 };
 
-// Slice
 const homeSlice = createSlice({
   name: "home",
   initialState,
@@ -212,7 +106,6 @@ const homeSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Initial fetch
     builder
       .addCase(fetchHomeMenu.pending, (state) => {
         state.productsLoading = true;
@@ -232,14 +125,12 @@ const homeSlice = createSlice({
         state.productsError = action.payload as string;
       });
 
-    // Load more
     builder
       .addCase(fetchHomeMenuMore.pending, (state) => {
         state.productsLoadingMore = true;
       })
       .addCase(fetchHomeMenuMore.fulfilled, (state, action) => {
         state.productsLoadingMore = false;
-        // Append new products (avoid duplicates by id)
         const existingIds = new Set(state.products.map((p) => p.id));
         const newProducts = action.payload.products.filter((p) => !existingIds.has(p.id));
         state.products = [...state.products, ...newProducts];
@@ -251,7 +142,6 @@ const homeSlice = createSlice({
         state.productsError = action.payload as string;
       });
 
-    // Vouchers
     builder
       .addCase(fetchVouchers.pending, (state) => {
         state.vouchersLoading = true;

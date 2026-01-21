@@ -5,7 +5,7 @@ import { CreatePreOrderRequestDTO, CreatePreOrderResponseDTO } from '../dto/PreO
 export class PreOrderMapper {
   static toRequestDTO(params: CreatePreOrderParams): CreatePreOrderRequestDTO {
     const now = new Date().toISOString();
-    
+
     return {
       user_id: params.userId,
       dateTimeCreated: now,
@@ -27,14 +27,15 @@ export class PreOrderMapper {
   }
 
   static toEntity(dto: CreatePreOrderResponseDTO): PreOrder {
-    return new PreOrder(
-      dto.preorder_id,
-      dto.subtotal,
-      dto.discount_amount,
-      dto.delivery_fee,
-      dto.final_amount,
-      new Date()
-    );
+    const { order } = dto;
+    return {
+      preorderId: order.preorder_id,
+      subtotal: order.subtotal,
+      discountAmount: order.discount_amount,
+      deliveryFee: order.delivery_fee,
+      finalAmount: order.final_amount,
+      createdAt: new Date(),
+    };
   }
 
   static toSerializable(entity: PreOrder) {

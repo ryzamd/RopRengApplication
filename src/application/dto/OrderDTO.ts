@@ -31,7 +31,7 @@ export interface OrderDTO {
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;
-  order_items: OrderItemDTO[];
+  order_items?: OrderItemDTO[];
 }
 
 export interface OrderItemDTO {

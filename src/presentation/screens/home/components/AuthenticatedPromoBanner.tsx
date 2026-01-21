@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { BANNER_ANIMATION_PRESETS } from '../../../../infrastructure/animations/presets/banner.presets';
+import Animated, { Easing, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { WELCOME_TEXT } from '../../welcome/WelcomeConstants';
 import { HOME_LAYOUT } from '../HomeLayout';
@@ -106,8 +105,8 @@ function PaginationDot({ isActive }: { isActive: boolean }) {
     progress.value = withTiming(
       isActive ? 1 : 0,
       {
-        duration: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.duration,
-        easing: BANNER_ANIMATION_PRESETS.BANNER_DOT_COLOR_TRANSITION.easing,
+        duration: 200,
+        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
       }
     );
   }, [isActive, progress]);

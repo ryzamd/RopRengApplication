@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Product } from '../../data/mockProducts';
 import { AuthActionService } from '../../domain/services/AuthActionService';
-import { setPendingAction } from '../../state/slices/auth';
-import { addToCart } from '../../state/slices/orderCart';
+import { setPendingAction } from '../../state/slices/authSlice';
+import { addToCart } from '../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { useAuthGuard } from './useAuthGuard';
 

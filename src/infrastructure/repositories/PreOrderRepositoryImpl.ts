@@ -10,7 +10,7 @@ import { httpClient } from '../http/HttpClient';
 export class PreOrderRepositoryImpl implements PreOrderRepository {
   private static instance: PreOrderRepositoryImpl;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): PreOrderRepositoryImpl {
     if (!PreOrderRepositoryImpl.instance) {
@@ -22,7 +22,7 @@ export class PreOrderRepositoryImpl implements PreOrderRepository {
   async create(params: CreatePreOrderParams): Promise<PreOrder> {
     try {
       const requestDTO = PreOrderMapper.toRequestDTO(params);
-      
+
       const response = await httpClient.post<CreatePreOrderResponseDTO>(
         PREORDER_ENDPOINTS.CREATE,
         requestDTO
@@ -34,11 +34,11 @@ export class PreOrderRepositoryImpl implements PreOrderRepository {
         if (!error.response) {
           throw new NetworkError();
         }
-        
+
         const message = error.response.data?.message || 'Không thể tạo đơn hàng';
         throw new Error(message);
       }
-      
+
       throw new Error('Đã có lỗi xảy ra khi tạo đơn hàng');
     }
   }

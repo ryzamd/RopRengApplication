@@ -1,31 +1,25 @@
-export class ConfirmOrder {
-  constructor(
-    public readonly userId: string,
-    public readonly storeId: number,
-    public readonly items: ConfirmOrderItem[],
-    public readonly voucherCodes: string[],
-    public readonly address: ConfirmOrderAddress,
-    public readonly contactName: string,
-    public readonly contactPhone: string,
-    public readonly note: string
-  ) {}
-}
+import { DeliveryAddress } from "../shared/types";
+import { ConfirmOrderItem } from "./ConfirmOrderItem";
 
-export class ConfirmOrderItem {
-  constructor(
-    public readonly menuItemId: number,
-    public readonly productId: number,
-    public readonly name: string,
-    public readonly qty: number,
-    public readonly unitPrice: number,
-    public readonly toppingIds: number[]
-  ) {}
-}
-
-export class ConfirmOrderAddress {
-  constructor(
-    public readonly lat: number,
-    public readonly lng: number,
-    public readonly detail: string
-  ) {}
+export interface ConfirmOrder {
+  readonly id: number;
+  readonly orderCode: string;
+  readonly userId: number;
+  readonly storeId: number;
+  readonly source: string;
+  readonly subtotal: number;
+  readonly totalAmount: number;
+  readonly deliveryFee: number;
+  readonly discountAmount: number;
+  readonly finalAmount: number;
+  readonly paymentMethod: string;
+  readonly paymentStatus: string;
+  readonly orderStatus: string;
+  readonly address: DeliveryAddress | null;
+  readonly contactName: string | null;
+  readonly contactPhone: string | null;
+  readonly note: string | null;
+  readonly items: ConfirmOrderItem[];
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }

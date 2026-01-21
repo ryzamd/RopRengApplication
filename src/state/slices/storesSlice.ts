@@ -7,46 +7,8 @@ import { storeRepository } from '../../infrastructure/repositories/StoreReposito
 const getStoresUseCase = new GetStoresUseCase(storeRepository);
 const getStoresByProductUseCase = new GetStoresByProductUseCase(storeRepository);
 
-interface SerializableStore {
-  id: number;
-  regionId: number;
-  name: string;
-  slug: string | null;
-  address: string | null;
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
-  phone: string | null;
-  email: string | null;
-  timezone: string;
-  isActive: number;
-  createdAt: string;
-  updatedAt: string | null;
-  deletedAt: string | null;
-  currentLoyaltyPoint: number;
-  region?: {
-    id: number;
-    parentId: number | null;
-    name: string;
-    code: string;
-    level: number;
-    img: string | null;
-    createdAt: string;
-    updatedAt: string | null;
-    deletedAt: string | null;
-  };
-  menus?: Array<{
-    id: number;
-    storeId: number;
-    name: string;
-    isDefault: number;
-    note: string | null;
-    createdAt: string;
-    updatedAt: string | null;
-    deletedAt: string | null;
-  }>;
-}
+// Use the mapper's return type instead of duplicating the interface
+type SerializableStore = ReturnType<typeof StoreMapper.toSerializableStore>;
 
 interface StoresState {
   stores: SerializableStore[];
@@ -89,41 +51,41 @@ interface FetchStoresByProductParams {
   refresh?: boolean;
 }
 
-export const fetchStores = createAsyncThunk('stores/fetch', async (params: FetchStoresParams = {}) => 
-  {const result = await getStoresUseCase.execute({
-      page: params.page ?? 1,
-      limit: params.limit ?? 10,
-    });
+export const fetchStores = createAsyncThunk('stores/fetch', async (params: FetchStoresParams = {}) => {
+  const result = await getStoresUseCase.execute({
+    page: params.page ?? 1,
+    limit: params.limit ?? 10,
+  });
 
-    return {
-      stores: result.stores.map(store => StoreMapper.toSerializableStore(store)),
-      page: result.page,
-      limit: result.limit,
-      total: result.total,
-      totalPages: result.totalPages,
-      refresh: params.refresh ?? false,
-    };
-  }
+  return {
+    stores: result.stores.map(store => StoreMapper.toSerializableStore(store)),
+    page: result.page,
+    limit: result.limit,
+    total: result.total,
+    totalPages: result.totalPages,
+    refresh: params.refresh ?? false,
+  };
+}
 );
 
-export const fetchStoresByProduct = createAsyncThunk('stores/fetchByProduct', async (params: FetchStoresByProductParams) =>
-  {
-    const result = await getStoresByProductUseCase.execute({
-      productId: params.productId,
-      lat: params.lat,
-      lng: params.lng,
-      page: params.page,
-      limit: params.limit ?? 10,
-    });
+export const fetchStoresByProduct = createAsyncThunk('stores/fetchByProduct', async (params: FetchStoresByProductParams) => {
+  const result = await getStoresByProductUseCase.execute({
+    productId: params.productId,
+    lat: params.lat,
+    lng: params.lng,
+    page: params.page,
+    limit: params.limit ?? 10,
+  });
 
-    return {
-      stores: result.stores.map(store => StoreMapper.toSerializableStore(store)),
-      refresh: params.refresh ?? false,
-    };
-  }
+  return {
+    stores: result.stores.map(store => StoreMapper.toSerializableStore(store)),
+    refresh: params.refresh ?? false,
+  };
+}
 );
 
-const storesSlice = createSlice({name: 'stores', initialState, reducers: {
+const storesSlice = createSlice({
+  name: 'stores', initialState, reducers: {
     clearStoresError: state => {
       state.error = null;
     },
@@ -191,3 +153,12 @@ const storesSlice = createSlice({name: 'stores', initialState, reducers: {
 export const { clearStoresError, selectStore, clearSelectedStore } =
   storesSlice.actions;
 export default storesSlice.reducer;
+
+// Selectors
+export const selectStores = (state: { stores: StoresState }) => state.stores.stores;
+export const selectLoading = (state: { stores: StoresState }) => state.stores.loading;
+export const selectLoadingMore = (state: { stores: StoresState }) => state.stores.loadingMore;
+export const selectError = (state: { stores: StoresState }) => state.stores.error;
+export const selectPage = (state: { stores: StoresState }) => state.stores.page;
+export const selectHasMore = (state: { stores: StoresState }) => state.stores.hasMore;
+export const selectSelectedStoreId = (state: { stores: StoresState }) => state.stores.selectedStoreId;

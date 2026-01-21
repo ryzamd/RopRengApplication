@@ -22,9 +22,11 @@ export interface CreatePreOrderRequestDTO {
 }
 
 export interface CreatePreOrderResponseDTO {
-  preorder_id: number;
-  subtotal: number;
-  discount_amount: number;
-  delivery_fee: number;
-  final_amount: number;
+  order: {
+    preorder_id: number;
+    subtotal: number;
+    discount_amount: number;
+    delivery_fee: number;
+    final_amount: number;
+  };
 }

@@ -1,13 +1,11 @@
-export class Region {
-  constructor(
-    public readonly id: number,
-    public readonly parentId: number | null,
-    public readonly name: string,
-    public readonly code: string,
-    public readonly level: number,
-    public readonly img: string | null,
-    public readonly createdAt: Date,
-    public readonly updatedAt: Date | null,
-    public readonly deletedAt: Date | null
-  ) {}
+export interface Region {
+  readonly id: number;
+  readonly parentId: number | null;
+  readonly name: string;
+  readonly code: string;
+  readonly level: number;
+  readonly img: string | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date | null;
+  readonly deletedAt: Date | null;
 }

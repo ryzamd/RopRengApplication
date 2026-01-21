@@ -1,4 +1,6 @@
-import { setSelectedStore } from '@/src/state/slices/orderCart';
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { locationService } from '@/src/infrastructure/services';
+import { setSelectedStore } from '@/src/state/slices/orderCartSlice';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -12,19 +14,17 @@ import { StoresHeader } from './components/StoresHeader';
 import { StoresSearchBar } from './components/StoresSearchBar';
 import { STORES_TEXT } from './StoresConstants';
 import { StoresUIService } from './StoresService';
-import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
-import { locationService } from '@/src/infrastructure/services';
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  
+
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  
+
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { stores: apiStores, loading, error } = useAppSelector((state) => state.stores);
@@ -33,7 +33,7 @@ export default function StoresScreen() {
     const initData = async () => {
       try {
         const location = await locationService.getCurrentPosition();
-        
+
         setUserLocation({
           lat: location.latitude,
           lng: location.longitude,
@@ -89,7 +89,7 @@ export default function StoresScreen() {
 
   const handleStorePress = useCallback((store: Store) => {
     console.log(`[StoresScreen] Store pressed: ${store.name}`);
-    
+
     if (selectedStore && selectedStore.id !== store.id && totalItems > 0) {
       Alert.alert(
         STORES_TEXT.ALERT_TITLE,
@@ -106,7 +106,7 @@ export default function StoresScreen() {
             onPress: () => {
               console.log('[StoresScreen] User confirmed, clearing cart and switching store');
               dispatch(setSelectedStore(store));
-              
+
               if (params.mode === 'select') {
                 router.replace('/(tabs)/order');
               }
@@ -116,7 +116,7 @@ export default function StoresScreen() {
       );
       return;
     }
-    
+
     if (params.mode === 'select') {
       console.log('[StoresScreen] Setting store and navigating to Order');
       dispatch(setSelectedStore(store));
@@ -143,7 +143,7 @@ export default function StoresScreen() {
 
   const handleRetry = useCallback(() => {
     dispatch(clearStoresError());
-    
+
     if (params.mode === 'select' && params.productId && userLocation) {
       dispatch(
         fetchStoresByProduct({
@@ -189,15 +189,15 @@ export default function StoresScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StoresHeader />
-      
+
       <StoresSearchBar value={searchQuery} onChangeText={setSearchQuery} />
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {filteredStores.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              {params.mode === 'select' 
-                ? STORES_TEXT.EMPTY_MESSAGE_SELECT 
+              {params.mode === 'select'
+                ? STORES_TEXT.EMPTY_MESSAGE_SELECT
                 : STORES_TEXT.EMPTY_MESSAGE_BROWSE}
             </Text>
           </View>
@@ -210,7 +210,7 @@ export default function StoresScreen() {
                 onStorePress={handleStorePress}
               />
             )}
-            
+
             <StoreSection
               title={STORES_TEXT.SECTION_OTHERS}
               stores={otherStores}

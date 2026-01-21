@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../state/store';
+import { selectSelectedAddress } from '../../../../state/slices/deliverySlice';
+import { useAppSelector } from '../../../../utils/hooks';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { OrderType } from '../PreOrderEnums';
@@ -11,8 +11,8 @@ interface PreOrderAddressCardProps {
   onNavigateToMap: () => void;
 }
 
-export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({orderType, onNavigateToMap}) => {
-  const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({ orderType, onNavigateToMap }) => {
+  const deliveryAddress = useAppSelector(selectSelectedAddress);
 
   if (orderType !== OrderType.DELIVERY) return null;
 
@@ -41,7 +41,7 @@ export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({orderTy
           <AppIcon
             name="location"
             size={20}
-            color={hasAddress ? BRAND_COLORS.primary.xanhReu : '#999999'} 
+            color={hasAddress ? BRAND_COLORS.primary.xanhReu : '#999999'}
           />
         </View>
 
@@ -49,10 +49,10 @@ export const PreOrderAddressCard: React.FC<PreOrderAddressCardProps> = ({orderTy
           {hasAddress ? (
             <>
               <Text style={styles.addressName} numberOfLines={1}>
-                {getShortName(deliveryAddress.addressString)}
+                {getShortName(deliveryAddress.addressString!)}
               </Text>
               <Text style={styles.addressFull} numberOfLines={1}>
-                {deliveryAddress.addressString}
+                {deliveryAddress.addressString!}
               </Text>
             </>
           ) : (

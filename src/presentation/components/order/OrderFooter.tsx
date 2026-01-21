@@ -1,0 +1,103 @@
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BRAND_COLORS } from '../../theme/colors';
+import { TYPOGRAPHY } from '../../theme/typography';
+import { ORDER_TYPE_LABELS } from './OrderConstants';
+import { OrderFooterProps } from './OrderInterfaces';
+import { OrderService } from './OrderService';
+
+/**
+ * Shared footer component for order actions.
+ * Used in both Pre-order and Confirm Order screens.
+ */
+export function OrderFooter({
+    orderType,
+    totalItems,
+    totalPrice,
+    buttonText,
+    onButtonPress,
+    isLoading = false,
+}: OrderFooterProps) {
+    const insets = useSafeAreaInsets();
+    const orderTypeLabel = ORDER_TYPE_LABELS[orderType];
+
+    return (
+        <View
+            style={[
+                styles.container,
+                { paddingBottom: Math.max(insets.bottom, 16) },
+            ]}
+        >
+            <View style={styles.info}>
+                <Text style={styles.infoText}>
+                    {orderTypeLabel} : {totalItems} sản phẩm
+                </Text>
+                <Text style={styles.totalPrice}>
+                    {OrderService.formatPrice(totalPrice)}
+                </Text>
+            </View>
+
+            <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={onButtonPress}
+                activeOpacity={0.8}
+                disabled={isLoading}
+            >
+                <Text style={styles.buttonText}>{isLoading ? 'Đang xử lý...' : buttonText}</Text>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        backgroundColor: BRAND_COLORS.secondary.vangNhat,
+        paddingTop: 16,
+        paddingHorizontal: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        shadowColor: BRAND_COLORS.shadow.heavy,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 16,
+    },
+    info: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    infoText: {
+        fontSize: TYPOGRAPHY.fontSize.base,
+        fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
+        color: BRAND_COLORS.text.primary,
+    },
+    totalPrice: {
+        fontSize: TYPOGRAPHY.fontSize.xl,
+        fontFamily: TYPOGRAPHY.fontFamily.monoBold,
+        color: BRAND_COLORS.text.primary,
+    },
+    button: {
+        height: 56,
+        backgroundColor: BRAND_COLORS.primary.xanhReu,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: BRAND_COLORS.shadow.heavy,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    buttonText: {
+        fontSize: TYPOGRAPHY.fontSize.lg,
+        fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
+        color: BRAND_COLORS.text.inverse,
+        letterSpacing: 1,
+    },
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+});
