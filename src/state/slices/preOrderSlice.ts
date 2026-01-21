@@ -6,14 +6,7 @@ import { preOrderRepository } from '../../infrastructure/repositories/PreOrderRe
 
 const createPreOrderUseCase = new CreatePreOrderUseCase(preOrderRepository);
 
-interface SerializablePreOrder {
-  preorderId: number;
-  subtotal: number;
-  discountAmount: number;
-  deliveryFee: number;
-  finalAmount: number;
-  createdAt: string;
-}
+type SerializablePreOrder = ReturnType<typeof PreOrderMapper.toSerializable>;
 
 interface PreOrderState {
   isLoading: boolean;
@@ -68,3 +61,8 @@ const preOrderSlice = createSlice({
 
 export const { clearPreOrderError } = preOrderSlice.actions;
 export default preOrderSlice.reducer;
+
+// Selectors
+export const selectIsLoading = (state: { preOrder: PreOrderState }) => state.preOrder.isLoading;
+export const selectError = (state: { preOrder: PreOrderState }) => state.preOrder.error;
+export const selectLastOrder = (state: { preOrder: PreOrderState }) => state.preOrder.lastOrder;

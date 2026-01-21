@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useCallback, useMemo } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { logout } from '../../../state/slices/auth';
+import { logout } from '../../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { ACCOUNT_MENU, MORE_STRINGS, SUPPORT_MENU } from './MoreConstants';
 import { MenuSectionData } from './MoreInterfaces';
@@ -35,20 +35,20 @@ export default function MoreScreen() {
 
   const handleLogout = useCallback(async () => {
     console.log('[MoreScreen] Processing logout...');
-    
+
     // 1. Clear SQLite Cart (Side Effect)
     if (user?.uuid) {
-        try {
-            const cartRepo = new CartRepository(db);
-            await cartRepo.clearAllCartsForUser(user?.uuid);
-            console.log('[MoreScreen] SQLite cart cleared');
-        } catch (error) {
-            console.error('[MoreScreen] Failed to clear SQLite cart', error);
-        }
+      try {
+        const cartRepo = new CartRepository(db);
+        await cartRepo.clearAllCartsForUser(user?.uuid);
+        console.log('[MoreScreen] SQLite cart cleared');
+      } catch (error) {
+        console.error('[MoreScreen] Failed to clear SQLite cart', error);
+      }
     }
 
     dispatch(logout());
-    
+
     // 3. Navigation (Optional: redirect to welcome or stay here)
     // router.replace('/');
   }, [dispatch, user?.uuid, db]);
@@ -70,7 +70,7 @@ export default function MoreScreen() {
           ]
         );
         break;
-      
+
       case 'login':
         router.push('../(auth)/login');
         break;
@@ -81,7 +81,7 @@ export default function MoreScreen() {
 
       case 'profile':
         if (isAuthenticated) {
-            console.log('Navigate to Profile');
+          console.log('Navigate to Profile');
         }
         break;
 

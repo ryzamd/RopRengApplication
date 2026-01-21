@@ -1,7 +1,7 @@
 import { ApiError, AppError, NetworkError, QuotaExceededError } from "../../core/errors/AppErrors";
-import { IAddressSuggestion, IGeocodingRepository } from "../../domain/models/LocationModel";
+import { IGeocodingRepository } from "../../domain/repositories/GeocodingRepository";
+import { IAddressSuggestion, ILocationCoordinate } from "../../domain/shared/types";
 import { GOONG_CONFIG } from "../api/goong/GoongConfig";
-import { ILocationCoordinate } from "../services/LocationService";
 
 export class GoongGeocodingRepository implements IGeocodingRepository {
   private readonly VN_LOCATION = "16.047079,108.206230";

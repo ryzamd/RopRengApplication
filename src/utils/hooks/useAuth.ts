@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { PendingAuthAction } from '../../domain/services/AuthActionService';
-import { clearError, clearPendingAction, loginWithOtp, logoutUser, registerUser, resetOtpFlow, setPendingAction } from '../../state/slices/auth';
+import { clearError, clearPendingAction, loginWithOtp, logoutUser, registerUser, resetOtpFlow, setPendingAction } from '../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
 export function useAuth() {

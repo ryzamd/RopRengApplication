@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Alert } from 'react-native';
 import * as Crypto from 'expo-crypto';
-import { IAddressSuggestion } from '../../domain/models/LocationModel';
-import { GoongGeocodingRepository } from '../../infrastructure/repositories/GoongGeocodingRepository';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'react-native';
 import { AppError } from '../../core/errors/AppErrors';
+import { IAddressSuggestion } from '../../domain/shared/types';
+import { GoongGeocodingRepository } from '../../infrastructure/repositories/GoongGeocodingRepository';
 
 const repository = new GoongGeocodingRepository();
 
@@ -30,16 +30,16 @@ export const useAddressSearch = () => {
     }
 
     setIsLoading(true);
-    
+
     debounceTimeout.current = setTimeout(async () => {
       try {
         const results = await repository.searchAddress(text, sessionToken.current);
         setSuggestions(results);
-        
+
       } catch (error: any) {
         setSuggestions([]);
         if (error instanceof AppError && error.code === 'QUOTA_EXCEEDED') {
-            Alert.alert('Thông báo', error.message);
+          Alert.alert('Thông báo', error.message);
         }
       } finally {
         setIsLoading(false);

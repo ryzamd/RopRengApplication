@@ -28,14 +28,14 @@ export class PreOrderMapper {
 
   static toEntity(dto: CreatePreOrderResponseDTO): PreOrder {
     const { order } = dto;
-    return new PreOrder(
-      order.preorder_id,
-      order.subtotal,
-      order.discount_amount,
-      order.delivery_fee,
-      order.final_amount,
-      new Date()
-    );
+    return {
+      preorderId: order.preorder_id,
+      subtotal: order.subtotal,
+      discountAmount: order.discount_amount,
+      deliveryFee: order.delivery_fee,
+      finalAmount: order.final_amount,
+      createdAt: new Date(),
+    };
   }
 
   static toSerializable(entity: PreOrder) {

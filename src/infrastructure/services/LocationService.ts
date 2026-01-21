@@ -1,11 +1,9 @@
 import { APP_DEFAULT_LOCATION } from "@/src/core/config/locationConstants";
 import * as Location from "expo-location";
+import { ILocationCoordinate } from "../../domain/shared/types";
 import { PermissionService } from "./PermissionService";
 
-export interface ILocationCoordinate {
-  latitude: number;
-  longitude: number;
-}
+export type { ILocationCoordinate } from "../../domain/shared/types";
 
 export class LocationService {
   private permissionService: PermissionService;

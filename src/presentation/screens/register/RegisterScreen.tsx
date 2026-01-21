@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { clearError, loginWithOtp, registerUser } from '../../../state/slices/auth';
+import { clearError, loginWithOtp, registerUser } from '../../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpVerificationBottomSheet, OtpVerificationRef } from '../otp-verification/OtpVerificationBottomSheet';

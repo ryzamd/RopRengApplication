@@ -6,9 +6,6 @@ import { confirmOrderRepository } from '../../infrastructure/repositories/Confir
 
 const confirmOrderUseCase = new ConfirmOrderUseCase(confirmOrderRepository);
 
-/**
- * Serializable item for Redux state
- */
 interface SerializableConfirmOrderItem {
     id: number;
     orderId: number;
@@ -27,9 +24,6 @@ interface SerializableConfirmOrderItem {
     createdAt: string;
 }
 
-/**
- * Serializable confirmed order for Redux state
- */
 interface SerializableConfirmOrder {
     id: number;
     orderCode: string;
@@ -65,14 +59,7 @@ const initialState: ConfirmOrderState = {
     confirmedOrder: null,
 };
 
-/**
- * Async thunk to confirm an order
- */
-export const confirmOrder = createAsyncThunk<
-    SerializableConfirmOrder,
-    ConfirmOrderParams,
-    { rejectValue: string }
->('confirmOrder/confirm', async (params: ConfirmOrderParams, { rejectWithValue }) => {
+export const confirmOrder = createAsyncThunk<SerializableConfirmOrder, ConfirmOrderParams, { rejectValue: string }>('confirmOrder/confirm', async (params: ConfirmOrderParams, { rejectWithValue }) => {
     try {
         const result = await confirmOrderUseCase.execute(params);
         return ConfirmOrderMapper.toSerializable(result);
@@ -119,3 +106,7 @@ const confirmOrderSlice = createSlice({
 export const { clearConfirmOrderError, clearConfirmedOrder, setConfirmedOrder } = confirmOrderSlice.actions;
 export default confirmOrderSlice.reducer;
 export type { SerializableConfirmOrder, SerializableConfirmOrderItem };
+
+export const selectIsLoading = (state: { confirmOrder: ConfirmOrderState }) => state.confirmOrder.isLoading;
+export const selectError = (state: { confirmOrder: ConfirmOrderState }) => state.confirmOrder.error;
+export const selectConfirmedOrder = (state: { confirmOrder: ConfirmOrderState }) => state.confirmOrder.confirmedOrder;

@@ -1,13 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
-import auth from './slices/auth';
-import confirmOrderReducer from './slices/confirmOrder';
-import deliveryReducer from './slices/delivery';
+import auth from './slices/authSlice';
+import confirmOrderReducer from './slices/confirmOrderSlice';
+import deliveryReducer from './slices/deliverySlice';
 import homeReducer from './slices/homeSlice';
-import orderCart from './slices/orderCart';
-import ordersReducer from './slices/orders';
-import preOrderReducer from './slices/preOrder';
+import orderCart from './slices/orderCartSlice';
+import ordersReducer from './slices/ordersSlice';
+import preOrderReducer from './slices/preOrderSlice';
 import storesReducer from './slices/storesSlice';
 
 // Persist config for auth slice only

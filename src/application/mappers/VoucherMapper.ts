@@ -1,22 +1,22 @@
-import { Voucher, VoucherType, VoucherRules } from '../../domain/entities/Voucher';
-import { VoucherDTO, VouchersResponseDTO, VoucherRulesDTO } from '../dto/VoucherDTO';
+import { Voucher, VoucherRules, VoucherType } from '../../domain/entities/Voucher';
 import { VouchersResult } from '../../domain/repositories/HomeRepository';
+import { VoucherDTO, VoucherRulesDTO, VouchersResponseDTO } from '../dto/VoucherDTO';
 
 export class VoucherMapper {
   static toEntity(dto: VoucherDTO): Voucher {
     const rules = VoucherMapper.parseRules(dto.rules, dto.type as VoucherType);
 
-    return new Voucher(
-      dto.id,
-      dto.code,
-      dto.name,
-      dto.type as VoucherType,
-      dto.description,
+    return {
+      id: dto.id,
+      code: dto.code,
+      name: dto.name,
+      type: dto.type as VoucherType,
+      description: dto.description,
       rules,
-      dto.can_combine === 1,
-      new Date(dto.start_at),
-      new Date(dto.end_at)
-    );
+      canCombine: dto.can_combine === 1,
+      startAt: new Date(dto.start_at),
+      endAt: new Date(dto.end_at),
+    };
   }
 
   static toEntityList(dtos: VoucherDTO[]): Voucher[] {
