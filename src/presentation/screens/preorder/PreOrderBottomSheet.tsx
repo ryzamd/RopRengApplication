@@ -1,4 +1,4 @@
-import { RootState } from '@/src/state/store';
+import { selectSelectedAddress } from '@/src/state/slices/deliverySlice';
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { BottomSheetFooterProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetFooter/types';
@@ -6,11 +6,10 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
 import { PreOrderItem } from '../../../domain/entities/PreOrder';
-import { confirmOrder } from '../../../state/slices/confirmOrder';
-import { clearCart } from '../../../state/slices/orderCart';
-import { createPreOrder } from '../../../state/slices/preOrder';
+import { confirmOrder } from '../../../state/slices/confirmOrderSlice';
+import { clearCart } from '../../../state/slices/orderCartSlice';
+import { createPreOrder } from '../../../state/slices/preOrderSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { Toast } from '../../components/shared/Toast';
@@ -40,7 +39,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const paymentModalRef = useRef<BottomSheetModal>(null);
   const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
-  const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+  const deliveryAddress = useAppSelector(selectSelectedAddress);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const user = useAppSelector((state) => state.auth.user);

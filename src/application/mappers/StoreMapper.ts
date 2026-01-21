@@ -6,54 +6,54 @@ import { GetStoresResponseDTO, MenuDTO, RegionDTO, StoreByProductDTO, StoreDetai
 
 export class StoreMapper {
   static toRegionEntity(dto: RegionDTO): Region {
-    return new Region(
-      dto.id,
-      dto.parent_id,
-      dto.name,
-      dto.code,
-      dto.level,
-      dto.img,
-      new Date(dto.created_at),
-      dto.updated_at ? new Date(dto.updated_at) : null,
-      dto.deleted_at ? new Date(dto.deleted_at) : null
-    );
+    return {
+      id: dto.id,
+      parentId: dto.parent_id,
+      name: dto.name,
+      code: dto.code,
+      level: dto.level,
+      img: dto.img,
+      createdAt: new Date(dto.created_at),
+      updatedAt: dto.updated_at ? new Date(dto.updated_at) : null,
+      deletedAt: dto.deleted_at ? new Date(dto.deleted_at) : null,
+    };
   }
 
   static toMenuEntity(dto: MenuDTO): Menu {
-    return new Menu(
-      dto.id,
-      dto.store_id,
-      dto.name,
-      dto.is_default,
-      dto.note,
-      new Date(dto.created_at),
-      dto.updated_at ? new Date(dto.updated_at) : null,
-      dto.deleted_at ? new Date(dto.deleted_at) : null
-    );
+    return {
+      id: dto.id,
+      storeId: dto.store_id,
+      name: dto.name,
+      isDefault: dto.is_default === 1,
+      note: dto.note,
+      createdAt: new Date(dto.created_at),
+      updatedAt: dto.updated_at ? new Date(dto.updated_at) : null,
+      deletedAt: dto.deleted_at ? new Date(dto.deleted_at) : null,
+    };
   }
 
   static toStoreEntity(dto: StoreDetailDTO): Store {
     const region = StoreMapper.toRegionEntity(dto.region);
     const menus = dto.menus.map(menu => StoreMapper.toMenuEntity(menu));
 
-    return new Store(
-      dto.id,
-      dto.region_id,
-      dto.name,
-      dto.slug,
-      dto.address,
-      dto.location,
-      dto.phone,
-      dto.email,
-      dto.timezone,
-      dto.is_active,
-      dto.created_at,
-      dto.updated_at,
-      dto.deleted_at,
-      dto.current_loyalty_point,
+    return {
+      id: dto.id,
+      regionId: dto.region_id,
+      name: dto.name,
+      slug: dto.slug,
+      address: dto.address,
+      location: dto.location,
+      phone: dto.phone,
+      email: dto.email,
+      timezone: dto.timezone,
+      isActive: dto.is_active === 1,
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
+      deletedAt: dto.deleted_at,
+      currentLoyaltyPoint: dto.current_loyalty_point,
       region,
-      menus
-    );
+      menus,
+    };
   }
 
   static toStoresResult(response: GetStoresResponseDTO): StoresResult {
@@ -84,16 +84,16 @@ export class StoreMapper {
       currentLoyaltyPoint: store.currentLoyaltyPoint,
       region: store.region
         ? {
-            id: store.region.id,
-            parentId: store.region.parentId,
-            name: store.region.name,
-            code: store.region.code,
-            level: store.region.level,
-            img: store.region.img,
-            createdAt: store.region.createdAt.toISOString(),
-            updatedAt: store.region.updatedAt?.toISOString() ?? null,
-            deletedAt: store.region.deletedAt?.toISOString() ?? null,
-          }
+          id: store.region.id,
+          parentId: store.region.parentId,
+          name: store.region.name,
+          code: store.region.code,
+          level: store.region.level,
+          img: store.region.img,
+          createdAt: store.region.createdAt.toISOString(),
+          updatedAt: store.region.updatedAt?.toISOString() ?? null,
+          deletedAt: store.region.deletedAt?.toISOString() ?? null,
+        }
         : undefined,
       menus: store.menus?.map(menu => ({
         id: menu.id,
@@ -109,23 +109,23 @@ export class StoreMapper {
   }
 
   static toStoreFromProductDTO(dto: StoreByProductDTO): Store {
-    return new Store(
-      dto.store_id,
-      0, // regionId not provided
-      dto.name,
-      null,
-      dto.address,
-      dto.location,
-      null,
-      null,
-      'Asia/Ho_Chi_Minh',
-      1,
-      new Date().toISOString(),
-      null,
-      null,
-      0,
-      undefined, // region
-      undefined  // menus will be fetched separately if needed
-    );
+    return {
+      id: dto.store_id,
+      regionId: 0, // regionId not provided
+      name: dto.name,
+      slug: null,
+      address: dto.address,
+      location: dto.location,
+      phone: null,
+      email: null,
+      timezone: 'Asia/Ho_Chi_Minh',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      deletedAt: null,
+      currentLoyaltyPoint: 0,
+      region: undefined,
+      menus: undefined,
+    };
   }
 }

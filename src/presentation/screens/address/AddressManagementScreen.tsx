@@ -1,16 +1,15 @@
 import { APP_DEFAULT_LOCATION } from "@/src/core/config/locationConstants";
+import { IAddressSuggestion, ILocationCoordinate } from "@/src/domain/shared/types";
 import { locationService } from "@/src/infrastructure/services";
-import { ILocationCoordinate } from "@/src/infrastructure/services/LocationService";
 import { useAddressSearch } from "@/src/utils/hooks/useAddressSearch";
 import { Camera, CameraRef, UserLocation } from "@maplibre/maplibre-react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import { IAddressSuggestion } from "../../../domain/models/LocationModel";
+import { useDispatch } from "react-redux";
 import { GoongGeocodingRepository } from "../../../infrastructure/repositories/GoongGeocodingRepository";
-import { setDeliveryAddress } from "../../../state/slices/delivery";
-import { RootState } from "../../../state/store";
+import { selectSelectedAddress, setDeliveryAddress } from "../../../state/slices/deliverySlice";
+import { useAppSelector } from "../../../utils/hooks";
 import { GoongMapView } from "../../components/map/GoongMapView";
 import { MapSearchBar } from "../../components/map/MapSearchBar";
 import { AppIcon } from "../../components/shared/AppIcon";
@@ -32,7 +31,7 @@ export default function AddressManagementScreen() {
   const dispatch = useDispatch();
   const cameraRef = useRef<CameraRef>(null);
 
-  const savedAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+  const savedAddress = useAppSelector(selectSelectedAddress);
 
   const { suggestions, isLoading, onSearch, onSelectAddress, sessionToken, refreshSessionToken } = useAddressSearch();
 
@@ -69,19 +68,19 @@ export default function AddressManagementScreen() {
   useEffect(() => {
     const initLocation = async () => {
       try {
-        if (savedAddress?.coordinates) {
-          const coords: [number, number] = [savedAddress.coordinates.longitude, savedAddress.coordinates.latitude];
+        if (savedAddress?.lat && savedAddress?.lng) {
+          const coords: [number, number] = [savedAddress.lng, savedAddress.lat];
 
           console.log("[AddressManagement] INIT from Redux:", {
-            lat: savedAddress.coordinates.latitude,
-            lng: savedAddress.coordinates.longitude,
+            lat: savedAddress.lat,
+            lng: savedAddress.lng,
             address: savedAddress.addressString,
           });
 
           setInitialRegion(coords);
-          setSelectedLocation(savedAddress.coordinates);
-          setAddressString(savedAddress.addressString);
-          setSearchBarValue(savedAddress.addressString);
+          setSelectedLocation({ latitude: savedAddress.lat, longitude: savedAddress.lng });
+          setAddressString(savedAddress.addressString || "");
+          setSearchBarValue(savedAddress.addressString || "");
           return;
         }
 
@@ -121,7 +120,7 @@ export default function AddressManagementScreen() {
       onSelectAddress(item);
       setGeocodingState({ isLoading: true, error: null });
 
-      const coords = await repo.getPlaceDetail(item.place_id, sessionToken);
+      const coords = await repo.getPlaceDetail(item.placeId, sessionToken);
       refreshSessionToken();
 
       setSelectedLocation(coords);
@@ -219,8 +218,10 @@ export default function AddressManagementScreen() {
 
     dispatch(
       setDeliveryAddress({
+        lat: selectedLocation.latitude,
+        lng: selectedLocation.longitude,
+        detail: addressString,
         addressString: addressString,
-        coordinates: selectedLocation,
       }),
     );
 
@@ -270,7 +271,7 @@ export default function AddressManagementScreen() {
         >
           <Camera
             ref={cameraRef}
-            // No defaultSettings - camera position controlled via setCamera() only
+          // No defaultSettings - camera position controlled via setCamera() only
           />
           <UserLocation visible={true} />
         </GoongMapView>

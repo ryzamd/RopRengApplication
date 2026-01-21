@@ -6,7 +6,7 @@ import { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthActionNavigator } from '../../../application/services/AuthActionNavigator';
 import { AuthActionService } from '../../../domain/services/AuthActionService';
-import { clearPendingAction } from '../../../state/slices/auth';
+import { clearPendingAction } from '../../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { useAuth } from '../../../utils/hooks/useAuth';
 import { BRAND_COLORS } from '../../theme/colors';

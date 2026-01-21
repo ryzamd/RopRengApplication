@@ -1,10 +1,11 @@
-import { User, UserRole, UserProps } from '../../domain/entities/User';
+import { User, UserRole } from '../../domain/entities/User';
+import { UserService } from '../../domain/services/UserService';
 import { UserResponseDTO } from '../dto/AuthDTO';
 
 export class AuthMapper {
 
   static toUser(dto: UserResponseDTO): User {
-    const props: UserProps = {
+    return {
       id: dto.id,
       uuid: dto.uuid,
       phone: dto.phone,
@@ -21,8 +22,6 @@ export class AuthMapper {
       createdAt: new Date(dto.created_at),
       updatedAt: dto.updated_at ? new Date(dto.updated_at) : null,
     };
-
-    return new User(props);
   }
 
   static toSerializable(user: User): SerializableUser {
@@ -42,7 +41,7 @@ export class AuthMapper {
       nextLevelId: user.nextLevelId,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt?.toISOString() ?? null,
-      isNewUser: user.isNewUser,
+      isNewUser: UserService.isNewUser(user),
     };
   }
 }

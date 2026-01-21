@@ -1,13 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ILocationCoordinate } from '../../infrastructure/services/LocationService';
-
-export interface DeliveryAddress {
-  addressString: string;
-  coordinates: ILocationCoordinate;
-  placeId?: string;
-  contactName?: string;
-  contactPhone?: string;
-}
+import { DeliveryAddress } from '../../domain/shared/types';
 
 interface DeliveryState {
   selectedAddress: DeliveryAddress | null;
@@ -32,3 +24,5 @@ const deliverySlice = createSlice({
 
 export const { setDeliveryAddress, clearDeliveryAddress } = deliverySlice.actions;
 export default deliverySlice.reducer;
+
+export const selectSelectedAddress = (state: { delivery: DeliveryState }) => state.delivery.selectedAddress;

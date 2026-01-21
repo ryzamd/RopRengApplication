@@ -1,14 +1,14 @@
 // src/presentation/screens/PreOrder/components/PreOrderProductItemEditBottomSheet.tsx
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CartItem, Topping } from '../../order/OrderInterfaces';
+import { removeCartItem, updateCartItem } from '../../../../state/slices/orderCartSlice';
 import { useAppDispatch } from '../../../../utils/hooks';
-import { removeCartItem, updateCartItem } from '../../../../state/slices/orderCart';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
+import { CartItem, Topping } from '../../order/OrderInterfaces';
 import { EDIT_PRODUCT_TEXT, ICE_OPTIONS, SIZE_OPTIONS, SWEETNESS_OPTIONS } from '../PreOrderConstants';
 import { PreOrderService } from '../PreOrderService';
 import { AddToppingBottomSheet, AddToppingRef } from './AddToppingBottomSheet';
@@ -123,7 +123,7 @@ export const PreOrderProductItemEditBottomSheet = forwardRef<PreOrderProductItem
         index={0}
         stackBehavior="push"
       >
-        <BottomSheetScrollView contentContainerStyle={[styles.contentWrapper, { paddingBottom: insets.bottom}]}>
+        <BottomSheetScrollView contentContainerStyle={[styles.contentWrapper, { paddingBottom: insets.bottom }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{editingItem.product.name}</Text>
             <TouchableOpacity onPress={() => sheetRef.current?.dismiss()} style={styles.closeButton}>
@@ -192,7 +192,7 @@ export const PreOrderProductItemEditBottomSheet = forwardRef<PreOrderProductItem
             <View style={styles.toppingContent}>
               <Text style={styles.toppingTitle}>{EDIT_PRODUCT_TEXT.TOPPING_LABEL}</Text>
               <Text style={styles.toppingHint}>
-                {selectedToppings.length > 0  ? selectedToppings.map(t => t.name).join(', ') : EDIT_PRODUCT_TEXT.TOPPING_HINT}
+                {selectedToppings.length > 0 ? selectedToppings.map(t => t.name).join(', ') : EDIT_PRODUCT_TEXT.TOPPING_HINT}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={BRAND_COLORS.secondary.nauEspresso} />

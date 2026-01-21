@@ -1,16 +1,10 @@
-export class Menu {
-  constructor(
-    public readonly id: number,
-    public readonly storeId: number,
-    public readonly name: string,
-    public readonly isDefault: number,
-    public readonly note: string | null,
-    public readonly createdAt: Date,
-    public readonly updatedAt: Date | null,
-    public readonly deletedAt: Date | null
-  ) {}
-
-  get isDefaultMenu(): boolean {
-    return this.isDefault === 1;
-  }
+export interface Menu {
+  readonly id: number;
+  readonly storeId: number;
+  readonly name: string;
+  readonly isDefault: boolean;
+  readonly note: string | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date | null;
+  readonly deletedAt: Date | null;
 }

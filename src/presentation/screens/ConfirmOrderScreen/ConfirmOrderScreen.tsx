@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { clearConfirmedOrder, SerializableConfirmOrderItem } from '../../../state/slices/confirmOrder';
-import { clearCart } from '../../../state/slices/orderCart';
-import { RootState } from '../../../state/store';
+import { clearConfirmedOrder, SerializableConfirmOrderItem } from '../../../state/slices/confirmOrderSlice';
+import { selectSelectedAddress } from '../../../state/slices/deliverySlice';
+import { clearCart } from '../../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../theme/colors';
@@ -40,7 +39,7 @@ export default function ConfirmOrderScreen() {
 
     // Get confirmed order from Redux state
     const { confirmedOrder, isLoading, error } = useAppSelector((state) => state.confirmOrder);
-    const deliveryAddress = useSelector((state: RootState) => state.delivery.selectedAddress);
+    const deliveryAddress = useAppSelector(selectSelectedAddress);
     const cartItems = useAppSelector((state) => state.orderCart.items);
 
     const [isConfirming, setIsConfirming] = useState(false);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { IAddressSuggestion } from '../../../domain/models/LocationModel';
+import { IAddressSuggestion } from '../../../domain/shared/types';
 
 interface MapSearchBarProps {
   suggestions: IAddressSuggestion[];
@@ -35,7 +35,7 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
     <View style={styles.container}>
       <View style={styles.inputContainer}>
         <View style={styles.iconContainer}>
-            <Text>🔍</Text>
+          <Text>🔍</Text>
         </View>
         <TextInput
           style={styles.input}

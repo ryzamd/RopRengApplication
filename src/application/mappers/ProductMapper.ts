@@ -8,19 +8,19 @@ export class ProductMapper {
     const price = parseFloat(dto.price);
     const badge = ProductMapper.parseBadge(dto.meta);
 
-    return new Product(
-      String(dto.product_id),
-      dto.menu_item_id,
-      dto.product_id,
-      dto.name,
+    return {
+      id: String(dto.product_id),
+      menuItemId: dto.menu_item_id,
+      productId: dto.product_id,
+      name: dto.name,
       price,
-      dto.image_url,
-      String(dto.category_id),
-      undefined,
+      imageUrl: dto.image_url,
+      categoryId: String(dto.category_id),
+      originalPrice: undefined,
       badge,
-      undefined,
-      'AVAILABLE'
-    );
+      discount: undefined,
+      status: 'AVAILABLE',
+    };
   }
 
   static toEntityList(dtos: ProductDTO[]): Product[] {
@@ -28,22 +28,22 @@ export class ProductMapper {
   }
 
   static toStoreEntity(dto: StoreDTO): Store {
-    return new Store(
-      dto.id,
-      dto.region_id,
-      dto.name,
-      dto.slug,
-      dto.address,
-      dto.location,
-      dto.phone,
-      dto.email,
-      dto.timezone,
-      dto.is_active,
-      dto.created_at,
-      dto.updated_at,
-      dto.deleted_at,
-      dto.current_loyalty_point
-    );
+    return {
+      id: dto.id,
+      regionId: dto.region_id,
+      name: dto.name,
+      slug: dto.slug,
+      address: dto.address,
+      location: dto.location,
+      phone: dto.phone,
+      email: dto.email,
+      timezone: dto.timezone,
+      isActive: dto.is_active === 1,
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
+      deletedAt: dto.deleted_at,
+      currentLoyaltyPoint: dto.current_loyalty_point,
+    };
   }
 
   static toHomeMenuResult(response: HomeMenuResponseDTO): HomeMenuResult {

@@ -3,7 +3,7 @@ import { randomUUID } from 'expo-crypto';
 import { Product } from '../../data/mockProducts';
 import { Store } from '../../data/mockStores';
 import { CART_DEFAULTS, CartItem } from '../../presentation/screens/order/OrderInterfaces';
-import { logoutUser } from './auth';
+import { logoutUser } from './authSlice';
 
 interface OrderCartState {
   selectedStore: Store | null;
@@ -47,10 +47,10 @@ const orderCartSlice = createSlice({
       }
 
       state.selectedStore = action.payload;
-      
+
       // TODO: Persist selected store to AsyncStorage for app restart
       // Implementation: AsyncStorage.setItem('selected_store', JSON.stringify(action.payload))
-      
+
       // TODO: Re-fetch menu if new store is outside current lat/lng range
       // Check if new store coordinates differ significantly from current menu fetch
       // If difference > threshold, dispatch fetchHomeMenu with new coordinates
@@ -65,7 +65,7 @@ const orderCartSlice = createSlice({
         finalPrice: 0,
       };
       newItem.finalPrice = calculateFinalPrice(newItem);
-      
+
       state.items.push(newItem);
       state.totalItems += 1;
       state.totalPrice += newItem.finalPrice;
@@ -76,10 +76,10 @@ const orderCartSlice = createSlice({
       if (index !== -1) {
         const oldPrice = state.items[index].finalPrice;
         const oldQty = state.items[index].quantity;
-        
+
         const updated = { ...action.payload };
         updated.finalPrice = calculateFinalPrice(updated);
-        
+
         state.items[index] = updated;
         state.totalItems += (updated.quantity - oldQty);
         state.totalPrice += (updated.finalPrice - oldPrice);

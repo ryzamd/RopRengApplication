@@ -1,12 +1,10 @@
-export class PreOrder {
-  constructor(
-    public readonly preorderId: number,
-    public readonly subtotal: number,
-    public readonly discountAmount: number,
-    public readonly deliveryFee: number,
-    public readonly finalAmount: number,
-    public readonly createdAt: Date
-  ) {}
+export interface PreOrder {
+  readonly preorderId: number;
+  readonly subtotal: number;
+  readonly discountAmount: number;
+  readonly deliveryFee: number;
+  readonly finalAmount: number;
+  readonly createdAt: Date;
 }
 
 export interface PreOrderItem {
