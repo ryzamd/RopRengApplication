@@ -24,7 +24,7 @@ export class OrderMapper {
       dto.created_at,
       dto.updated_at,
       dto.deleted_at,
-      dto.order_items.map((item) => OrderMapper.itemToDomain(item))
+      (dto.order_items ?? []).map((item) => OrderMapper.itemToDomain(item))
     );
   }
 

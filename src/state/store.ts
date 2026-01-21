@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import auth from './slices/auth';
+import confirmOrderReducer from './slices/confirmOrder';
 import deliveryReducer from './slices/delivery';
 import homeReducer from './slices/homeSlice';
 import orderCart from './slices/orderCart';
@@ -25,6 +26,7 @@ export const store = configureStore({
     delivery: deliveryReducer,
     home: homeReducer,
     preOrder: preOrderReducer,
+    confirmOrder: confirmOrderReducer,
     orders: ordersReducer,
     stores: storesReducer,
   },

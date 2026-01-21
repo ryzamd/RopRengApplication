@@ -8,6 +8,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { PreOrderItem } from '../../../domain/entities/PreOrder';
+import { confirmOrder } from '../../../state/slices/confirmOrder';
 import { clearCart } from '../../../state/slices/orderCart';
 import { createPreOrder } from '../../../state/slices/preOrder';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
@@ -45,7 +46,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const user = useAppSelector((state) => state.auth.user);
   const cartItems = useAppSelector((state) => state.orderCart.items);
   const { isLoading: isCreatingOrder } = useAppSelector((state) => state.preOrder);
-  
+
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
     orderType: OrderType.TAKEAWAY,
     paymentMethod: PaymentMethod.CASH,
@@ -79,7 +80,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const handleNavigateToAddress = useCallback(() => {
     setIsNavigatingToAddress(true);
     bottomSheetRef.current?.dismiss();
-    
+
     setTimeout(() => {
       router.push('/address-management');
     }, 200);
@@ -94,7 +95,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
   const handleSheetChanges = useCallback(
     (index: number) => {
-      if (index === -1  && !isNavigatingToAddress) {
+      if (index === -1 && !isNavigatingToAddress) {
         onClose();
       }
     },
@@ -142,12 +143,12 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     console.log('User UUID:', user?.uuid);
     console.log('Selected Store:', selectedStore);
     console.log('Cart Items Count:', cartItems.length);
-    
+
     if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
-      Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => {} });
+      Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => { } });
       return;
     }
-    
+
     const validation = PreOrderService.validateOrder(
       totalItems,
       selectedStore?.id || null,
@@ -191,32 +192,43 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         promotions: [],
       };
 
-            console.log('=== PRE-ORDER PAYLOAD ===');
+      console.log('=== PRE-ORDER PAYLOAD ===');
       console.log(JSON.stringify(preOrderPayload, null, 2));
-      
-      const result = await dispatch(createPreOrder(preOrderPayload)).unwrap();
-      
+
+      // Step 1: Create pre-order and get preorder_id
+      const preOrderResult = await dispatch(createPreOrder(preOrderPayload)).unwrap();
+
       console.log('=== PRE-ORDER RESPONSE ===');
-      console.log(JSON.stringify(result, null, 2));
-      
-      Alert.alert(
-        'Success',
-        'Your order has been sending successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              dispatch(clearCart());
-              bottomSheetRef.current?.dismiss();
-              onOrderSuccess();
-            },
-          },
-        ]
-      );
+      console.log(JSON.stringify(preOrderResult, null, 2));
+
+      const preorderId = preOrderResult.preorderId;
+      if (!preorderId) {
+        throw new Error('Không nhận được mã đơn hàng từ server');
+      }
+
+      // Step 2: Call Confirm Order API
+      console.log('=== CALLING CONFIRM ORDER API ===');
+      console.log('Preorder ID:', preorderId);
+
+      const confirmResult = await dispatch(confirmOrder({ preorderId })).unwrap();
+
+      console.log('=== CONFIRM ORDER RESPONSE ===');
+      console.log(JSON.stringify(confirmResult, null, 2));
+
+      // Step 3: Dismiss bottom sheet and navigate to Confirm Order screen
+      // All payment types go to confirm screen for double-checking before final submission
+      bottomSheetRef.current?.dismiss();
+
+      // Navigate to Confirm Order screen for all orders
+      // User will review and confirm the order on this screen
+      router.push('../confirm-order');
+
+      onOrderSuccess();
     } catch (error) {
-      Alert.alert('Lỗi', error as string || 'Không thể tạo đơn hàng');
+      console.error('=== ORDER ERROR ===', error);
+      Alert.alert('Lỗi', (error as string) || 'Không thể tạo đơn hàng');
     }
-  }, [totalItems, selectedStore, preOrderState, dispatch,   onOrderSuccess, deliveryAddress, user, cartItems, isAuthenticated]);
+  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress, user, cartItems, isAuthenticated]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
@@ -303,7 +315,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
       <OrderTypeModal ref={orderTypeModalRef} selectedType={preOrderState.orderType} onSelectType={handleOrderTypeChange} />
 
       <PaymentTypeModal ref={paymentModalRef} selectedMethod={preOrderState.paymentMethod} onSelectMethod={handlePaymentMethodChange} />
-      
+
       <PreOrderProductItemEditBottomSheet ref={editProductModalRef} />
     </>
   );
