@@ -6,9 +6,9 @@ export interface ConfirmOrderRequestDTO {
   items: ConfirmOrderItemDTO[];
   voucher_code: ConfirmOrderVoucherDTO[];
   address: ConfirmOrderAddressDTO;
-  contact_name: string;
-  contact_phone: string;
-  note: string;
+  contact_name?: string | null;
+  contact_phone?: string | null;
+  note?: string | null;
 }
 
 export interface ConfirmOrderItemDTO {

@@ -59,16 +59,16 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
         <View style={styles.resultsContainer}>
           <FlatList
             data={suggestions}
-            keyExtractor={(item) => item.place_id}
+            keyExtractor={(item) => item.placeId}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.item}
                 onPress={() => handleSelect(item)}
               >
-                <Text style={styles.mainText}>{item.structured_formatting.main_text}</Text>
+                <Text style={styles.mainText}>{item.mainText}</Text>
                 <Text style={styles.subText} numberOfLines={1}>
-                  {item.structured_formatting.secondary_text}
+                  {item.secondaryText}
                 </Text>
               </TouchableOpacity>
             )}

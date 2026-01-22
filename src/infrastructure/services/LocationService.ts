@@ -5,6 +5,8 @@ import { PermissionService } from "./PermissionService";
 
 export type { ILocationCoordinate } from "../../domain/shared/types";
 
+const LOCATION_TIMEOUT_MS = 3000;
+
 export class LocationService {
   private permissionService: PermissionService;
 
@@ -21,31 +23,51 @@ export class LocationService {
         return APP_DEFAULT_LOCATION;
       }
 
-      console.log("[LocationService] Fetching GPS location...");
+      const lastKnown = await Location.getLastKnownPositionAsync();
+      if (lastKnown) {
+        console.log("[LocationService] Using last known position:", {
+          latitude: lastKnown.coords.latitude,
+          longitude: lastKnown.coords.longitude,
+        });
+        return {
+          latitude: lastKnown.coords.latitude,
+          longitude: lastKnown.coords.longitude,
+        };
+      }
 
-      const location = await Location.getCurrentPositionAsync({
+      console.log("[LocationService] Fetching GPS location with timeout...");
+
+      const locationPromise = Location.getCurrentPositionAsync({
         accuracy,
-        timeInterval: 5000,
-        distanceInterval: 10,
       });
 
-      const coords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("LOCATION_TIMEOUT"));
+        }, LOCATION_TIMEOUT_MS);
+      });
 
-      console.log("[LocationService] ✅ GPS location:", coords);
-      return coords;
+      const location = await Promise.race([locationPromise, timeoutPromise]);
+
+      if (location) {
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        console.log("[LocationService] ✅ GPS location:", coords);
+        return coords;
+      }
+
+      // Should not reach here, but fallback just in case
+      return APP_DEFAULT_LOCATION;
+
     } catch (error: any) {
-      console.warn("[LocationService] GPS Error:", error?.message || error);
+      const errorMsg = error?.message || error;
 
-      if (
-        error?.message?.includes("DEADLINE_EXCEEDED") ||
-        error?.message?.includes("No address associated") ||
-        error?.message?.includes("Location provider") ||
-        error?.message?.includes("Network")
-      ) {
-        console.log("[LocationService] Network/GPS issue → Using fallback");
+      if (errorMsg === "LOCATION_TIMEOUT") {
+        console.log("[LocationService] GPS timeout → Using fallback immediately");
+      } else {
+        console.warn("[LocationService] GPS Error:", errorMsg);
       }
 
       return APP_DEFAULT_LOCATION;

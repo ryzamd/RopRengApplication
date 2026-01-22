@@ -1,11 +1,11 @@
 import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../data/mockProducts';
 import { clearPendingAction } from '../../../state/slices/authSlice';
+import { selectProducts } from '../../../state/slices/homeSlice';
 import { addToCart } from '../../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
@@ -27,6 +27,8 @@ export default function OrderScreen() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
 
+  // Use cached products from Redux instead of mock data
+  const products = useAppSelector(selectProducts);
   const processedActionRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function OrderScreen() {
 
     console.log(`[OrderScreen] All conditions met! Auto-adding product: ${pendingAction.context.productId}`);
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === pendingAction.context.productId);
+    const product = products.find((p) => p.id === pendingAction.context.productId);
 
     if (!product) {
       console.error(`[OrderScreen] Product not found: ${pendingAction.context.productId}`);
@@ -81,7 +83,7 @@ export default function OrderScreen() {
     processedActionRef.current = actionKey;
 
     Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
-  }, [selectedStore, pendingAction, dispatch]);
+  }, [selectedStore, pendingAction, dispatch, products]);
 
   const handleMiniCartPress = useCallback(() => {
     console.log('[OrderScreen] Opening PreOrder sheet');
@@ -97,10 +99,19 @@ export default function OrderScreen() {
     router.replace('../(tabs)/');
   }, []);
 
-  const productsByCategory = MOCK_CATEGORIES.map((category) => ({
-    categoryName: category.name,
-    products: MOCK_PRODUCTS.filter((p) => p.categoryId === category.id),
-  }));
+  const productsByCategory = useMemo(() => {
+    const categoryMap = new Map<string, { categoryName: string; products: typeof products }>();
+
+    products.forEach(product => {
+      const categoryId = product.categoryId;
+      if (!categoryMap.has(categoryId)) {
+        categoryMap.set(categoryId, { categoryName: `Danh mục ${categoryId}`, products: [] });
+      }
+      categoryMap.get(categoryId)!.products.push(product);
+    });
+
+    return Array.from(categoryMap.values());
+  }, [products]);
 
   const showMiniCart = isAuthenticated && totalItems > 0;
 

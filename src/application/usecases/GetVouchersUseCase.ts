@@ -1,9 +1,9 @@
 import { LocationPermissionError } from '../../core/errors/AppErrors';
-import { Voucher } from '../../domain/entities/Voucher';
+import { Voucher, calculateVoucherDiscount } from '../../domain/entities/Voucher';
 import { HomeRepository, VouchersParams, VouchersResult } from '../../domain/repositories/HomeRepository';
 
 export class GetVouchersUseCase {
-  constructor(private readonly repository: HomeRepository) {}
+  constructor(private readonly repository: HomeRepository) { }
 
   async execute(params: VouchersParams): Promise<VouchersResult> {
     if (!params.lat || !params.lng) {
@@ -41,7 +41,7 @@ export class GetVouchersUseCase {
     for (const voucher of vouchers) {
       if (!voucher.isValid) continue;
 
-      const discount = voucher.calculateDiscount(orderTotal);
+      const discount = calculateVoucherDiscount(voucher, orderTotal);
       if (discount > maxDiscount) {
         maxDiscount = discount;
         bestVoucher = voucher;

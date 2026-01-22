@@ -1,15 +1,12 @@
 import { AxiosError } from 'axios';
-import { ConfirmOrderMapper, ConfirmOrderResponseDTO } from '../../application/mappers/ConfirmOrderMapper';
+import { ConfirmOrderResponseDTO } from '../../application/dto/ConfirmOrderDTO';
+import { ConfirmOrderMapper } from '../../application/mappers/ConfirmOrderMapper';
 import { NetworkError } from '../../core/errors/AppErrors';
 import { ConfirmOrder } from '../../domain/entities/ConfirmOrder';
 import { ConfirmOrderParams, ConfirmOrderRepository } from '../../domain/repositories/ConfirmOrderRepository';
 import { CONFIRM_ORDER_ENDPOINTS } from '../api/confirm-order/ConfirmOrderApiConfig';
 import { httpClient } from '../http/HttpClient';
 
-/**
- * Implementation of ConfirmOrderRepository
- * Handles API communication for order confirmation
- */
 export class ConfirmOrderRepositoryImpl implements ConfirmOrderRepository {
     private static instance: ConfirmOrderRepositoryImpl;
 
@@ -22,10 +19,6 @@ export class ConfirmOrderRepositoryImpl implements ConfirmOrderRepository {
         return ConfirmOrderRepositoryImpl.instance;
     }
 
-    /**
-     * Confirm a pre-order
-     * API: POST /orders/confirm/:id with body { id: preorder_id }
-     */
     async confirm(params: ConfirmOrderParams): Promise<ConfirmOrder> {
         try {
             const endpoint = CONFIRM_ORDER_ENDPOINTS.CONFIRM(params.preorderId);

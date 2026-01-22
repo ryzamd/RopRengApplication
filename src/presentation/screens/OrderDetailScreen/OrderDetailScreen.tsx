@@ -106,7 +106,7 @@ export default function OrderDetailScreen() {
             <Text style={styles.summaryLabel}>{ORDER_DETAIL_STRINGS.DELIVERY_FEE}</Text>
             <Text style={styles.summaryValue}>{service.formatCurrency(order.deliveryFee)}</Text>
           </View>
-          {parseFloat(order.discountAmount) > 0 && (
+          {order.discountAmount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>{ORDER_DETAIL_STRINGS.DISCOUNT}</Text>
               <Text style={[styles.summaryValue, styles.discountValue]}>
