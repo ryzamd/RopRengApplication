@@ -34,9 +34,6 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <View style={styles.iconContainer}>
-          <Text>🔍</Text>
-        </View>
         <TextInput
           style={styles.input}
           placeholder={placeholder}
@@ -101,7 +98,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  iconContainer: { marginRight: 8 },
   input: { flex: 1, fontSize: 16, color: '#333' },
   loader: { marginLeft: 8 },
   resultsContainer: {

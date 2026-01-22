@@ -42,10 +42,10 @@ export default function StoresScreen() {
           refresh: true,
         })
       );
-    } else {
+    } else if (apiStores.length === 0) {
       dispatch(fetchStores({ page: 1, refresh: true }));
     }
-  }, [dispatch, params.mode, params.productId, cachedLocation, userLocation.lat, userLocation.lng]);
+  }, [dispatch, params.mode, params.productId, cachedLocation, userLocation.lat, userLocation.lng, apiStores.length]);
 
   const uiStores = useMemo<Store[]>(() => {
     return apiStores.map(apiStore =>
