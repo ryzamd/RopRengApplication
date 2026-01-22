@@ -1,3 +1,5 @@
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { selectAppLocation } from '@/src/state/slices/appSlice';
 import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,8 +24,6 @@ import { HomeSearchBar } from './components/HomeSearchBar';
 import { LocationBanner } from './components/LocationBanner';
 import { HOME_TEXT } from './HomeConstants';
 import { HOME_LAYOUT } from './HomeLayout';
-import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
-import { locationService } from '@/src/infrastructure/services';
 
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
@@ -38,7 +38,13 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const handleAddToCart = useAddToCart();
 
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Use cached location from Redux (fetched at app startup)
+  const cachedLocation = useAppSelector(selectAppLocation);
+  const currentLocation = cachedLocation ?? {
+    lat: APP_DEFAULT_LOCATION.latitude,
+    lng: APP_DEFAULT_LOCATION.longitude,
+  };
+
   const [locationError] = useState<string | null>(null);
   const [userAddress, setUserAddress] = useState<string>('');
 
@@ -48,26 +54,6 @@ export default function HomeScreen() {
   const [showPreOrder, setShowPreOrder] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const userName = phoneNumber?.replace('+84', '0') || 'User';
-
-  useEffect(() => {
-    const initLocation = async () => {
-      try {
-        const location = await locationService.getCurrentPosition();
-        setCurrentLocation({
-          lat: location.latitude,
-          lng: location.longitude,
-        });
-      } catch (error) {
-        console.error('[HomeScreen] Location error:', error);
-        setCurrentLocation({
-          lat: APP_DEFAULT_LOCATION.latitude,
-          lng: APP_DEFAULT_LOCATION.longitude,
-        });
-      }
-    };
-
-    initLocation();
-  }, []);
 
   const {
     products,
@@ -80,29 +66,22 @@ export default function HomeScreen() {
     loadMore,
     clearError,
   } = useHomeData({
-    lat: currentLocation?.lat || 0,
-    lng: currentLocation?.lng || 0,
+    lat: currentLocation.lat,
+    lng: currentLocation.lng,
     limit: PAGE_LIMIT,
-    enabled: !!currentLocation,
+    enabled: !!cachedLocation,
   });
 
 
   const handleRefresh = useCallback(async () => {
-    if (!currentLocation) {
-      const location = await locationService.getCurrentPosition();
-      setCurrentLocation({
-        lat: location.latitude,
-        lng: location.longitude
-      });
-    }
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-  }, [refresh, currentLocation]);
+  }, [refresh]);
 
   const handleProductPress = useCallback((product: ProductCardData) => {
     console.log('[HomeScreen] Product pressed:', product.id);
-    
+
     const productForCart = {
       id: product.id,
       name: product.name,
@@ -113,7 +92,7 @@ export default function HomeScreen() {
       badge: product.badge,
       discount: product.discount,
     };
-    
+
     handleAddToCart(productForCart);
   }, [handleAddToCart]);
 
@@ -227,7 +206,7 @@ export default function HomeScreen() {
       error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-             {error.includes('404') ? 'Không tìm thấy cửa hàng ở khu vực này' : error}
+            {error.includes('404') ? 'Không tìm thấy cửa hàng ở khu vực này' : error}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
             <Text style={styles.retryText}>Thử lại</Text>
@@ -241,7 +220,7 @@ export default function HomeScreen() {
     [error, handleRetry]
   );
 
-  const isInitialLoading = (isLoading && products.length === 0) || !currentLocation;
+  const isInitialLoading = (isLoading && products.length === 0) || !cachedLocation;
 
   return (
     <LinearGradient
@@ -276,7 +255,7 @@ export default function HomeScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
           <Text style={styles.loadingText}>
-              {!currentLocation ? 'Đang xác định vị trí...' : 'Đang tải menu...'}
+            {!cachedLocation ? 'Đang xác định vị trí...' : 'Đang tải menu...'}
           </Text>
         </View>
       ) : (
@@ -316,7 +295,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  // ... (Giữ nguyên styles cũ)
   container: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -426,10 +404,10 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.text.secondary,
   },
   userLocationInfo: {
-  padding: 12,
-  backgroundColor: BRAND_COLORS.primary.beSua,
-  marginBottom: 8,
-  borderRadius: 8,
+    padding: 12,
+    backgroundColor: BRAND_COLORS.primary.beSua,
+    marginBottom: 8,
+    borderRadius: 8,
   },
   storeName: {
     fontSize: 14,

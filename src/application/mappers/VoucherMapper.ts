@@ -5,6 +5,10 @@ import { VoucherDTO, VoucherRulesDTO, VouchersResponseDTO } from '../dto/Voucher
 export class VoucherMapper {
   static toEntity(dto: VoucherDTO): Voucher {
     const rules = VoucherMapper.parseRules(dto.rules, dto.type as VoucherType);
+    const startAt = dto.start_at;
+    const endAt = dto.end_at;
+    const now = new Date();
+    const isValid = now >= new Date(startAt) && now <= new Date(endAt);
 
     return {
       id: dto.id,
@@ -14,8 +18,9 @@ export class VoucherMapper {
       description: dto.description,
       rules,
       canCombine: dto.can_combine === 1,
-      startAt: new Date(dto.start_at),
-      endAt: new Date(dto.end_at),
+      startAt,
+      endAt,
+      isValid,
     };
   }
 

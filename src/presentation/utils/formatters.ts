@@ -28,7 +28,7 @@ export function formatVoucherDiscount(voucher: Voucher): string {
 }
 
 export function formatVoucherExpiry(voucher: Voucher): string {
-    return voucher.endAt.toLocaleDateString('vi-VN', {
+    return new Date(voucher.endAt).toLocaleDateString('vi-VN', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',

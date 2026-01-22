@@ -9,6 +9,7 @@ export default function ConfirmOrderRoute() {
                 options={{
                     headerShown: true,
                     title: CONFIRM_ORDER_TEXT.SCREEN_TITLE,
+                    headerTitleAlign: "center",
                     animation: 'slide_from_right',
                 }}
             />

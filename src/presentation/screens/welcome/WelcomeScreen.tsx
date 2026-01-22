@@ -1,7 +1,10 @@
+import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
+import { selectAppLocation } from '@/src/state/slices/appSlice';
+import { useAppSelector } from '@/src/utils/hooks';
 import { useAuthGuard } from '@/src/utils/hooks/useAuthGuard';
 import { useHomeData } from '@/src/utils/hooks/useHomeData';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '../../components/shared/AppIcon';
@@ -15,8 +18,6 @@ import { PromoBanner } from './components/PromoBanner';
 import { QuickActions } from './components/QuickActions';
 import { SearchBar } from './components/SearchBar';
 import { WELCOME_TEXT } from './WelcomeConstants';
-import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
-import { locationService } from '@/src/infrastructure/services';
 
 const PAGE_LIMIT = 10;
 const LOAD_MORE_THRESHOLD = 0.5;
@@ -29,30 +30,12 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
-  
-  const [currentLocation, setCurrentLocation] = useState({
+
+  const cachedLocation = useAppSelector(selectAppLocation);
+  const currentLocation = cachedLocation ?? {
     lat: APP_DEFAULT_LOCATION.latitude,
     lng: APP_DEFAULT_LOCATION.longitude,
-  });
-  const [isLocationReady, setIsLocationReady] = useState(false);
-
-  useEffect(() => {
-    const initLocation = async () => {
-      try {
-        const location = await locationService.getCurrentPosition();
-        setCurrentLocation({
-          lat: location.latitude,
-          lng: location.longitude,
-        });
-      } catch (error) {
-        console.error('⚠️ Location Error:', error);
-      } finally {
-        setIsLocationReady(true);
-      }
-    };
-
-    initLocation();
-  }, []);
+  };
 
   const {
     products,
@@ -67,7 +50,7 @@ export default function WelcomeScreen() {
     lat: currentLocation.lat,
     lng: currentLocation.lng,
     limit: PAGE_LIMIT,
-    enabled: isLocationReady,
+    enabled: !!cachedLocation,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -84,14 +67,14 @@ export default function WelcomeScreen() {
     refresh();
   }, [clearError, refresh]);
 
-    const handleProductPress = useAuthGuard(
-      (product: ProductCardData) => {
-        console.log('[WelcomeScreen] Navigating to product:', product.id);
-        // TODO: Navigate to product detail
-      },
-      'PURCHASE',
-      (product: ProductCardData) => ({ productId: product.id })
-    );
+  const handleProductPress = useAuthGuard(
+    (product: ProductCardData) => {
+      console.log('[WelcomeScreen] Navigating to product:', product.id);
+      // TODO: Navigate to product detail
+    },
+    'PURCHASE',
+    (product: ProductCardData) => ({ productId: product.id })
+  );
 
   const handleCategoryPress = useCallback((categoryId: string) => {
     setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
@@ -195,7 +178,7 @@ export default function WelcomeScreen() {
     [error, handleRetry]
   );
 
-  const isInitialLoading = !isLocationReady || (isLoading && products.length === 0);
+  const isInitialLoading = !cachedLocation || (isLoading && products.length === 0);
 
   return (
     <LinearGradient

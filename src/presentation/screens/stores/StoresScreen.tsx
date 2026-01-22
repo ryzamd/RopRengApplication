@@ -1,5 +1,5 @@
 import { APP_DEFAULT_LOCATION } from '@/src/core/config/locationConstants';
-import { locationService } from '@/src/infrastructure/services';
+import { selectAppLocation } from '@/src/state/slices/appSlice';
 import { setSelectedStore } from '@/src/state/slices/orderCartSlice';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -21,50 +21,31 @@ export default function StoresScreen() {
   const dispatch = useAppDispatch();
 
   const params = useLocalSearchParams<{ productId?: string; mode?: 'select' | 'browse' }>();
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-
+  const cachedLocation = useAppSelector(selectAppLocation);
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
   const { stores: apiStores, loading, error } = useAppSelector((state) => state.stores);
+  const userLocation = cachedLocation ?? { lat: APP_DEFAULT_LOCATION.latitude, lng: APP_DEFAULT_LOCATION.longitude };
 
   useEffect(() => {
-    const initData = async () => {
-      try {
-        const location = await locationService.getCurrentPosition();
+    if (!cachedLocation) return;
 
-        setUserLocation({
-          lat: location.latitude,
-          lng: location.longitude,
-        });
-
-        if (params.mode === 'select' && params.productId) {
-          dispatch(
-            fetchStoresByProduct({
-              lat: location.latitude,
-              lng: location.longitude,
-              productId: Number(params.productId),
-              page: 0,
-              limit: 20,
-              refresh: true,
-            })
-          );
-        } else {
-          dispatch(fetchStores({ page: 1, refresh: true }));
-        }
-      } catch (error) {
-        console.log('[StoresScreen] Error:', error);
-        setUserLocation({
-          lat: APP_DEFAULT_LOCATION.latitude,
-          lng: APP_DEFAULT_LOCATION.longitude,
-        });
-        dispatch(fetchStores({ page: 1, refresh: true }));
-      }
-    };
-
-    initData();
-  }, [dispatch, params.mode, params.productId]);
+    if (params.mode === 'select' && params.productId) {
+      dispatch(
+        fetchStoresByProduct({
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          productId: Number(params.productId),
+          page: 0,
+          limit: 20,
+          refresh: true,
+        })
+      );
+    } else {
+      dispatch(fetchStores({ page: 1, refresh: true }));
+    }
+  }, [dispatch, params.mode, params.productId, cachedLocation, userLocation.lat, userLocation.lng]);
 
   const uiStores = useMemo<Store[]>(() => {
     return apiStores.map(apiStore =>
@@ -124,27 +105,10 @@ export default function StoresScreen() {
     }
   }, [selectedStore, totalItems, dispatch, router, params.mode]);
 
-  useEffect(() => {
-    const loadStores = async () => {
-      if (params.mode === 'select' && params.productId && userLocation) {
-        dispatch(fetchStoresByProduct({
-          productId: Number(params.productId),
-          lat: userLocation.lat,
-          lng: userLocation.lng,
-          limit: 20,
-        }));
-      } else {
-        dispatch(fetchStores({ page: 1, refresh: true }));
-      }
-    };
-
-    loadStores();
-  }, [dispatch, params.mode, params.productId, userLocation]);
-
   const handleRetry = useCallback(() => {
     dispatch(clearStoresError());
 
-    if (params.mode === 'select' && params.productId && userLocation) {
+    if (params.mode === 'select' && params.productId && cachedLocation) {
       dispatch(
         fetchStoresByProduct({
           lat: userLocation.lat,
@@ -158,7 +122,7 @@ export default function StoresScreen() {
     } else {
       dispatch(fetchStores({ page: 1, refresh: true }));
     }
-  }, [dispatch, params.mode, params.productId, userLocation]);
+  }, [dispatch, params.mode, params.productId, cachedLocation, userLocation]);
 
   if (loading) {
     return (
@@ -196,9 +160,7 @@ export default function StoresScreen() {
         {filteredStores.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              {params.mode === 'select'
-                ? STORES_TEXT.EMPTY_MESSAGE_SELECT
-                : STORES_TEXT.EMPTY_MESSAGE_BROWSE}
+              {params.mode === 'select' ? STORES_TEXT.EMPTY_MESSAGE_SELECT : STORES_TEXT.EMPTY_MESSAGE_BROWSE}
             </Text>
           </View>
         ) : (

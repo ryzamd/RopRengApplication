@@ -3,15 +3,15 @@ import { Voucher } from '../entities/Voucher';
 export class VoucherService {
     static isValid(voucher: Voucher): boolean {
         const now = new Date();
-        return now >= voucher.startAt && now <= voucher.endAt;
+        return now >= new Date(voucher.startAt) && now <= new Date(voucher.endAt);
     }
 
     static isExpired(voucher: Voucher): boolean {
-        return new Date() > voucher.endAt;
+        return new Date() > new Date(voucher.endAt);
     }
 
     static isPending(voucher: Voucher): boolean {
-        return new Date() < voucher.startAt;
+        return new Date() < new Date(voucher.startAt);
     }
 
     static calculateDiscount(voucher: Voucher, orderTotal: number): number {
@@ -30,7 +30,7 @@ export class VoucherService {
 
     static getDaysUntilExpiry(voucher: Voucher): number {
         const now = new Date();
-        const diffTime = voucher.endAt.getTime() - now.getTime();
+        const diffTime = new Date(voucher.endAt).getTime() - now.getTime();
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 }

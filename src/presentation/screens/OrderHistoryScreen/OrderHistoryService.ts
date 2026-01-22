@@ -1,4 +1,4 @@
-import { OrderRepositoryImpl } from '@/src/infrastructure/repositories/OrderRepositoryImpls';
+import { OrderRepositoryImpl } from '@/src/infrastructure/repositories/OrderRepositoryImpl';
 import { GetOrderHistory } from '../../../application/usecases/orders/GetOrderHistory';
 import { Order } from '../../../domain/entities/Order';
 
@@ -22,8 +22,8 @@ export class OrderHistoryService {
     };
   }
 
-  formatCurrency(amount: string): string {
-    const num = parseFloat(amount);
+  formatCurrency(amount: number | string): string {
+    const num = typeof amount === 'number' ? amount : parseFloat(amount);
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
