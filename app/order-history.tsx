@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
-import { ORDER_HISTORY_STRINGS } from "../src/presentation/screens/OrderHistoryScreen/OrderHistoryConstants";
-import OrderHistoryScreen from "../src/presentation/screens/OrderHistoryScreen/OrderHistoryScreen";
+import { ORDER_HISTORY_STRINGS } from "../src/presentation/screens/order-history/OrderHistoryConstants";
+import OrderHistoryScreen from "../src/presentation/screens/order-history/OrderHistoryScreen";
 
 export default function OrderHistoryRoute() {
   return (

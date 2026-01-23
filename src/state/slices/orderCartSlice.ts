@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { randomUUID } from 'expo-crypto';
 import { Product } from '../../data/mockProducts';
 import { Store } from '../../data/mockStores';
-import { CART_DEFAULTS, CartItem } from '../../presentation/screens/order/OrderInterfaces';
+import { CART_DEFAULTS, CartItem, CartItemCustomization } from '../../presentation/screens/order/OrderInterfaces';
 import { logoutUser } from './authSlice';
 
 interface OrderCartState {
@@ -31,6 +31,31 @@ const calculateFinalPrice = (item: CartItem): number => {
   return (item.product.price + sizeAdjust + toppingTotal) * item.quantity;
 };
 
+const isSameCustomizations = (a: CartItemCustomization, b: CartItemCustomization): boolean => {
+  if (a.size !== b.size) return false;
+  if (a.ice !== b.ice) return false;
+  if (a.sweetness !== b.sweetness) return false;
+  if (a.toppings.length !== b.toppings.length) return false;
+
+  // Compare toppings by ID (sorted to avoid order issues)
+  const aToppingIds = a.toppings.map(t => t.id).sort();
+  const bToppingIds = b.toppings.map(t => t.id).sort();
+  return aToppingIds.every((id, i) => id === bToppingIds[i]);
+};
+
+const findDuplicateItem = (items: CartItem[], productId: string, customizations: CartItemCustomization, excludeItemId?: string): CartItem | undefined => {
+  return items.find(item =>
+    item.id !== excludeItemId &&
+    item.product.id === productId &&
+    isSameCustomizations(item.customizations, customizations)
+  );
+};
+
+const recalculateTotals = (state: OrderCartState): void => {
+  state.totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
+  state.totalPrice = state.items.reduce((sum, item) => sum + item.finalPrice, 0);
+};
+
 const orderCartSlice = createSlice({
   name: 'orderCart',
   initialState,
@@ -39,7 +64,6 @@ const orderCartSlice = createSlice({
       const newStoreId = action.payload.id;
       const oldStoreId = state.selectedStore?.id;
 
-      // Clear cart when switching stores
       if (oldStoreId && oldStoreId !== newStoreId) {
         state.items = [];
         state.totalItems = 0;
@@ -57,33 +81,60 @@ const orderCartSlice = createSlice({
     },
 
     addToCart: (state, action: PayloadAction<Product>) => {
-      const newItem: CartItem = {
-        id: randomUUID(),
-        product: action.payload,
-        quantity: 1,
-        customizations: { ...CART_DEFAULTS },
-        finalPrice: 0,
-      };
-      newItem.finalPrice = calculateFinalPrice(newItem);
+      const defaultCustomizations = { ...CART_DEFAULTS };
 
-      state.items.push(newItem);
-      state.totalItems += 1;
-      state.totalPrice += newItem.finalPrice;
+      const existingItem = findDuplicateItem(
+        state.items,
+        action.payload.id,
+        defaultCustomizations
+      );
+
+      if (existingItem) {
+        existingItem.quantity += 1;
+        existingItem.finalPrice = calculateFinalPrice(existingItem);
+      } else {
+        const newItem: CartItem = {
+          id: randomUUID(),
+          product: action.payload,
+          quantity: 1,
+          customizations: defaultCustomizations,
+          finalPrice: 0,
+        };
+        newItem.finalPrice = calculateFinalPrice(newItem);
+        state.items.push(newItem);
+      }
+
+      recalculateTotals(state);
     },
 
     updateCartItem: (state, action: PayloadAction<CartItem>) => {
-      const index = state.items.findIndex((item) => item.id === action.payload.id);
-      if (index !== -1) {
-        const oldPrice = state.items[index].finalPrice;
-        const oldQty = state.items[index].quantity;
+      const updatedItem = action.payload;
+      const index = state.items.findIndex((item) => item.id === updatedItem.id);
+      if (index === -1) return;
 
-        const updated = { ...action.payload };
+      // Check for duplicate item with same customizations (excluding self)
+      const duplicateItem = findDuplicateItem(
+        state.items,
+        updatedItem.product.id,
+        updatedItem.customizations,
+        updatedItem.id // Exclude self
+      );
+
+      if (duplicateItem) {
+        // MERGE: Combine quantities into duplicate item
+        duplicateItem.quantity += updatedItem.quantity;
+        duplicateItem.finalPrice = calculateFinalPrice(duplicateItem);
+
+        // Remove the original item
+        state.items = state.items.filter(item => item.id !== updatedItem.id);
+      } else {
+        // UPDATE IN PLACE: No duplicate found
+        const updated = { ...updatedItem };
         updated.finalPrice = calculateFinalPrice(updated);
-
         state.items[index] = updated;
-        state.totalItems += (updated.quantity - oldQty);
-        state.totalPrice += (updated.finalPrice - oldPrice);
       }
+
+      recalculateTotals(state);
     },
 
     removeCartItem: (state, action: PayloadAction<string>) => {

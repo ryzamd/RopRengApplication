@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAppSelector } from '../../../../utils/hooks';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
-import { PreOrderProductItem } from './PreOrderProductItem';
 import { CartItem } from '../../order/OrderInterfaces';
 import { PREORDER_TEXT } from '../PreOrderConstants';
+import { PreOrderProductItem } from './PreOrderProductItem';
 
 interface PreOrderProductListProps {
   handleAddMore: () => void;
   onItemPress: (item: CartItem) => void;
 }
 
-export function PreOrderProductList({ handleAddMore, onItemPress }: PreOrderProductListProps) {
+export const PreOrderProductList = React.memo(function PreOrderProductList({ handleAddMore, onItemPress }: PreOrderProductListProps) {
   const cartItems = useAppSelector((state) => state.orderCart.items);
+
+  const handleItemPress = useCallback((item: CartItem) => {
+    onItemPress(item);
+  }, [onItemPress]);
 
   if (cartItems.length === 0) {
     return (
@@ -31,17 +35,17 @@ export function PreOrderProductList({ handleAddMore, onItemPress }: PreOrderProd
           <Text style={styles.addButton}>{PREORDER_TEXT.ADD_MORE_BUTTON}</Text>
         </TouchableOpacity>
       </View>
-     
+
       {cartItems.map((item) => (
         <PreOrderProductItem
           key={item.id}
           item={item}
-          onPress={onItemPress}
+          onPress={handleItemPress}
         />
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -65,7 +69,7 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.text.primary,
   },
   addButton: {
-   fontSize: TYPOGRAPHY.fontSize.base,
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
     color: BRAND_COLORS.secondary.camNhat,
   },
