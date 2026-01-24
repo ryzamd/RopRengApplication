@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
-import { CONFIRM_ORDER_TEXT } from "../src/presentation/screens/ConfirmOrderScreen/ConfirmOrderConstants";
-import ConfirmOrderScreen from "../src/presentation/screens/ConfirmOrderScreen/ConfirmOrderScreen";
+import { CONFIRM_ORDER_TEXT } from "../src/presentation/screens/confirm-order/ConfirmOrderConstants";
+import ConfirmOrderScreen from "../src/presentation/screens/confirm-order/ConfirmOrderScreen";
 
 export default function ConfirmOrderRoute() {
     return (
