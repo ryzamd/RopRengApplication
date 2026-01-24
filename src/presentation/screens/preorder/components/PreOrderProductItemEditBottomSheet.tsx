@@ -1,4 +1,3 @@
-// src/presentation/screens/PreOrder/components/PreOrderProductItemEditBottomSheet.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
@@ -107,8 +106,6 @@ export const PreOrderProductItemEditBottomSheet = forwardRef<PreOrderProductItem
     []
   );
 
-  if (!editingItem) return null;
-
   return (
     <>
       <BottomSheetModal
@@ -122,107 +119,106 @@ export const PreOrderProductItemEditBottomSheet = forwardRef<PreOrderProductItem
         handleIndicatorStyle={styles.indicator}
         index={0}
         stackBehavior="push"
+        onDismiss={() => setEditingItem(null)}
       >
-        <BottomSheetScrollView contentContainerStyle={[styles.contentWrapper, { paddingBottom: insets.bottom }]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{editingItem.product.name}</Text>
-            <TouchableOpacity onPress={() => sheetRef.current?.dismiss()} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={BRAND_COLORS.text.primary} />
-            </TouchableOpacity>
-          </View>
+        {editingItem ? (
+          <>
+            <BottomSheetScrollView contentContainerStyle={[styles.contentWrapper, { paddingBottom: insets.bottom }]}>
+              <View style={styles.header}>
+                <Text style={styles.title}>{editingItem.product.name}</Text>
+                <TouchableOpacity onPress={() => sheetRef.current?.dismiss()} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color={BRAND_COLORS.text.primary} />
+                </TouchableOpacity>
+              </View>
 
-          {/* Size */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {EDIT_PRODUCT_TEXT.SIZE_LABEL} <Text style={styles.required}>*</Text>
-            </Text>
-            <Text style={styles.sectionHint}>{EDIT_PRODUCT_TEXT.SIZE_HINT}</Text>
-            <View style={styles.optionRow}>
-              {SIZE_OPTIONS.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[styles.optionButton, selectedSize === option.id && styles.optionButtonSelected]}
-                  onPress={() => setSelectedSize(option.id as any)}
-                >
-                  <Text style={[styles.optionText, selectedSize === option.id && styles.optionTextSelected]}>
-                    {option.label}: {PreOrderService.formatPrice(editingItem.product.price + option.priceAdjust)}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  {EDIT_PRODUCT_TEXT.SIZE_LABEL} <Text style={styles.required}>*</Text>
+                </Text>
+                <Text style={styles.sectionHint}>{EDIT_PRODUCT_TEXT.SIZE_HINT}</Text>
+                <View style={styles.optionRow}>
+                  {SIZE_OPTIONS.map((option) => (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[styles.optionButton, selectedSize === option.id && styles.optionButtonSelected]}
+                      onPress={() => setSelectedSize(option.id as any)}
+                    >
+                      <Text style={[styles.optionText, selectedSize === option.id && styles.optionTextSelected]}>
+                        {option.label}: {PreOrderService.formatPrice(editingItem.product.price + option.priceAdjust)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{EDIT_PRODUCT_TEXT.ICE_LABEL}</Text>
+                <View style={styles.optionRow}>
+                  {ICE_OPTIONS.map((option) => (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[styles.optionButton, selectedIce === option.id && styles.optionButtonSelected]}
+                      onPress={() => setSelectedIce(option.id as any)}
+                    >
+                      <Text style={[styles.optionText, selectedIce === option.id && styles.optionTextSelected]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{EDIT_PRODUCT_TEXT.SWEETNESS_LABEL}</Text>
+                <View style={styles.optionRow}>
+                  {SWEETNESS_OPTIONS.map((option) => (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[styles.optionButton, selectedSweetness === option.id && styles.optionButtonSelected]}
+                      onPress={() => setSelectedSweetness(option.id as any)}
+                    >
+                      <Text style={[styles.optionText, selectedSweetness === option.id && styles.optionTextSelected]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.toppingSection} onPress={handleOpenToppingModal}>
+                <View style={styles.toppingIcon}>
+                  <Ionicons name="cafe" size={24} color={BRAND_COLORS.secondary.nauEspresso} />
+                </View>
+                <View style={styles.toppingContent}>
+                  <Text style={styles.toppingTitle}>{EDIT_PRODUCT_TEXT.TOPPING_LABEL}</Text>
+                  <Text style={styles.toppingHint}>
+                    {selectedToppings.length > 0 ? selectedToppings.map(t => t.name).join(', ') : EDIT_PRODUCT_TEXT.TOPPING_HINT}
                   </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.noteSection}>
+                <Ionicons name="document-text-outline" size={20} color={BRAND_COLORS.text.secondary} />
+                <Text style={styles.noteText}>{EDIT_PRODUCT_TEXT.NOTE_LABEL}</Text>
+              </TouchableOpacity>
+            </BottomSheetScrollView>
+
+            <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+              <View style={styles.quantityControls}>
+                <TouchableOpacity style={styles.quantityButton} onPress={() => handleQuantityChange(-1)}>
+                  <Ionicons name="remove" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
                 </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Ice */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{EDIT_PRODUCT_TEXT.ICE_LABEL}</Text>
-            <View style={styles.optionRow}>
-              {ICE_OPTIONS.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[styles.optionButton, selectedIce === option.id && styles.optionButtonSelected]}
-                  onPress={() => setSelectedIce(option.id as any)}
-                >
-                  <Text style={[styles.optionText, selectedIce === option.id && styles.optionTextSelected]}>{option.label}</Text>
+                <Text style={styles.quantityValue}>{quantity}</Text>
+                <TouchableOpacity style={styles.quantityButton} onPress={() => handleQuantityChange(1)}>
+                  <Ionicons name="add" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
                 </TouchableOpacity>
-              ))}
+              </View>
+
+              <TouchableOpacity style={styles.applyButton} onPress={handleApplyChanges}>
+                <Text style={styles.applyButtonText}>
+                  {EDIT_PRODUCT_TEXT.CHANGE_BUTTON} · {PreOrderService.formatPrice(calculatePrice())}
+                </Text>
+              </TouchableOpacity>
             </View>
-          </View>
-
-          {/* Sweetness */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{EDIT_PRODUCT_TEXT.SWEETNESS_LABEL}</Text>
-            <View style={styles.optionRow}>
-              {SWEETNESS_OPTIONS.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[styles.optionButton, selectedSweetness === option.id && styles.optionButtonSelected]}
-                  onPress={() => setSelectedSweetness(option.id as any)}
-                >
-                  <Text style={[styles.optionText, selectedSweetness === option.id && styles.optionTextSelected]}>{option.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Toppings */}
-          <TouchableOpacity style={styles.toppingSection} onPress={handleOpenToppingModal}>
-            <View style={styles.toppingIcon}>
-              <Ionicons name="cafe" size={24} color={BRAND_COLORS.secondary.nauEspresso} />
-            </View>
-            <View style={styles.toppingContent}>
-              <Text style={styles.toppingTitle}>{EDIT_PRODUCT_TEXT.TOPPING_LABEL}</Text>
-              <Text style={styles.toppingHint}>
-                {selectedToppings.length > 0 ? selectedToppings.map(t => t.name).join(', ') : EDIT_PRODUCT_TEXT.TOPPING_HINT}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
-          </TouchableOpacity>
-
-          {/* Note placeholder */}
-          <TouchableOpacity style={styles.noteSection}>
-            <Ionicons name="document-text-outline" size={20} color={BRAND_COLORS.text.secondary} />
-            <Text style={styles.noteText}>{EDIT_PRODUCT_TEXT.NOTE_LABEL}</Text>
-          </TouchableOpacity>
-        </BottomSheetScrollView>
-
-        {/* FIXED: Footer with buttons */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.quantityControls}>
-            <TouchableOpacity style={styles.quantityButton} onPress={() => handleQuantityChange(-1)}>
-              <Ionicons name="remove" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
-            </TouchableOpacity>
-            <Text style={styles.quantityValue}>{quantity}</Text>
-            <TouchableOpacity style={styles.quantityButton} onPress={() => handleQuantityChange(1)}>
-              <Ionicons name="add" size={20} color={BRAND_COLORS.secondary.nauEspresso} />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.applyButton} onPress={handleApplyChanges}>
-            <Text style={styles.applyButtonText}>
-              {EDIT_PRODUCT_TEXT.CHANGE_BUTTON} · {PreOrderService.formatPrice(calculatePrice())}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          </>
+        ) : null}
       </BottomSheetModal>
 
       <AddToppingBottomSheet ref={toppingModalRef} onApply={handleToppingsSelected} />

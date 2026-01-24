@@ -1,7 +1,7 @@
 import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Pressable } from 'react-native-gesture-handler';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { CartItem } from '../../order/OrderInterfaces';
@@ -43,9 +43,11 @@ export const PreOrderProductItem = React.memo(function PreOrderProductItem({ ite
   }, [onPress, item]);
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      activeOpacity={0.7}
+    <Pressable
+      style={({ pressed }) => [
+        styles.container,
+        pressed && { opacity: 0.7 }
+      ]}
       onPress={handlePress}
     >
       <View>
@@ -70,7 +72,7 @@ export const PreOrderProductItem = React.memo(function PreOrderProductItem({ ite
       <Text style={styles.productPrice}>
         {PreOrderService.formatPrice(item.finalPrice)}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }, arePropsEqual);
 
