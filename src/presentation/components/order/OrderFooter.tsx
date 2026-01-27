@@ -7,18 +7,7 @@ import { ORDER_TYPE_LABELS } from './OrderConstants';
 import { OrderFooterProps } from './OrderInterfaces';
 import { OrderService } from './OrderService';
 
-/**
- * Shared footer component for order actions.
- * Used in both Pre-order and Confirm Order screens.
- */
-export function OrderFooter({
-    orderType,
-    totalItems,
-    totalPrice,
-    buttonText,
-    onButtonPress,
-    isLoading = false,
-}: OrderFooterProps) {
+export function OrderFooter({ orderType, totalItems, totalPrice, buttonText, onButtonPress, isLoading = false }: OrderFooterProps) {
     const insets = useSafeAreaInsets();
     const orderTypeLabel = ORDER_TYPE_LABELS[orderType];
 
@@ -53,7 +42,7 @@ export function OrderFooter({
 const styles = StyleSheet.create({
     container: {
         backgroundColor: BRAND_COLORS.secondary.vangNhat,
-        paddingTop: 16,
+        paddingTop: 24,
         paddingHorizontal: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -81,6 +70,8 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
+        width: '60%',
+        alignSelf: 'center',
         backgroundColor: BRAND_COLORS.primary.xanhReu,
         borderRadius: 16,
         justifyContent: 'center',
@@ -90,6 +81,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
+        marginBottom: 24,
     },
     buttonText: {
         fontSize: TYPOGRAPHY.fontSize.lg,

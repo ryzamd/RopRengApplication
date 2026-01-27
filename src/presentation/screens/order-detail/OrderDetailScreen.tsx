@@ -2,9 +2,9 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Order } from '../../../domain/entities/Order';
+import { BaseAuthenticatedLayout } from '../../layouts/BaseAuthenticatedLayout';
 import { ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS, STATUS_COLORS } from '../order-history/OrderHistoryConstants';
 import { ORDER_DETAIL_STRINGS, PAYMENT_METHOD_LABELS } from './OrderDetailConstants';
-import { OrderDetailLayout } from './OrderDetailLayout';
 import { OrderDetailService } from './OrderDetailService';
 
 export default function OrderDetailScreen() {
@@ -35,27 +35,27 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <OrderDetailLayout>
+      <BaseAuthenticatedLayout safeAreaEdges={['bottom', 'left', 'right']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#606A37" />
           <Text style={styles.loadingText}>{ORDER_DETAIL_STRINGS.LOADING}</Text>
         </View>
-      </OrderDetailLayout>
+      </BaseAuthenticatedLayout>
     );
   }
 
   if (error || !order) {
     return (
-      <OrderDetailLayout>
+      <BaseAuthenticatedLayout safeAreaEdges={['bottom', 'left', 'right']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || ORDER_DETAIL_STRINGS.ERROR_LOAD}</Text>
         </View>
-      </OrderDetailLayout>
+      </BaseAuthenticatedLayout>
     );
   }
 
   return (
-    <OrderDetailLayout>
+    <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.orderCode}>{order.orderCode}</Text>
@@ -163,7 +163,7 @@ export default function OrderDetailScreen() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-    </OrderDetailLayout>
+    </BaseAuthenticatedLayout>
   );
 }
 

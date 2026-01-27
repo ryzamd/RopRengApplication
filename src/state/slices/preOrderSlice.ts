@@ -3,21 +3,23 @@ import { PreOrderMapper } from '../../application/mappers/PreOrderMapper';
 import { CreatePreOrderUseCase } from '../../application/usecases/CreatePreOrderUseCase';
 import { CreatePreOrderParams } from '../../domain/repositories/PreOrderRepository';
 import { preOrderRepository } from '../../infrastructure/repositories/PreOrderRepositoryImpl';
+import { OrderType } from '../../presentation/screens/preorder/PreOrderEnums';
 
 const createPreOrderUseCase = new CreatePreOrderUseCase(preOrderRepository);
-
 type SerializablePreOrder = ReturnType<typeof PreOrderMapper.toSerializable>;
 
 interface PreOrderState {
   isLoading: boolean;
   error: string | null;
   lastOrder: SerializablePreOrder | null;
+  orderType: OrderType;
 }
 
 const initialState: PreOrderState = {
   isLoading: false,
   error: null,
   lastOrder: null,
+  orderType: OrderType.TAKEAWAY,
 };
 
 export const createPreOrder = createAsyncThunk<SerializablePreOrder, CreatePreOrderParams, { rejectValue: string }>('preOrder/create',
@@ -41,6 +43,9 @@ const preOrderSlice = createSlice({
     clearPreOrderError: (state) => {
       state.error = null;
     },
+    setOrderType: (state, action: PayloadAction<OrderType>) => {
+      state.orderType = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -59,10 +64,10 @@ const preOrderSlice = createSlice({
   },
 });
 
-export const { clearPreOrderError } = preOrderSlice.actions;
+export const { clearPreOrderError, setOrderType } = preOrderSlice.actions;
 export default preOrderSlice.reducer;
 
-// Selectors
 export const selectIsLoading = (state: { preOrder: PreOrderState }) => state.preOrder.isLoading;
 export const selectError = (state: { preOrder: PreOrderState }) => state.preOrder.error;
 export const selectLastOrder = (state: { preOrder: PreOrderState }) => state.preOrder.lastOrder;
+export const selectPreOrderType = (state: { preOrder: PreOrderState }) => state.preOrder.orderType;

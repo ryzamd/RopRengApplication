@@ -9,12 +9,13 @@ import { selectProducts } from '../../../state/slices/homeSlice';
 import { addToCart } from '../../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
+import { BaseFullScreenLayout } from '../../layouts/BaseFullScreenLayout';
+import { BRAND_COLORS } from '../../theme/colors';
 import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { OrderCategoryScroll } from './components/OrderCategoryScroll';
 import { OrderHeader } from './components/OrderHeader';
 import { OrderProductSection } from './components/OrderProductSection';
 import { OrderPromoSection } from './components/OrderPromoSection';
-import { orderStyles } from './styles';
 
 export default function OrderScreen() {
   const insets = useSafeAreaInsets();
@@ -26,10 +27,9 @@ export default function OrderScreen() {
   const selectedStore = useAppSelector((state) => state.orderCart.selectedStore);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const totalItems = useAppSelector((state) => state.orderCart.totalItems);
-
-  // Use cached products from Redux instead of mock data
   const products = useAppSelector(selectProducts);
   const processedActionRef = useRef<string | null>(null);
+  const showMiniCart = isAuthenticated && totalItems > 0;
 
   useEffect(() => {
     console.log('[OrderScreen] Store or Action changed, checking conditions...');
@@ -113,12 +113,20 @@ export default function OrderScreen() {
     return Array.from(categoryMap.values());
   }, [products]);
 
-  const showMiniCart = isAuthenticated && totalItems > 0;
+
+
+  const renderHeader = useCallback(() => (
+    <View style={{ paddingTop: insets.top, backgroundColor: BRAND_COLORS.background.default }}>
+      <OrderHeader />
+    </View>
+  ), [insets.top]);
 
   return (
-    <View style={[orderStyles.container, { paddingTop: insets.top }]}>
-      <OrderHeader />
-
+    <BaseFullScreenLayout
+      renderHeader={renderHeader}
+      testID="order-screen"
+      safeAreaEdges={['left', 'right']}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <OrderCategoryScroll />
 
@@ -147,6 +155,6 @@ export default function OrderScreen() {
       {showMiniCart && <MiniCartButton onPress={handleMiniCartPress} />}
 
       <PreOrderBottomSheet visible={showPreOrder} onClose={handlePreOrderClose} onOrderSuccess={handleOrderSuccess} />
-    </View>
+    </BaseFullScreenLayout>
   );
 }

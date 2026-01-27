@@ -1,20 +1,18 @@
 import { selectSelectedAddress } from '@/src/state/slices/deliverySlice';
-import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
-import { BottomSheetFooterProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetFooter/types';
+import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PreOrderItem } from '../../../domain/entities/PreOrder';
-import { confirmOrder } from '../../../state/slices/confirmOrderSlice';
+import { StyleSheet } from 'react-native';
 import { clearCart } from '../../../state/slices/orderCartSlice';
-import { createPreOrder } from '../../../state/slices/preOrderSlice';
+import { selectPreOrderType, setOrderType } from '../../../state/slices/preOrderSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
-import { AppIcon } from '../../components/shared/AppIcon';
+import { OrderFooter } from '../../components/order/OrderFooter';
+import { OrderDisplayItem } from '../../components/order/OrderInterfaces';
+import { OrderMapper } from '../../components/order/OrderMapper';
+import { OrderProductList } from '../../components/order/OrderProductList';
 import { Toast } from '../../components/shared/Toast';
-import { BRAND_COLORS } from '../../theme/colors';
-import { TYPOGRAPHY } from '../../theme/typography';
+import { BaseBottomSheetLayout } from '../../layouts/BaseBottomSheetLayout';
+import { popupService } from '../../layouts/popup/PopupService';
 import { CartItem } from '../order/OrderInterfaces';
 import { PREORDER_TEXT } from './PreOrderConstants';
 import { OrderType, PaymentMethod } from './PreOrderEnums';
@@ -26,13 +24,10 @@ import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { PaymentTypeModal } from './components/PaymentTypeModal';
 import { PaymentTypeSelector } from './components/PaymentTypeSelector';
 import { PreOrderAddressCard } from './components/PreOrderAddressCard';
-import { PreOrderFooter } from './components/PreOrderFooter';
 import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './components/PreOrderProductItemEditBottomSheet';
-import { PreOrderProductList } from './components/PreOrderProductList';
 import { PreOrderTotalPrice } from './components/PreOrderTotalPrice';
 
 export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }: PreOrderBottomSheetProps) {
-  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const orderTypeModalRef = useRef<BottomSheetModal>(null);
@@ -41,19 +36,37 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
   const deliveryAddress = useAppSelector(selectSelectedAddress);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-
   const user = useAppSelector((state) => state.auth.user);
   const cartItems = useAppSelector((state) => state.orderCart.items);
+  const { confirmedOrder } = useAppSelector((state) => state.confirmOrder);
   const { isLoading: isCreatingOrder } = useAppSelector((state) => state.preOrder);
+  const globalOrderType = useAppSelector(selectPreOrderType);
 
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
-    orderType: OrderType.TAKEAWAY,
+    orderType: globalOrderType,
     paymentMethod: PaymentMethod.CASH,
     shippingFee: 0,
   });
 
+  useEffect(() => {
+    if (confirmedOrder) {
+      setPreOrderState(prev => ({
+        ...prev,
+        shippingFee: confirmedOrder.deliveryFee
+      }));
+    }
+  }, [confirmedOrder]);
+
+  useEffect(() => {
+    setPreOrderState(prev => ({ ...prev, orderType: globalOrderType }));
+  }, [globalOrderType]);
+
   const [isNavigatingToAddress, setIsNavigatingToAddress] = useState(false);
-  const finalTotal = PreOrderService.calculateTotalPrice(totalPrice, preOrderState.shippingFee);
+
+  const finalTotal = confirmedOrder ? confirmedOrder.finalAmount : PreOrderService.calculateTotalPrice(totalPrice, preOrderState.shippingFee);
+
+  const displayItems = useMemo(() => OrderMapper.mapCartItemsToDisplayItems(cartItems), [cartItems]);
+
   const snapPoints = useMemo(() => ['90%'], []);
 
   useEffect(() => {
@@ -85,13 +98,6 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     }, 200);
   }, []);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetDefaultBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} pressBehavior="close" />
-    ),
-    []
-  );
-
   const handleSheetChanges = useCallback(
     (index: number) => {
       if (index === -1 && !isNavigatingToAddress) {
@@ -103,11 +109,10 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
   const handleOrderTypeChange = useCallback(
     (type: OrderType) => {
-      const shippingFee = PreOrderService.calculateShippingFee(type, totalPrice);
-      setPreOrderState((prev) => ({ ...prev, orderType: type, shippingFee }));
+      dispatch(setOrderType(type));
       orderTypeModalRef.current?.dismiss();
     },
-    [totalPrice]
+    [dispatch]
   );
 
   const handlePaymentMethodChange = useCallback((method: PaymentMethod) => {
@@ -115,34 +120,28 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     paymentModalRef.current?.dismiss();
   }, []);
 
-  const handleClearCart = useCallback(() => {
-    Alert.alert(PREORDER_TEXT.CONFIRM_CLEAR_TITLE, PREORDER_TEXT.CONFIRM_CLEAR_MESSAGE, [
+  const handleClearCart = useCallback(async () => {
+    const confirmed = await popupService.confirm(
+      PREORDER_TEXT.CONFIRM_CLEAR_MESSAGE,
       {
-        text: PREORDER_TEXT.CONFIRM_CLEAR_CANCEL,
-        style: 'cancel',
-      },
-      {
-        text: PREORDER_TEXT.CONFIRM_CLEAR_CONFIRM,
-        style: 'destructive',
-        onPress: () => {
-          dispatch(clearCart());
-          bottomSheetRef.current?.dismiss();
-        },
-      },
-    ]);
+        title: PREORDER_TEXT.CONFIRM_CLEAR_TITLE,
+        confirmText: PREORDER_TEXT.CONFIRM_CLEAR_CONFIRM,
+        cancelText: PREORDER_TEXT.CONFIRM_CLEAR_CANCEL,
+        confirmStyle: 'destructive'
+      }
+    );
+
+    if (confirmed) {
+      dispatch(clearCart());
+      bottomSheetRef.current?.dismiss();
+    }
   }, [dispatch]);
 
   const handlePromotionPress = useCallback(() => {
-    Alert.alert('Coming Soon', PREORDER_TEXT.COMING_SOON_MESSAGE);
+    popupService.alert(PREORDER_TEXT.COMING_SOON_MESSAGE, { title: 'Coming Soon' });
   }, []);
 
   const handlePlaceOrder = useCallback(async () => {
-    console.log('=== PRE-ORDER DEBUG ===');
-    console.log('User:', JSON.stringify(user, null, 2));
-    console.log('User UUID:', user?.uuid);
-    console.log('Selected Store:', selectedStore);
-    console.log('Cart Items Count:', cartItems.length);
-
     if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
       Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => { } });
       return;
@@ -150,141 +149,71 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
     const validation = PreOrderService.validateOrder(
       totalItems,
-      selectedStore?.id || null,
+      selectedStore?.id?.toString() || null,
       preOrderState.paymentMethod
     );
 
     if (!validation.valid) {
-      Alert.alert('Lỗi', validation.error);
+      popupService.alert(validation.error || 'Lỗi đặt hàng', { type: 'error' });
       return;
     }
 
     if (!user?.uuid) {
-      Alert.alert(
-        'Debug User Info',
-        `User: ${JSON.stringify(user, null, 2)}\n\nAuth: ${isAuthenticated}`
-      );
+      popupService.alert('Vui lòng đăng nhập để tiếp tục', { title: 'Yêu cầu đăng nhập' });
       return;
     }
 
     if (!selectedStore) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin cửa hàng');
+      popupService.alert('Không tìm thấy thông tin cửa hàng', { type: 'error' });
       return;
     }
 
-    try {
-      const items: PreOrderItem[] = cartItems.map(item => ({
-        menuItemId: item.product.id,
-        quantity: item.quantity,
-        size: item.customizations.size,
-        ice: item.customizations.ice,
-        sweetness: item.customizations.sweetness,
-        toppings: item.customizations.toppings,
-      }));
+    bottomSheetRef.current?.dismiss();
+    router.push('../confirm-order');
 
-      const preOrderPayload = {
-        userId: user.uuid,
-        orderType: (preOrderState.orderType === OrderType.DELIVERY ? 'DELIVERY' : 'TAKEAWAY') as 'DELIVERY' | 'TAKEAWAY',
-        paymentMethod: preOrderState.paymentMethod,
-        storeId: typeof selectedStore.id === 'string' ? parseInt(selectedStore.id, 10) : selectedStore.id,
-        items,
-        promotions: [],
-      };
-
-      console.log('=== PRE-ORDER PAYLOAD ===');
-      console.log(JSON.stringify(preOrderPayload, null, 2));
-
-      // Step 1: Create pre-order and get preorder_id
-      const preOrderResult = await dispatch(createPreOrder(preOrderPayload)).unwrap();
-
-      console.log('=== PRE-ORDER RESPONSE ===');
-      console.log(JSON.stringify(preOrderResult, null, 2));
-
-      const preorderId = preOrderResult.preorderId;
-      if (!preorderId) {
-        throw new Error('Không nhận được mã đơn hàng từ server');
-      }
-
-      // Step 2: Call Confirm Order API
-      console.log('=== CALLING CONFIRM ORDER API ===');
-      console.log('Preorder ID:', preorderId);
-
-      const confirmResult = await dispatch(confirmOrder({ preorderId })).unwrap();
-
-      console.log('=== CONFIRM ORDER RESPONSE ===');
-      console.log(JSON.stringify(confirmResult, null, 2));
-
-      // Step 3: Dismiss bottom sheet and navigate to Confirm Order screen
-      // All payment types go to confirm screen for double-checking before final submission
-      bottomSheetRef.current?.dismiss();
-
-      // Navigate to Confirm Order screen for all orders
-      // User will review and confirm the order on this screen
-      router.push('../confirm-order');
-
-      onOrderSuccess();
-    } catch (error) {
-      console.error('=== ORDER ERROR ===', error);
-      Alert.alert('Lỗi', (error as string) || 'Không thể tạo đơn hàng');
-    }
-  }, [totalItems, selectedStore, preOrderState, dispatch, onOrderSuccess, deliveryAddress, user, cartItems, isAuthenticated]);
+    onOrderSuccess();
+  }, [totalItems, selectedStore, preOrderState, onOrderSuccess, deliveryAddress, user]);
 
   const handleAddMore = useCallback(() => {
     bottomSheetRef.current?.dismiss();
     router.push('/(tabs)/order');
   }, []);
 
-  const handleEditProduct = useCallback((item: CartItem) => {
-    editProductModalRef.current?.present(item);
+  const handleEditProduct = useCallback((displayItem: OrderDisplayItem) => {
+    const cartItem = displayItem.originalItem as CartItem;
+    if (cartItem) {
+      editProductModalRef.current?.present(cartItem);
+    }
   }, []);
 
-  const renderFooter = useCallback(
-    (props: BottomSheetFooterProps) => (
-      <BottomSheetFooter {...props} bottomInset={0}>
-        <PreOrderFooter
-          orderType={preOrderState.orderType}
-          totalItems={totalItems}
-          totalPrice={finalTotal}
-          onPlaceOrder={handlePlaceOrder}
-          isLoading={isCreatingOrder}
-        />
-      </BottomSheetFooter>
-    ),
-    [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder, isCreatingOrder]
-  );
+  const FooterComponent = useMemo(() => {
+    return (props: any) => (
+      <OrderFooter
+        {...props}
+        orderType={preOrderState.orderType}
+        totalItems={totalItems}
+        totalPrice={finalTotal}
+        buttonText={PREORDER_TEXT.PLACE_ORDER_BUTTON}
+        onButtonPress={handlePlaceOrder}
+        isLoading={isCreatingOrder}
+      />
+    );
+  }, [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder, isCreatingOrder]);
 
   return (
     <>
-      <BottomSheetModal
+      <BaseBottomSheetLayout
         ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
+        title={PREORDER_TEXT.TITLE}
+        showClearButton={true}
+        clearButtonText={PREORDER_TEXT.CLEAR_BUTTON}
+        onClear={handleClearCart}
+        onClose={() => bottomSheetRef.current?.dismiss()}
         onChange={handleSheetChanges}
-        enablePanDownToClose={true}
-        enableDismissOnClose={true}
-        enableDynamicSizing={false}
-        enableContentPanningGesture={false}
-        enableHandlePanningGesture={true}
-        animateOnMount={true}
-        handleIndicatorStyle={styles.indicator}
-        backgroundStyle={styles.background}
-        topInset={insets.top}
-        bottomInset={0}
-        footerComponent={renderFooter}
+        snapPoints={snapPoints}
+        footerComponent={FooterComponent}
         stackBehavior="push"
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleClearCart} activeOpacity={0.7}>
-            <Text style={styles.clearText}>{PREORDER_TEXT.CLEAR_BUTTON}</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.title}>{PREORDER_TEXT.TITLE}</Text>
-
-          <TouchableOpacity onPress={() => bottomSheetRef.current?.dismiss()} style={styles.closeButton} activeOpacity={0.7}>
-            <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
-          </TouchableOpacity>
-        </View>
-
         <BottomSheetScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <OrderTypeSelector
             selectedType={preOrderState.orderType}
@@ -296,9 +225,12 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
             onNavigateToMap={handleNavigateToAddress}
           />
 
-          <PreOrderProductList
-            handleAddMore={handleAddMore}
+          <OrderProductList
+            items={displayItems}
             onItemPress={handleEditProduct}
+            onAddMore={handleAddMore}
+            showAddButton={true}
+            editable={true}
           />
 
           <PreOrderTotalPrice
@@ -309,7 +241,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
           <PaymentTypeSelector selectedMethod={preOrderState.paymentMethod} onPress={() => paymentModalRef.current?.present()} />
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </BaseBottomSheetLayout>
 
       <OrderTypeModal ref={orderTypeModalRef} selectedType={preOrderState.orderType} onSelectType={handleOrderTypeChange} />
 
@@ -321,41 +253,6 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 }
 
 const styles = StyleSheet.create({
-  background: {
-    backgroundColor: BRAND_COLORS.background.default,
-    borderTopLeftRadius: PREORDER_LAYOUT.SHEET_BORDER_RADIUS,
-    borderTopRightRadius: PREORDER_LAYOUT.SHEET_BORDER_RADIUS,
-  },
-  indicator: {
-    backgroundColor: BRAND_COLORS.border.medium,
-    width: 40,
-    height: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: PREORDER_LAYOUT.HEADER_HEIGHT,
-    paddingHorizontal: PREORDER_LAYOUT.HEADER_PADDING_HORIZONTAL,
-    borderBottomWidth: 1,
-    borderBottomColor: BRAND_COLORS.border.light,
-  },
-  clearText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
-    color: BRAND_COLORS.text.secondary,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
-    color: BRAND_COLORS.text.primary,
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   contentContainer: {
     padding: PREORDER_LAYOUT.SECTION_PADDING_HORIZONTAL,
     paddingBottom: 200,

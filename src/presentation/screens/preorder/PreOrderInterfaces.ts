@@ -1,5 +1,5 @@
-import { OrderType, PaymentMethod } from './PreOrderEnums';
 import { CartItem } from '../order/OrderInterfaces';
+import { OrderType, PaymentMethod } from './PreOrderEnums';
 
 export interface PreOrderState {
   orderType: OrderType;
@@ -40,14 +40,6 @@ export interface PreOrderTotalPriceProps {
 export interface PaymentTypeSelectorProps {
   selectedMethod: PaymentMethod;
   onPress: () => void;
-}
-
-export interface PreOrderFooterProps {
-  orderType: OrderType;
-  totalItems: number;
-  totalPrice: number;
-  onPlaceOrder: () => void;
-  isLoading?: boolean;
 }
 
 // TODO: API Integration - Define Order creation DTO

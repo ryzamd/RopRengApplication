@@ -1,10 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ConfirmOrderMapper } from '../../application/mappers/ConfirmOrderMapper';
-import { ConfirmOrderUseCase } from '../../application/usecases/ConfirmOrderUseCase';
-import { ConfirmOrderParams } from '../../domain/repositories/ConfirmOrderRepository';
-import { confirmOrderRepository } from '../../infrastructure/repositories/ConfirmOrderRepositoryImpl';
-
-const confirmOrderUseCase = new ConfirmOrderUseCase(confirmOrderRepository);
+import { CreatePreOrderParams } from '../../domain/repositories/PreOrderRepository';
+import { preOrderRepository } from '../../infrastructure/repositories/PreOrderRepositoryImpl';
 
 interface SerializableConfirmOrderItem {
     id: number;
@@ -59,10 +55,10 @@ const initialState: ConfirmOrderState = {
     confirmedOrder: null,
 };
 
-export const confirmOrder = createAsyncThunk<SerializableConfirmOrder, ConfirmOrderParams, { rejectValue: string }>('confirmOrder/confirm', async (params: ConfirmOrderParams, { rejectWithValue }) => {
+export const submitOrder = createAsyncThunk<number, CreatePreOrderParams, { rejectValue: string }>('confirmOrder/submit', async (params: CreatePreOrderParams, { rejectWithValue }) => {
     try {
-        const result = await confirmOrderUseCase.execute(params);
-        return ConfirmOrderMapper.toSerializable(result);
+        const result = await preOrderRepository.confirm(params);
+        return result.preorderId;
     } catch (error) {
         if (error instanceof Error) {
             return rejectWithValue(error.message);
@@ -88,15 +84,19 @@ const confirmOrderSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(confirmOrder.pending, (state) => {
+            .addCase(submitOrder.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
             })
-            .addCase(confirmOrder.fulfilled, (state, action: PayloadAction<SerializableConfirmOrder>) => {
+            .addCase(submitOrder.fulfilled, (state, action: PayloadAction<number>) => {
                 state.isLoading = false;
-                state.confirmedOrder = action.payload;
+                if (state.confirmedOrder) {
+                    state.confirmedOrder.id = action.payload;
+                    state.confirmedOrder.orderCode = `ORD-${action.payload}`;
+                    state.confirmedOrder.orderStatus = 'CONFIRMED';
+                }
             })
-            .addCase(confirmOrder.rejected, (state, action) => {
+            .addCase(submitOrder.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload || 'Đã có lỗi xảy ra';
             });
