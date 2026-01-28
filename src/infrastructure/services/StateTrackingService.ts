@@ -1,6 +1,5 @@
 import { createListenerMiddleware, isAnyOf, TypedStartListening } from "@reduxjs/toolkit";
-import { PaymentMethod } from "../../presentation/screens/preorder/PreOrderEnums";
-import { PreOrderState } from "../../presentation/screens/preorder/PreOrderInterfaces";
+import { PaymentMethod, PreOrderState } from "../../domain/shared";
 import { PreOrderService } from "../../presentation/screens/preorder/PreOrderService";
 import { setConfirmedOrder } from "../../state/slices/confirmOrderSlice";
 import { setDeliveryAddress } from "../../state/slices/deliverySlice";

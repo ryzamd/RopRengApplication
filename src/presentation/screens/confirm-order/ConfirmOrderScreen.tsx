@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { OrderType, PaymentMethod, PreOrderState } from '../../../domain/shared';
 import { clearConfirmedOrder, SerializableConfirmOrderItem, submitOrder } from '../../../state/slices/confirmOrderSlice';
 import { selectSelectedAddress } from '../../../state/slices/deliverySlice';
 import { clearCart } from '../../../state/slices/orderCartSlice';
@@ -12,8 +13,6 @@ import { BaseAuthenticatedLayout } from '../../layouts/BaseAuthenticatedLayout';
 import { popupService } from '../../layouts/popup/PopupService';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
-import { OrderType, PaymentMethod } from '../preorder/PreOrderEnums';
-import { PreOrderState } from '../preorder/PreOrderInterfaces';
 import { PreOrderService } from '../preorder/PreOrderService';
 import { CONFIRM_ORDER_TEXT, PAYMENT_METHOD_LABELS } from './ConfirmOrderConstants';
 
@@ -22,10 +21,9 @@ export default function ConfirmOrderScreen() {
     const dispatch = useAppDispatch();
     const editProductModalRef = useRef<OrderProductEditRef>(null);
 
-    const { confirmedOrder, isLoading, error } = useAppSelector((state) => state.confirmOrder);
+    const { confirmedOrder, error } = useAppSelector((state) => state.confirmOrder);
     const deliveryAddress = useAppSelector(selectSelectedAddress);
     const cartItems = useAppSelector((state) => state.orderCart.items);
-    const [isConfirming, setIsConfirming] = useState(false);
 
     const user = useAppSelector(state => state.auth.user);
     const selectedStore = useAppSelector(state => state.home.store);
@@ -105,9 +103,6 @@ export default function ConfirmOrderScreen() {
             return;
         }
 
-        setIsConfirming(true);
-        popupService.loading(true, 'Đang xác nhận đơn hàng...');
-
         try {
             const currentPreOrderState: PreOrderState = {
                 orderType: orderType,
@@ -125,8 +120,6 @@ export default function ConfirmOrderScreen() {
 
             await dispatch(submitOrder(payload)).unwrap();
 
-            popupService.loading(false);
-
             await popupService.alert(CONFIRM_ORDER_TEXT.CONFIRM_SUCCESS_MESSAGE, {
                 title: CONFIRM_ORDER_TEXT.CONFIRM_SUCCESS_TITLE,
                 buttonText: 'OK'
@@ -138,28 +131,16 @@ export default function ConfirmOrderScreen() {
 
         } catch (err) {
             console.error(err);
-            popupService.loading(false);
             popupService.alert((err as string) || 'Không thể xác nhận đơn hàng', {
                 title: CONFIRM_ORDER_TEXT.CONFIRM_ERROR_TITLE,
                 type: 'error'
             });
-        } finally {
-            setIsConfirming(false);
         }
     }, [confirmedOrder, dispatch, user, selectedStore, deliveryAddress, cartItems, orderType]);
 
 
 
-    if (isLoading) {
-        return (
-            <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
-                    <Text style={styles.loadingText}>{CONFIRM_ORDER_TEXT.LOADING_MESSAGE}</Text>
-                </View>
-            </BaseAuthenticatedLayout>
-        );
-    }
+
 
     if (!confirmedOrder || error) {
         return (
@@ -227,7 +208,6 @@ export default function ConfirmOrderScreen() {
                         totalPrice={totals.finalAmount}
                         buttonText={CONFIRM_ORDER_TEXT.CONFIRM_BUTTON}
                         onButtonPress={handleConfirmOrder}
-                        isLoading={isConfirming}
                     />
                 </View>
             </View>

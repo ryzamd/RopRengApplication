@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { OrderType } from '../../screens/preorder/PreOrderEnums';
+import { OrderType } from '../../../domain/shared';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { AppIcon } from '../shared/AppIcon';

@@ -1,9 +1,14 @@
 import { OrderRepositoryImpl } from '@/src/infrastructure/repositories/OrderRepositoryImpl';
 import { GetOrderDetail } from '../../../application/usecases/orders/GetOrderDetail';
 import { Order } from '../../../domain/entities/Order';
+import { OrderRepository } from '../../../domain/repositories/OrderRepository';
 
 export class OrderDetailService {
-  private repository = new OrderRepositoryImpl();
+  private repository: OrderRepository;
+
+  constructor(repository?: OrderRepository) {
+    this.repository = repository || new OrderRepositoryImpl();
+  }
 
   async loadOrderDetail(orderId: number): Promise<Order> {
     const useCase = new GetOrderDetail(this.repository);

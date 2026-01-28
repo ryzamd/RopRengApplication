@@ -2,8 +2,8 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PreOrderMapper } from '../../application/mappers/PreOrderMapper';
 import { CreatePreOrderUseCase } from '../../application/usecases/CreatePreOrderUseCase';
 import { CreatePreOrderParams } from '../../domain/repositories/PreOrderRepository';
+import { OrderType } from '../../domain/shared';
 import { preOrderRepository } from '../../infrastructure/repositories/PreOrderRepositoryImpl';
-import { OrderType } from '../../presentation/screens/preorder/PreOrderEnums';
 
 const createPreOrderUseCase = new CreatePreOrderUseCase(preOrderRepository);
 type SerializablePreOrder = ReturnType<typeof PreOrderMapper.toSerializable>;

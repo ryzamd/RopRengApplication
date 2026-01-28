@@ -85,6 +85,7 @@ export interface PopupState {
     queue: Array<{ id: string; config: PopupConfig }>;
     current: { id: string; config: PopupConfig } | null;
     isVisible: boolean;
+    isAnimating: boolean;
 }
 
 export type PopupAction =
@@ -92,6 +93,7 @@ export type PopupAction =
     | { type: 'HIDE_POPUP'; payload: { id: string } }
     | { type: 'SHOW_LOADING'; payload: { message?: string } }
     | { type: 'HIDE_LOADING' }
+    | { type: 'ANIMATION_COMPLETE' }
     | {
         type: 'SHOW_TOAST';
         payload: {

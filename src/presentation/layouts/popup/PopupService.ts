@@ -13,17 +13,14 @@ class PopupService {
         return PopupService.instance;
     }
 
-    // Initialize with dispatch from PopupProvider
     initialize(dispatch: Dispatch<PopupAction>): void {
         this.dispatch = dispatch;
     }
 
-    // Generate unique ID
     private generateId(): string {
         return Math.random().toString(36).substring(2, 9);
     }
 
-    // Show alert popup
     async alert(
         message: string,
         options?: {
@@ -41,7 +38,6 @@ class PopupService {
         });
     }
 
-    // Show confirm popup, returns user decision
     async confirm(
         message: string,
         options?: {
@@ -58,7 +54,6 @@ class PopupService {
         });
     }
 
-    // Show/hide global loading
     loading(show: boolean, message?: string): void {
         if (show) {
             this.dispatch?.({ type: 'SHOW_LOADING', payload: { message } });
@@ -67,7 +62,6 @@ class PopupService {
         }
     }
 
-    // Show toast notification
     toast(
         message: string,
         type: 'success' | 'error' | 'info' | 'warning' = 'info',
@@ -79,7 +73,6 @@ class PopupService {
         });
     }
 
-    // Show custom popup with arbitrary component
     async custom<T>(
         component: React.ComponentType<CustomPopupProps<T>>,
         props: Omit<CustomPopupProps<T>, 'onResolve' | 'onDismiss'>
@@ -91,7 +84,6 @@ class PopupService {
         });
     }
 
-    // Generic show method
     private async show<T>(config: PopupConfig): Promise<T> {
         const id = this.generateId();
 
@@ -104,7 +96,6 @@ class PopupService {
         });
     }
 
-    // Resolve popup with value
     resolve(id: string, value: any): void {
         const resolver = this.resolvers.get(id);
         if (resolver) {
@@ -114,7 +105,6 @@ class PopupService {
         this.dispatch?.({ type: 'HIDE_POPUP', payload: { id } });
     }
 
-    // Dismiss popup without value
     dismiss(id: string): void {
         this.resolve(id, null);
     }

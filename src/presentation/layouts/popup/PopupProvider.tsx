@@ -6,7 +6,6 @@ import { popupService } from './PopupService';
 export function PopupProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(popupReducer, initialState);
 
-    // Initialize service with dispatch
     useEffect(() => {
         popupService.initialize(dispatch);
     }, []);

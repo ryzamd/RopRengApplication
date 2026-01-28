@@ -1,15 +1,15 @@
+import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OrderType } from '../../../../domain/shared';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { ORDER_TYPE_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
-import { OrderType } from '../PreOrderEnums';
 import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderService } from '../PreOrderService';
-import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 
 interface OrderTypeModalProps {
   selectedType: OrderType;
@@ -23,7 +23,7 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
   ({ selectedType, onSelectType }, ref) => {
     const snapPoints = useMemo(() => [MODAL_HEIGHT], []);
     const orderTypes = useMemo(() => [OrderType.DELIVERY, OrderType.TAKEAWAY, OrderType.DINE_IN], []);
-    
+
     const renderBackdrop = useCallback(
       (props: BottomSheetDefaultBackdropProps) => (
         <BottomSheetBackdrop
@@ -36,13 +36,13 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
       ),
       []
     );
-    
+
     const handleClose = useCallback(() => {
       if (typeof ref === 'object' && ref?.current) {
         ref.current.dismiss();
       }
     }, [ref]);
-    
+
     return (
       <BottomSheetModal
         ref={ref}
@@ -68,12 +68,12 @@ export const OrderTypeModal = forwardRef<BottomSheetModal, OrderTypeModalProps>(
               <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.optionsList}>
             {orderTypes.map((type) => {
               const isSelected = type === selectedType;
               const iconName = PreOrderService.getOrderTypeIcon(type);
-              
+
               return (
                 <TouchableOpacity
                   key={type}

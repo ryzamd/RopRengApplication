@@ -1,9 +1,14 @@
 import { OrderRepositoryImpl } from '@/src/infrastructure/repositories/OrderRepositoryImpl';
 import { GetOrderHistory } from '../../../application/usecases/orders/GetOrderHistory';
 import { Order } from '../../../domain/entities/Order';
+import { OrderRepository } from '../../../domain/repositories/OrderRepository';
 
 export class OrderHistoryService {
-  private repository = new OrderRepositoryImpl();
+  private repository: OrderRepository;
+
+  constructor(repository?: OrderRepository) {
+    this.repository = repository || new OrderRepositoryImpl();
+  }
 
   async loadOrders(userUuid: string, page: number, limit: number, statuses?: string[]): Promise<{
     orders: Order[];

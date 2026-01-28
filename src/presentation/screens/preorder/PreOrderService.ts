@@ -1,25 +1,10 @@
 import { PreOrderItem } from '../../../domain/entities/PreOrder';
 import { CreatePreOrderParams } from '../../../domain/repositories/PreOrderRepository';
-import { DeliveryAddress } from '../../../domain/shared/types';
+import { DeliveryAddress, OrderType, PaymentMethod, PreOrderState } from '../../../domain/shared';
 import { SerializableConfirmOrder } from '../../../state/slices/confirmOrderSlice';
 import { CartItem } from '../order/OrderInterfaces';
-import { SHIPPING_FEE_CONFIG } from './PreOrderConstants';
-import { OrderType, PaymentMethod } from './PreOrderEnums';
-import { PreOrderState } from './PreOrderInterfaces';
 
 export class PreOrderService {
-  static calculateShippingFee(orderType: OrderType, subtotal: number): number {
-    if (orderType !== OrderType.DELIVERY) {
-      return 0;
-    }
-
-    if (subtotal >= SHIPPING_FEE_CONFIG.FREE_SHIPPING_THRESHOLD) {
-      return 0;
-    }
-
-    return SHIPPING_FEE_CONFIG.FLAT_RATE_VND;
-  }
-
   static calculateTotalPrice(subtotal: number, shippingFee: number): number {
     return subtotal + shippingFee;
   }

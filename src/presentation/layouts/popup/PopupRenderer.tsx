@@ -6,10 +6,16 @@ import { PopupContext } from './PopupContext';
 import { popupService } from './PopupService';
 
 export function PopupRenderer() {
-    const { state } = useContext(PopupContext);
-    const { current, isVisible } = state;
+    const { state, dispatch } = useContext(PopupContext);
+    const { current, isVisible, isAnimating } = state;
 
-    if (!current || !isVisible) return null;
+    const handleAnimationComplete = () => {
+        if (isAnimating) {
+            dispatch({ type: 'ANIMATION_COMPLETE' });
+        }
+    };
+
+    if (!current) return null;
 
     const { id, config } = current;
 
@@ -26,6 +32,10 @@ export function PopupRenderer() {
     };
 
     const renderContent = () => {
+        if (!isVisible && isAnimating) {
+            return null;
+        }
+
         switch (config.type) {
             case 'loading':
                 return (
@@ -70,17 +80,19 @@ export function PopupRenderer() {
                     </View>
                 );
 
-            // Implement other types as needed
             default:
                 return null;
         }
     };
 
-    // For loading, we might want a transparent background without a modal if it blocks interaction? 
-    // Or just a modal that blocks everything. Blocking is usually safer for global loading.
-
     return (
-        <Modal visible={isVisible} transparent animationType="fade" onRequestClose={handleDismiss}>
+        <Modal
+            visible={isVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={handleDismiss}
+            onDismiss={handleAnimationComplete}
+        >
             <View style={styles.overlay}>
                 {renderContent()}
             </View>

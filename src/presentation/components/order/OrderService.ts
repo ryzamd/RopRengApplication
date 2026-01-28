@@ -1,4 +1,4 @@
-import { OrderType } from '../../screens/preorder/PreOrderEnums';
+import { OrderType } from '../../../domain/shared';
 import { ICE_LABELS, SIZE_LABELS, SWEETNESS_LABELS } from './OrderConstants';
 import { OrderDisplayItem, OrderItemOptions } from './OrderInterfaces';
 

@@ -1,15 +1,15 @@
+import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PaymentMethod } from '../../../../domain/shared';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { TYPOGRAPHY } from '../../../theme/typography';
 import { PAYMENT_METHOD_LABELS, PREORDER_TEXT } from '../PreOrderConstants';
-import { PaymentMethod } from '../PreOrderEnums';
 import { PREORDER_LAYOUT } from '../PreOrderLayout';
 import { PreOrderService } from '../PreOrderService';
-import { AppIcon } from '@/src/presentation/components/shared/AppIcon';
 
 interface PaymentTypeModalProps {
   selectedMethod: PaymentMethod;
@@ -26,7 +26,7 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
       () => [PaymentMethod.CASH, PaymentMethod.VNPAY, PaymentMethod.MOMO],
       []
     );
-    
+
     const renderBackdrop = useCallback(
       (props: BottomSheetDefaultBackdropProps) => (
         <BottomSheetBackdrop
@@ -39,13 +39,13 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
       ),
       []
     );
-    
+
     const handleClose = useCallback(() => {
       if (typeof ref === 'object' && ref?.current) {
         ref.current.dismiss();
       }
     }, [ref]);
-    
+
     return (
       <BottomSheetModal
         ref={ref}
@@ -71,13 +71,13 @@ export const PaymentTypeModal = forwardRef<BottomSheetModal, PaymentTypeModalPro
               <AppIcon name="close" size={PREORDER_LAYOUT.HEADER_BUTTON_SIZE} color={BRAND_COLORS.text.secondary} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.optionsList}>
             {paymentMethods.map((method) => {
               const isSelected = method === selectedMethod;
               const isAvailable = PreOrderService.isPaymentMethodAvailable(method);
               const iconName = PreOrderService.getPaymentMethodIcon(method);
-              
+
               return (
                 <TouchableOpacity
                   key={method}

@@ -1,5 +1,5 @@
 import { Product } from '../../../data/mockProducts';
-import { OrderType } from '../../screens/preorder/PreOrderEnums';
+import { OrderType } from '../../../domain/shared';
 
 export interface Topping {
     id: string;
@@ -85,7 +85,6 @@ export interface OrderFooterProps {
     totalPrice: number;
     buttonText: string;
     onButtonPress: () => void;
-    isLoading?: boolean;
 }
 
 export interface OrderTypeSelectorProps {

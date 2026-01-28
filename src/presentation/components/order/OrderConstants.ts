@@ -1,4 +1,4 @@
-import { OrderType } from '../../screens/preorder/PreOrderEnums';
+import { OrderType } from '../../../domain/shared';
 
 export const ORDER_TEXT = {
     PRODUCT_LIST_TITLE: 'Sản phẩm đã chọn',

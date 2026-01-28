@@ -1,8 +1,16 @@
 import { AuthRepository, LoginResult } from '../../domain/repositories/AuthRepository';
+import { TokenStorageService } from '../../domain/services/TokenStorageService';
 import { TokenStorage } from '../../infrastructure/storage/tokenStorage';
 
 export class LoginUseCase {
-  constructor(private readonly authRepository: AuthRepository) {}
+  private readonly tokenStorage: TokenStorageService;
+
+  constructor(
+    private readonly authRepository: AuthRepository,
+    tokenStorage?: TokenStorageService
+  ) {
+    this.tokenStorage = tokenStorage || TokenStorage;
+  }
 
   async execute(phone: string, otp: string): Promise<LoginResult> {
     const cleanPhone = phone.replace(/\D/g, '');
@@ -16,7 +24,7 @@ export class LoginUseCase {
 
     const result = await this.authRepository.login(cleanPhone, otp);
 
-    await TokenStorage.saveTokens(
+    await this.tokenStorage.saveTokens(
       result.token,
       '',
       result.user.uuid

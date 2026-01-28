@@ -7,9 +7,6 @@ interface ConfirmOrderLayoutProps {
     children: ReactNode;
 }
 
-/**
- * Layout wrapper for Confirm Order screen
- */
 export function ConfirmOrderLayout({ children }: ConfirmOrderLayoutProps) {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>

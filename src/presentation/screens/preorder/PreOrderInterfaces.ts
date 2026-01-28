@@ -1,5 +1,5 @@
+import { OrderType, PaymentMethod } from '../../../domain/shared';
 import { CartItem } from '../order/OrderInterfaces';
-import { OrderType, PaymentMethod } from './PreOrderEnums';
 
 export interface PreOrderState {
   orderType: OrderType;

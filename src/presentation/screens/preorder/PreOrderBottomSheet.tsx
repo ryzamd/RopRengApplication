@@ -3,6 +3,7 @@ import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
+import { OrderType, PaymentMethod } from '../../../domain/shared';
 import { clearCart } from '../../../state/slices/orderCartSlice';
 import { selectPreOrderType, setOrderType } from '../../../state/slices/preOrderSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
@@ -18,7 +19,6 @@ import { BaseBottomSheetLayout } from '../../layouts/BaseBottomSheetLayout';
 import { popupService } from '../../layouts/popup/PopupService';
 import { CartItem } from '../order/OrderInterfaces';
 import { PREORDER_TEXT } from './PreOrderConstants';
-import { OrderType, PaymentMethod } from './PreOrderEnums';
 import { PreOrderBottomSheetProps, PreOrderState } from './PreOrderInterfaces';
 import { PREORDER_LAYOUT } from './PreOrderLayout';
 import { PreOrderService } from './PreOrderService';
@@ -34,11 +34,9 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   const editProductModalRef = useRef<OrderProductEditRef>(null);
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
   const deliveryAddress = useAppSelector(selectSelectedAddress);
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const user = useAppSelector((state) => state.auth.user);
   const cartItems = useAppSelector((state) => state.orderCart.items);
   const { confirmedOrder } = useAppSelector((state) => state.confirmOrder);
-  const { isLoading: isCreatingOrder } = useAppSelector((state) => state.preOrder);
   const globalOrderType = useAppSelector(selectPreOrderType);
 
   const [preOrderState, setPreOrderState] = useState<PreOrderState>({
@@ -61,9 +59,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
   }, [globalOrderType]);
 
   const [isNavigatingToAddress, setIsNavigatingToAddress] = useState(false);
-
   const finalTotal = confirmedOrder ? confirmedOrder.finalAmount : PreOrderService.calculateTotalPrice(totalPrice, preOrderState.shippingFee);
-
   const displayItems = useMemo(() => OrderMapper.mapCartItemsToDisplayItems(cartItems), [cartItems]);
 
   const snapPoints = useMemo(() => ['90%'], []);
@@ -194,10 +190,9 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         totalPrice={finalTotal}
         buttonText={PREORDER_TEXT.PLACE_ORDER_BUTTON}
         onButtonPress={handlePlaceOrder}
-        isLoading={isCreatingOrder}
       />
     );
-  }, [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder, isCreatingOrder]);
+  }, [preOrderState.orderType, totalItems, finalTotal, handlePlaceOrder]);
 
   return (
     <>
