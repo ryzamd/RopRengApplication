@@ -1,9 +1,27 @@
+import { Product } from '../../../data/mockProducts';
 import { OrderType } from '../../screens/preorder/PreOrderEnums';
 
-/**
- * Generic order item interface for display in both Pre-order and Confirm Order screens.
- * This interface abstracts the differences between CartItem (local) and ConfirmOrderItem (API).
- */
+export interface Topping {
+    id: string;
+    name: string;
+    price: number;
+}
+
+export interface CartItemCustomization {
+    size: 'small' | 'medium' | 'large';
+    ice: 'normal' | 'separate' | 'less';
+    sweetness: 'normal' | 'less' | 'more';
+    toppings: Topping[];
+}
+
+export interface CartItem {
+    id: string;
+    product: Product;
+    quantity: number;
+    customizations: CartItemCustomization;
+    finalPrice: number;
+}
+
 export interface OrderDisplayItem {
     id: string | number;
     name: string;
@@ -11,7 +29,6 @@ export interface OrderDisplayItem {
     unitPrice: number;
     totalPrice: number;
     options: OrderItemOptions;
-    /** Original item reference for edit operations */
     originalItem?: unknown;
 }
 
@@ -28,18 +45,12 @@ export interface OrderToppingOption {
     price?: number;
 }
 
-/**
- * Props for OrderProductItem component
- */
 export interface OrderProductItemProps {
     item: OrderDisplayItem;
     onPress?: (item: OrderDisplayItem) => void;
     editable?: boolean;
 }
 
-/**
- * Props for OrderProductList component
- */
 export interface OrderProductListProps {
     items: OrderDisplayItem[];
     title?: string;
@@ -50,9 +61,6 @@ export interface OrderProductListProps {
     emptyText?: string;
 }
 
-/**
- * Props for OrderPriceSection component
- */
 export interface OrderPriceSectionProps {
     subtotal: number;
     shippingFee: number;
@@ -61,9 +69,6 @@ export interface OrderPriceSectionProps {
     showPromotionButton?: boolean;
 }
 
-/**
- * Props for OrderAddressCard component
- */
 export interface OrderAddressCardProps {
     orderType: OrderType;
     address?: {
@@ -74,9 +79,6 @@ export interface OrderAddressCardProps {
     editable?: boolean;
 }
 
-/**
- * Props for OrderFooter component
- */
 export interface OrderFooterProps {
     orderType: OrderType;
     totalItems: number;
@@ -84,4 +86,14 @@ export interface OrderFooterProps {
     buttonText: string;
     onButtonPress: () => void;
     isLoading?: boolean;
+}
+
+export interface OrderTypeSelectorProps {
+    selectedType: OrderType;
+    store?: {
+        name: string;
+        address?: string | null;
+    } | null;
+    onPress?: () => void;
+    editable?: boolean;
 }

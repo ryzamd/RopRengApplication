@@ -2,16 +2,18 @@ import { CartRepository } from '@/src/infrastructure/db/sqlite/repositories/Cart
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useCallback, useMemo } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { logout } from '../../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { BaseFullScreenLayout } from '../../layouts/BaseFullScreenLayout';
+import { popupService } from '../../layouts/popup/PopupService';
+import { BRAND_COLORS } from '../../theme/colors';
 import { ACCOUNT_MENU, MORE_STRINGS, SUPPORT_MENU } from './MoreConstants';
 import { MenuSectionData } from './MoreInterfaces';
 import { MenuSection } from './components/MenuSection';
 import { MoreHeader } from './components/MoreHeader';
 import { UtilityGrid } from './components/UtilityGrid';
 import { VersionFooter } from './components/VersionFooter';
-import { styles } from './styles';
 
 export default function MoreScreen() {
   const dispatch = useAppDispatch();
@@ -36,7 +38,6 @@ export default function MoreScreen() {
   const handleLogout = useCallback(async () => {
     console.log('[MoreScreen] Processing logout...');
 
-    // 1. Clear SQLite Cart (Side Effect)
     if (user?.uuid) {
       try {
         const cartRepo = new CartRepository(db);
@@ -57,18 +58,19 @@ export default function MoreScreen() {
     console.log(`[MoreScreen] Menu pressed: ${id}, Auth: ${isAuthenticated}`);
     switch (id) {
       case 'logout':
-        Alert.alert(
-          MORE_STRINGS.LOGOUT_CONFIRM_TITLE,
+        popupService.confirm(
           MORE_STRINGS.LOGOUT_CONFIRM_MSG,
-          [
-            { text: MORE_STRINGS.CANCEL, style: 'cancel' },
-            {
-              text: MORE_STRINGS.AGREE,
-              style: 'destructive',
-              onPress: handleLogout,
-            },
-          ]
-        );
+          {
+            title: MORE_STRINGS.LOGOUT_CONFIRM_TITLE,
+            cancelText: MORE_STRINGS.CANCEL,
+            confirmText: MORE_STRINGS.AGREE,
+            confirmStyle: 'destructive',
+          }
+        ).then((confirmed) => {
+          if (confirmed) {
+            handleLogout();
+          }
+        });
         break;
 
       case 'login':
@@ -99,8 +101,11 @@ export default function MoreScreen() {
   }, [handleLogout, isAuthenticated, router]);
 
   return (
-    <View style={styles.container}>
-      <MoreHeader />
+    <BaseFullScreenLayout
+      renderHeader={() => <MoreHeader />}
+      safeAreaEdges={['left', 'right']}
+      backgroundColor={BRAND_COLORS.background.paper}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <UtilityGrid onItemPress={handleMenuPress} />
         <MenuSection section={SUPPORT_MENU} onItemPress={handleMenuPress} />
@@ -108,6 +113,6 @@ export default function MoreScreen() {
         <VersionFooter />
         <View style={{ height: 20 }} />
       </ScrollView>
-    </View>
+    </BaseFullScreenLayout>
   );
 }

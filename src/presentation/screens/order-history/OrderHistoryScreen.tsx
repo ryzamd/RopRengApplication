@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { Order } from "../../../domain/entities/Order";
 import { useAppSelector } from "../../../utils/hooks";
+import { BaseAuthenticatedLayout } from "../../layouts/BaseAuthenticatedLayout";
 import { ITEMS_PER_PAGE, ORDER_HISTORY_STRINGS, STATUS_CHIPS } from "./OrderHistoryConstants";
 import { OrderStatus } from "./OrderHistoryEnums";
 import { StatusChipData } from "./OrderHistoryInterfaces";
-import { OrderHistoryLayout } from "./OrderHistoryLayout";
 import { OrderHistoryService } from "./OrderHistoryService";
 import { OrderHistoryItem } from "./components/OrderHistoryItem";
 import { OrderStatusChip } from "./components/OrderStatusChip";
@@ -160,17 +160,17 @@ export default function OrderHistoryScreen() {
 
   if (loading && !refreshing) {
     return (
-      <OrderHistoryLayout>
+      <BaseAuthenticatedLayout>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#606A37" />
           <Text style={styles.loadingText}>{ORDER_HISTORY_STRINGS.LOADING}</Text>
         </View>
-      </OrderHistoryLayout>
+      </BaseAuthenticatedLayout>
     );
   }
 
   return (
-    <OrderHistoryLayout>
+    <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
       {renderStatusChips()}
       <FlatList
         data={filteredOrders}
@@ -183,7 +183,7 @@ export default function OrderHistoryScreen() {
         ListFooterComponent={renderFooter}
         contentContainerStyle={filteredOrders.length === 0 ? styles.emptyList : undefined}
       />
-    </OrderHistoryLayout>
+    </BaseAuthenticatedLayout>
   );
 }
 

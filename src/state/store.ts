@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
+import { StateTrackingService } from '../infrastructure/services/StateTrackingService';
 import appReducer from './slices/appSlice';
 import auth from './slices/authSlice';
 import confirmOrderReducer from './slices/confirmOrderSlice';
@@ -37,7 +38,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
-    }),
+    }).prepend(StateTrackingService.middleware.middleware),
 });
 
 export const persistor = persistStore(store);

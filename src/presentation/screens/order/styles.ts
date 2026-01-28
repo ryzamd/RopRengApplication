@@ -7,7 +7,7 @@ export const orderStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: BRAND_COLORS.background.default,
   },
-  
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -30,8 +30,6 @@ export const orderStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: 16,
   },
-  
-  // Promo Section
   promoSection: {
     marginBottom: 24,
   },
@@ -155,8 +153,6 @@ export const orderStyles = StyleSheet.create({
     fontFamily: 'Phudu-Bold',
     color: BRAND_COLORS.primary.xanhReu,
   },
-  
-  // Product Section
   productSection: {
     paddingHorizontal: ORDER_LAYOUT.SECTION_PADDING,
     marginBottom: 24,

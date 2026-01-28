@@ -1,20 +1,28 @@
 import { PreOrder } from '../../domain/entities/PreOrder';
 import { CreatePreOrderParams } from '../../domain/repositories/PreOrderRepository';
-import { CreatePreOrderRequestDTO, CreatePreOrderResponseDTO } from '../dto/PreOrderDTO';
+import { ConfirmOrderResponseDTO, CreatePreOrderRequestDTO, CreatePreOrderResponseDTO } from '../dto/PreOrderDTO';
 
 export class PreOrderMapper {
   static toRequestDTO(params: CreatePreOrderParams): CreatePreOrderRequestDTO {
     const now = new Date().toISOString();
+    const { user, store, deliveryAddress, items } = params;
+    const userLat = deliveryAddress?.lat || 0;
+    const userLng = deliveryAddress?.lng || 0;
+    const userAddr = deliveryAddress?.detail || '';
 
     return {
-      user_id: params.userId,
-      dateTimeCreated: now,
-      dateTimeUpdated: now,
-      orderType: params.orderType,
-      orderStatus: 'PENDING_PAYMENT',
-      paymentMethod: params.paymentMethod,
-      store_id: params.storeId,
-      items: params.items.map(item => ({
+      user_id: user.uuid,
+      user_lat: userLat,
+      user_lng: userLng,
+      user_address: userAddr,
+      store_id: store.id,
+      store_lat: store.location.coordinates[1],
+      store_lng: store.location.coordinates[0],
+      store_address: store.address || '',
+      user_name: user.displayName || '',
+      shipping_type: params.orderType === 'DELIVERY' ? 'delivery' : 'pickup',
+      payment_method: params.paymentMethod,
+      items: items.map(item => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         size: item.size,
@@ -22,18 +30,33 @@ export class PreOrderMapper {
         sweetness: item.sweetness,
         toppings: item.toppings,
       })),
+      vouchers: params.vouchers,
       promotions: params.promotions,
+      dateTimeCreated: now,
+      dateTimeUpdated: now,
     };
   }
 
   static toEntity(dto: CreatePreOrderResponseDTO): PreOrder {
     const { order } = dto;
     return {
-      preorderId: order.preorder_id,
+      preorderId: 0,
       subtotal: order.subtotal,
       discountAmount: order.discount_amount,
       deliveryFee: order.delivery_fee,
-      finalAmount: order.final_amount,
+      finalAmount: order.total,
+      createdAt: new Date(),
+    };
+  }
+
+  static toConfirmEntity(dto: ConfirmOrderResponseDTO): PreOrder {
+    const { order } = dto;
+    return {
+      preorderId: order.order_id,
+      subtotal: order.subtotal,
+      discountAmount: order.discount_amount,
+      deliveryFee: order.delivery_fee,
+      finalAmount: order.total,
       createdAt: new Date(),
     };
   }

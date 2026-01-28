@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { CreatePreOrderResponseDTO } from '../../application/dto/PreOrderDTO';
+import { ConfirmOrderResponseDTO, CreatePreOrderResponseDTO } from '../../application/dto/PreOrderDTO';
 import { PreOrderMapper } from '../../application/mappers/PreOrderMapper';
 import { NetworkError } from '../../core/errors/AppErrors';
 import { PreOrder } from '../../domain/entities/PreOrder';
@@ -29,6 +29,31 @@ export class PreOrderRepositoryImpl implements PreOrderRepository {
       );
 
       return PreOrderMapper.toEntity(response);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (!error.response) {
+          throw new NetworkError();
+        }
+
+        const message = error.response.data?.message || 'Không thể tính giá đơn hàng';
+        throw new Error(message);
+      }
+
+      throw new Error('Đã có lỗi xảy ra khi tính giá');
+    }
+  }
+
+  async confirm(params: CreatePreOrderParams): Promise<PreOrder> {
+    try {
+      const requestDTO = PreOrderMapper.toRequestDTO(params);
+
+      // Same payload, different endpoint and response handling
+      const response = await httpClient.post<ConfirmOrderResponseDTO>(
+        PREORDER_ENDPOINTS.CONFIRM,
+        requestDTO
+      );
+
+      return PreOrderMapper.toConfirmEntity(response);
     } catch (error) {
       if (error instanceof AxiosError) {
         if (!error.response) {
