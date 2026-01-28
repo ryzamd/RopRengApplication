@@ -2,21 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { OrderType } from '../../screens/preorder/PreOrderEnums';
 import { BRAND_COLORS } from '../../theme/colors';
+import { TYPOGRAPHY } from '../../theme/typography';
 import { AppIcon } from '../shared/AppIcon';
 import { ORDER_TEXT } from './OrderConstants';
 import { OrderAddressCardProps } from './OrderInterfaces';
 
-/**
- * Shared address card component for order display.
- * Used in both Pre-order and Confirm Order screens.
- */
-export function OrderAddressCard({
-    orderType,
-    address,
-    onChangeAddress,
-    editable = true,
-}: OrderAddressCardProps) {
-    // Only show for delivery orders
+
+export function OrderAddressCard({ orderType, address, onChangeAddress, editable = true }: OrderAddressCardProps) {
     if (orderType !== OrderType.DELIVERY) {
         return null;
     }
@@ -83,13 +75,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#666666',
+        fontSize: TYPOGRAPHY.fontSize.md,
+        fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
+        color: BRAND_COLORS.text.primary,
     },
     changeText: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: TYPOGRAPHY.fontSize.base,
+        fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
         color: BRAND_COLORS.secondary.camNhat,
     },
     card: {

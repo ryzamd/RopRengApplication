@@ -6,11 +6,14 @@ import { StyleSheet } from 'react-native';
 import { clearCart } from '../../../state/slices/orderCartSlice';
 import { selectPreOrderType, setOrderType } from '../../../state/slices/preOrderSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { OrderAddressCard } from '../../components/order/OrderAddressCard';
 import { OrderFooter } from '../../components/order/OrderFooter';
 import { OrderDisplayItem } from '../../components/order/OrderInterfaces';
 import { OrderMapper } from '../../components/order/OrderMapper';
+import { OrderPriceSection } from '../../components/order/OrderPriceSection';
+import { OrderProductEditBottomSheet, OrderProductEditRef } from '../../components/order/OrderProductEditBottomSheet';
 import { OrderProductList } from '../../components/order/OrderProductList';
-import { Toast } from '../../components/shared/Toast';
+import { OrderTypeSelector } from '../../components/order/OrderTypeSelector';
 import { BaseBottomSheetLayout } from '../../layouts/BaseBottomSheetLayout';
 import { popupService } from '../../layouts/popup/PopupService';
 import { CartItem } from '../order/OrderInterfaces';
@@ -20,19 +23,15 @@ import { PreOrderBottomSheetProps, PreOrderState } from './PreOrderInterfaces';
 import { PREORDER_LAYOUT } from './PreOrderLayout';
 import { PreOrderService } from './PreOrderService';
 import { OrderTypeModal } from './components/OrderTypeModal';
-import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { PaymentTypeModal } from './components/PaymentTypeModal';
 import { PaymentTypeSelector } from './components/PaymentTypeSelector';
-import { PreOrderAddressCard } from './components/PreOrderAddressCard';
-import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from './components/PreOrderProductItemEditBottomSheet';
-import { PreOrderTotalPrice } from './components/PreOrderTotalPrice';
 
 export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }: PreOrderBottomSheetProps) {
   const dispatch = useAppDispatch();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const orderTypeModalRef = useRef<BottomSheetModal>(null);
   const paymentModalRef = useRef<BottomSheetModal>(null);
-  const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
+  const editProductModalRef = useRef<OrderProductEditRef>(null);
   const { totalItems, totalPrice, selectedStore } = useAppSelector((state) => state.orderCart);
   const deliveryAddress = useAppSelector(selectSelectedAddress);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -143,7 +142,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
   const handlePlaceOrder = useCallback(async () => {
     if (preOrderState.orderType === OrderType.DELIVERY && !deliveryAddress) {
-      Toast({ message: 'Vui lòng chọn địa chỉ giao hàng', onHide: () => { } });
+      popupService.alert('Vui lòng chọn địa chỉ giao hàng', { title: 'THÔNG BÁO', type: 'error' });
       return;
     }
 
@@ -154,17 +153,17 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
     );
 
     if (!validation.valid) {
-      popupService.alert(validation.error || 'Lỗi đặt hàng', { type: 'error' });
+      popupService.alert(validation.error || 'Lỗi đặt hàng', { title: 'THÔNG BÁO', type: 'error' });
       return;
     }
 
     if (!user?.uuid) {
-      popupService.alert('Vui lòng đăng nhập để tiếp tục', { title: 'Yêu cầu đăng nhập' });
+      popupService.alert('Vui lòng đăng nhập để tiếp tục', { title: 'Yêu cầu đăng nhập', type: 'error' });
       return;
     }
 
     if (!selectedStore) {
-      popupService.alert('Không tìm thấy thông tin cửa hàng', { type: 'error' });
+      popupService.alert('Không tìm thấy thông tin cửa hàng', { title: 'THÔNG BÁO', type: 'error' });
       return;
     }
 
@@ -217,12 +216,19 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
         <BottomSheetScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <OrderTypeSelector
             selectedType={preOrderState.orderType}
+            store={selectedStore}
             onPress={() => orderTypeModalRef.current?.present()}
+            editable={true}
           />
 
-          <PreOrderAddressCard
+          <OrderAddressCard
             orderType={preOrderState.orderType}
-            onNavigateToMap={handleNavigateToAddress}
+            address={deliveryAddress ? {
+              name: (deliveryAddress.addressString || '').split(',')[0]?.trim() || '',
+              full: deliveryAddress.addressString || ''
+            } : null}
+            onChangeAddress={handleNavigateToAddress}
+            editable={true}
           />
 
           <OrderProductList
@@ -233,10 +239,11 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
             editable={true}
           />
 
-          <PreOrderTotalPrice
+          <OrderPriceSection
             subtotal={totalPrice}
             shippingFee={preOrderState.shippingFee}
             onPromotionPress={handlePromotionPress}
+            showPromotionButton={true}
           />
 
           <PaymentTypeSelector selectedMethod={preOrderState.paymentMethod} onPress={() => paymentModalRef.current?.present()} />
@@ -247,7 +254,7 @@ export default function PreOrderBottomSheet({ visible, onClose, onOrderSuccess }
 
       <PaymentTypeModal ref={paymentModalRef} selectedMethod={preOrderState.paymentMethod} onSelectMethod={handlePaymentMethodChange} />
 
-      <PreOrderProductItemEditBottomSheet ref={editProductModalRef} />
+      <OrderProductEditBottomSheet ref={editProductModalRef} />
     </>
   );
 }

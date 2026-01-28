@@ -104,7 +104,7 @@ export class GoongGeocodingRepository implements IGeocodingRepository {
         throw error;
       }
 
-      if (error?.name === "TypeError" && error?.message?.includes("Network")) {
+      if (error?.name === "TypeError" || error?.message?.includes("Network") || error?.message?.includes("network")) {
         console.error("[GoongGeocoding] Network failure:", error.message);
         throw new NetworkError();
       }

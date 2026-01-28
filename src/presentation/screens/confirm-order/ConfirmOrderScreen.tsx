@@ -6,13 +6,12 @@ import { clearConfirmedOrder, SerializableConfirmOrderItem, submitOrder } from '
 import { selectSelectedAddress } from '../../../state/slices/deliverySlice';
 import { clearCart } from '../../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
-import { OrderAddressCard, OrderDisplayItem, OrderFooter, OrderPriceSection, OrderProductList } from '../../components/order';
+import { OrderAddressCard, OrderDisplayItem, OrderFooter, OrderPriceSection, OrderProductEditBottomSheet, OrderProductEditRef, OrderProductList, OrderTypeSelector } from '../../components/order';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { BaseAuthenticatedLayout } from '../../layouts/BaseAuthenticatedLayout';
 import { popupService } from '../../layouts/popup/PopupService';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
-import { PreOrderProductItemEditBottomSheet, PreOrderProductItemEditRef } from '../preorder/components/PreOrderProductItemEditBottomSheet';
 import { OrderType, PaymentMethod } from '../preorder/PreOrderEnums';
 import { PreOrderState } from '../preorder/PreOrderInterfaces';
 import { PreOrderService } from '../preorder/PreOrderService';
@@ -21,12 +20,15 @@ import { CONFIRM_ORDER_TEXT, PAYMENT_METHOD_LABELS } from './ConfirmOrderConstan
 export default function ConfirmOrderScreen() {
     const insets = useSafeAreaInsets();
     const dispatch = useAppDispatch();
-    const editProductModalRef = useRef<PreOrderProductItemEditRef>(null);
+    const editProductModalRef = useRef<OrderProductEditRef>(null);
 
     const { confirmedOrder, isLoading, error } = useAppSelector((state) => state.confirmOrder);
     const deliveryAddress = useAppSelector(selectSelectedAddress);
     const cartItems = useAppSelector((state) => state.orderCart.items);
     const [isConfirming, setIsConfirming] = useState(false);
+
+    const user = useAppSelector(state => state.auth.user);
+    const selectedStore = useAppSelector(state => state.home.store);
 
     const orderType = useMemo(() => {
         if (confirmedOrder?.address) {
@@ -93,36 +95,9 @@ export default function ConfirmOrderScreen() {
         router.back();
     }, []);
 
-    const handleNavigateToAddress = useCallback(() => {
-        router.push('/address-management');
-    }, []);
-
-    const handleAddMore = useCallback(() => {
-        router.push('/(tabs)/order');
-    }, []);
-
-    const handleEditProduct = useCallback((displayItem: OrderDisplayItem) => {
-        const cartItem = cartItems.find(item => {
-            const originalItem = displayItem.originalItem as SerializableConfirmOrderItem | undefined;
-            if (originalItem?.menuItemId) {
-                return item.product.id === originalItem.menuItemId.toString();
-            }
-            return false;
-        });
-
-        if (cartItem) {
-            editProductModalRef.current?.present(cartItem);
-        } else {
-            popupService.alert('Thông báo', { title: 'Không thể chỉnh sửa sản phẩm này' });
-        }
-    }, [cartItems]);
-
     const handlePromotionPress = useCallback(() => {
         popupService.alert(CONFIRM_ORDER_TEXT.VOUCHER_NOTICE, { title: 'Thông báo' });
     }, []);
-
-    const user = useAppSelector(state => state.auth.user);
-    const selectedStore = useAppSelector(state => state.home.store);
 
     const handleConfirmOrder = useCallback(async () => {
         if (!confirmedOrder || !user || !selectedStore) {
@@ -208,19 +183,22 @@ export default function ConfirmOrderScreen() {
                     contentContainerStyle={[styles.contentContainer, { paddingBottom: 200 }]}
                     showsVerticalScrollIndicator={false}
                 >
+                    <OrderTypeSelector
+                        selectedType={orderType}
+                        store={selectedStore}
+                        editable={false}
+                    />
+
                     <OrderAddressCard
                         orderType={orderType}
                         address={formattedAddress}
-                        onChangeAddress={handleNavigateToAddress}
-                        editable={true}
+                        editable={false}
                     />
 
                     <OrderProductList
                         items={displayItems}
-                        onItemPress={handleEditProduct}
-                        onAddMore={handleAddMore}
-                        showAddButton={true}
-                        editable={true}
+                        showAddButton={false}
+                        editable={false}
                     />
 
                     <OrderPriceSection
@@ -228,7 +206,7 @@ export default function ConfirmOrderScreen() {
                         shippingFee={totals.shippingFee}
                         discountAmount={totals.discountAmount}
                         onPromotionPress={handlePromotionPress}
-                        showPromotionButton={false}
+                        showPromotionButton={true}
                     />
 
                     <View style={styles.paymentSection}>
@@ -254,7 +232,7 @@ export default function ConfirmOrderScreen() {
                 </View>
             </View>
 
-            <PreOrderProductItemEditBottomSheet ref={editProductModalRef} />
+            <OrderProductEditBottomSheet ref={editProductModalRef} />
         </BaseAuthenticatedLayout>
     );
 }

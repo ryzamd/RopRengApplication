@@ -170,7 +170,7 @@ export default function OrderHistoryScreen() {
   }
 
   return (
-    <BaseAuthenticatedLayout safeAreaEdges={['left', 'right', 'bottom']}>
+    <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
       {renderStatusChips()}
       <FlatList
         data={filteredOrders}

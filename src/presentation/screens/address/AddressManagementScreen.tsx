@@ -5,7 +5,7 @@ import { useAddressSearch } from "@/src/utils/hooks/useAddressSearch";
 import { Camera, CameraRef, UserLocation } from "@maplibre/maplibre-react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { GoongGeocodingRepository } from "../../../infrastructure/repositories/GoongGeocodingRepository";
 import { selectSelectedAddress, setDeliveryAddress } from "../../../state/slices/deliverySlice";
@@ -13,6 +13,8 @@ import { useAppSelector } from "../../../utils/hooks";
 import { GoongMapView } from "../../components/map/GoongMapView";
 import { MapSearchBar } from "../../components/map/MapSearchBar";
 import { AppIcon } from "../../components/shared/AppIcon";
+import { BaseAuthenticatedLayout } from "../../layouts/BaseAuthenticatedLayout";
+import { popupService } from "../../layouts/popup/PopupService";
 import { BRAND_COLORS } from "../../theme/colors";
 
 const repo = new GoongGeocodingRepository();
@@ -66,52 +68,75 @@ export default function AddressManagementScreen() {
   }, []);
 
   useEffect(() => {
-    const initLocation = async () => {
+    initLocation();
+  }, [savedAddress]);
+
+  const initLocation = async () => {
+    try {
+      if (savedAddress?.lat && savedAddress?.lng) {
+        const coords: [number, number] = [savedAddress.lng, savedAddress.lat];
+
+        console.log("[AddressManagement] INIT from Redux:", {
+          lat: savedAddress.lat,
+          lng: savedAddress.lng,
+          address: savedAddress.addressString,
+        });
+
+        setInitialRegion(coords);
+        setSelectedLocation({ latitude: savedAddress.lat, longitude: savedAddress.lng });
+        setAddressString(savedAddress.addressString || "");
+        setSearchBarValue(savedAddress.addressString || "");
+        return;
+      }
+
+      const location = await locationService.getCurrentPosition();
+
+      const coords: [number, number] = [location.longitude, location.latitude];
+      setInitialRegion(coords);
+      setSelectedLocation(location);
+
+      setGeocodingState({ isLoading: true, error: null });
+
       try {
-        if (savedAddress?.lat && savedAddress?.lng) {
-          const coords: [number, number] = [savedAddress.lng, savedAddress.lat];
+        const address = await repo.reverseGeocode(location);
+        setAddressString(address);
+        setSearchBarValue(address);
+        setGeocodingState({ isLoading: false, error: null });
+      } catch (error: any) {
+        console.error("[AddressManagement] Reverse geocode failed:", error);
 
-          console.log("[AddressManagement] INIT from Redux:", {
-            lat: savedAddress.lat,
-            lng: savedAddress.lng,
-            address: savedAddress.addressString,
-          });
+        // Show retry popup for initial load failure
+        const shouldRetry = await popupService.confirm(
+          "Không thể xác định tên đường do lỗi kết nối. Bạn có muốn thử lại?",
+          { title: "Lỗi kết nối", confirmText: "Thử lại", cancelText: "Để sau" }
+        );
 
-          setInitialRegion(coords);
-          setSelectedLocation({ latitude: savedAddress.lat, longitude: savedAddress.lng });
-          setAddressString(savedAddress.addressString || "");
-          setSearchBarValue(savedAddress.addressString || "");
+        if (shouldRetry) {
+          initLocation(); // Recursive retry
           return;
         }
 
-        const location = await locationService.getCurrentPosition();
-
-        const coords: [number, number] = [location.longitude, location.latitude];
-        setInitialRegion(coords);
-        setSelectedLocation(location);
-
-        setGeocodingState({ isLoading: true, error: null });
-
-        try {
-          const address = await repo.reverseGeocode(location);
-          setAddressString(address);
-          setSearchBarValue(address);
-          setGeocodingState({ isLoading: false, error: null });
-        } catch (error: any) {
-          console.error("[AddressManagement] Reverse geocode failed:", error);
-          setGeocodingState({
-            isLoading: false,
-            error: error?.message || "Không thể xác định địa chỉ",
-          });
-        }
-      } catch (error) {
-        console.log("[AddressManagement] GPS Error:", error);
-        setInitialRegion([APP_DEFAULT_LOCATION.longitude, APP_DEFAULT_LOCATION.latitude]);
+        setGeocodingState({
+          isLoading: false,
+          error: error?.message || "Không thể xác định địa chỉ",
+        });
       }
-    };
+    } catch (error) {
+      console.log("[AddressManagement] GPS Error:", error);
 
-    initLocation();
-  }, [savedAddress]);
+      const shouldRetry = await popupService.confirm(
+        "Không thể lấy vị trí hiện tại. Vui lòng kiểm tra GPS và thử lại.",
+        { title: "Lỗi vị trí", confirmText: "Thử lại", cancelText: "Hủy" }
+      );
+
+      if (shouldRetry) {
+        initLocation();
+        return;
+      }
+
+      setInitialRegion([APP_DEFAULT_LOCATION.longitude, APP_DEFAULT_LOCATION.latitude]);
+    }
+  };
 
   const handleSelectSuggestion = async (item: IAddressSuggestion) => {
     try {
@@ -131,14 +156,40 @@ export default function AddressManagementScreen() {
         zoomLevel: 16,
         animationDuration: 1000,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("[AddressManagement] Select suggestion error:", error);
-      setGeocodingState({ isLoading: false, error: "Không thể lấy thông tin địa điểm" });
+      setGeocodingState({ isLoading: false, error: null });
+      popupService.alert(
+        "Không thể lấy thông tin địa điểm này. Vui lòng thử lại.",
+        { title: "Lỗi", type: 'error' }
+      );
     }
   };
 
+  const markerY = useRef(new Animated.Value(0)).current;
+
+  const animateMarker = (toValue: number) => {
+    Animated.timing(markerY, {
+      toValue,
+      duration: 300,
+      easing: Easing.out(Easing.back(1.5)),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onRegionWillChange = useCallback((feature: any) => {
+    const { isUserInteraction = false, animated = false } = feature.properties || {};
+    if (isUserInteraction) {
+      animateMarker(-5);
+    }
+  }, []);
+
   const onRegionDidChange = useCallback((feature: any) => {
     const { isUserInteraction = false, animated = false } = feature.properties || {};
+
+    if (isUserInteraction) {
+      animateMarker(0);
+    }
 
     if (!isUserInteraction || animated) {
       console.log("[AddressManagement] Skipping - programmatic move:", { isUserInteraction, animated });
@@ -236,13 +287,11 @@ export default function AddressManagementScreen() {
     console.log("[AddressManagement] Map ready");
     setMapState("ready");
 
-    // Set initial camera position imperatively instead of defaultSettings
-    // This prevents any "snap back" behavior from prop-based reactivity
     if (initialRegion) {
       cameraRef.current?.setCamera({
         centerCoordinate: initialRegion,
         zoomLevel: 15,
-        animationDuration: 0, // No animation on init
+        animationDuration: 300,
       });
     }
   };
@@ -255,7 +304,11 @@ export default function AddressManagementScreen() {
   const showMapLoading = mapState === "loading" || !initialRegion;
 
   return (
-    <View style={styles.container}>
+    <BaseAuthenticatedLayout
+      headerMode="hidden"
+      safeAreaEdges={['bottom']}
+      backgroundColor="#F5F5F5"
+    >
       {showMapLoading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
@@ -267,6 +320,7 @@ export default function AddressManagementScreen() {
         <GoongMapView
           style={[styles.map, showMapLoading && styles.hiddenMap]}
           onRegionDidChange={onRegionDidChange}
+          onRegionWillChange={onRegionWillChange}
           onMapReady={handleMapReady}
         >
           <Camera
@@ -278,9 +332,9 @@ export default function AddressManagementScreen() {
       )}
 
       <View style={styles.centerMarkerContainer} pointerEvents="none">
-        <View style={styles.markerPin}>
+        <Animated.View style={[styles.markerPin, { transform: [{ translateY: markerY }] }]}>
           <AppIcon name="location" size={32} color={BRAND_COLORS.primary.beSua} />
-        </View>
+        </Animated.View>
         <View style={styles.markerShadow} />
       </View>
 
@@ -331,7 +385,7 @@ export default function AddressManagementScreen() {
           <Text style={styles.btnText}>Xác nhận địa chỉ này</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </BaseAuthenticatedLayout>
   );
 }
 
@@ -401,7 +455,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: "rgba(15, 175, 0, 1)",
     marginTop: 4,
   },
   footer: {

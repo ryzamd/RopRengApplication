@@ -7,27 +7,27 @@ import { GOONG_CONFIG } from "../../../infrastructure/api/goong/GoongConfig";
 MapLibreGL.setAccessToken(null);
 MapLibreGL.setConnected(true);
 
-const CACHE_SIZE_MB = 100;
-
 interface GoongMapViewProps extends ViewProps {
   centerCoordinate?: [number, number];
   zoomLevel?: number;
   onMapReady?: () => void;
   onRegionDidChange?: (feature: any) => void;
+  onRegionWillChange?: (feature: any) => void;
   children?: React.ReactNode;
 }
 
 const DEFAULT_CENTER: [number, number] = [106.6297, 10.8231];
 
-export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DEFAULT_CENTER, zoomLevel = 14, onMapReady, onRegionDidChange, children, style, ...props}) => {
+export const GoongMapView: React.FC<GoongMapViewProps> = ({ centerCoordinate = DEFAULT_CENTER, zoomLevel = 14, onMapReady, onRegionDidChange, onRegionWillChange, children, style, ...props }) => {
   const styleUrl = `${GOONG_CONFIG.STYLE_URL}?api_key=${GOONG_CONFIG.MAP_TILES_KEY}`;
   const hasChildren = React.Children.count(children) > 0;
 
   useEffect(() => {
     const initCache = async () => {
       try {
-        await MapLibreGL.OfflineManager.setMaximumAmbientCacheSize(CACHE_SIZE_MB * 1024 * 1024);
-        console.log(`[GoongMap] Cache size set to ${CACHE_SIZE_MB}MB`);
+        await MapLibreGL.OfflineManager.setMaximumAmbientCacheSize(500 * 1024 * 1024); // 500MB
+        // await MapLibreGL.OfflineManager.invalidateAmbientCache(); // Use only if cache is corrupted
+        console.log(`[GoongMap] Ambient cache size set to 500MB`);
       } catch (error) {
         console.warn("[GoongMap] Failed to set cache size:", error);
       }
@@ -44,6 +44,7 @@ export const GoongMapView: React.FC<GoongMapViewProps> = ({centerCoordinate = DE
         attributionEnabled={true}
         onDidFinishLoadingMap={onMapReady}
         onRegionDidChange={onRegionDidChange}
+        onRegionWillChange={onRegionWillChange}
         surfaceView={true}
       >
         {!hasChildren && (

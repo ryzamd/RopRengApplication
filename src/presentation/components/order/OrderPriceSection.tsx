@@ -7,17 +7,7 @@ import { ORDER_TEXT } from './OrderConstants';
 import { OrderPriceSectionProps } from './OrderInterfaces';
 import { OrderService } from './OrderService';
 
-/**
- * Shared price section component for order display.
- * Used in both Pre-order and Confirm Order screens.
- */
-export function OrderPriceSection({
-    subtotal,
-    shippingFee,
-    discountAmount = 0,
-    onPromotionPress,
-    showPromotionButton = true,
-}: OrderPriceSectionProps) {
+export function OrderPriceSection({ subtotal, shippingFee, discountAmount = 0, onPromotionPress, showPromotionButton = true }: OrderPriceSectionProps) {
     const totalPrice = OrderService.calculateTotalPrice(subtotal, shippingFee, discountAmount);
 
     return (

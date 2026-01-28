@@ -35,7 +35,7 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <BaseAuthenticatedLayout safeAreaEdges={['bottom', 'left', 'right']}>
+      <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#606A37" />
           <Text style={styles.loadingText}>{ORDER_DETAIL_STRINGS.LOADING}</Text>
@@ -46,7 +46,7 @@ export default function OrderDetailScreen() {
 
   if (error || !order) {
     return (
-      <BaseAuthenticatedLayout safeAreaEdges={['bottom', 'left', 'right']}>
+      <BaseAuthenticatedLayout safeAreaEdges={['left', 'right']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || ORDER_DETAIL_STRINGS.ERROR_LOAD}</Text>
         </View>

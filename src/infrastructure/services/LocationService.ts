@@ -54,11 +54,10 @@ export class LocationService {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         };
-        console.log("[LocationService] ✅ GPS location:", coords);
+        console.log("[LocationService] GPS location:", coords);
         return coords;
       }
 
-      // Should not reach here, but fallback just in case
       return APP_DEFAULT_LOCATION;
 
     } catch (error: any) {

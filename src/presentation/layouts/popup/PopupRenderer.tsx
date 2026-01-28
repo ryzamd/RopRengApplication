@@ -59,6 +59,7 @@ export function PopupRenderer() {
                             <TouchableOpacity
                                 style={[
                                     styles.buttonMain,
+                                    { flex: 1 },
                                     config.confirmStyle === 'destructive' && { backgroundColor: BRAND_COLORS.semantic.error }
                                 ]}
                                 onPress={handleConfirm}
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     buttonMain: {
-        flex: 1,
+        width: '50%',
         backgroundColor: BRAND_COLORS.primary.xanhReu,
         paddingVertical: 12,
         borderRadius: 8,

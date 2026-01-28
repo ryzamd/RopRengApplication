@@ -7,10 +7,10 @@ import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../../utils/hooks';
 import { AppIcon } from '../../components/shared/AppIcon';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
+import { BaseFullScreenLayout } from '../../layouts/BaseFullScreenLayout';
 import { BRAND_COLORS } from '../../theme/colors';
 import { HEADER_ICONS } from '../../theme/iconConstants';
 import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
@@ -35,7 +35,6 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const handleAddToCart = useAddToCart();
 
   // Use cached location from Redux (fetched at app startup)
@@ -222,16 +221,8 @@ export default function HomeScreen() {
 
   const isInitialLoading = (isLoading && products.length === 0) || !cachedLocation;
 
-  return (
-    <LinearGradient
-      colors={[
-        BRAND_COLORS.primary.xanhReu,
-        BRAND_COLORS.primary.xanhBo,
-        BRAND_COLORS.primary.beSua,
-        '#FFFFFF',
-      ]}
-      style={[styles.container, { paddingTop: insets.top }]}
-    >
+  const renderHeader = useCallback(
+    () => (
       <View style={styles.header}>
         <View style={styles.greeting}>
           <AppIcon name={HEADER_ICONS.GREETING} size="lg" style={styles.greetingIcon} />
@@ -250,46 +241,65 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
+    ),
+    [userName, voucherCount]
+  );
 
-      {isInitialLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
-          <Text style={styles.loadingText}>
-            {!cachedLocation ? 'Đang xác định vị trí...' : 'Đang tải menu...'}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={products}
-          renderItem={renderProduct}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.productRow}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={ListHeader}
-          ListFooterComponent={ListFooter}
-          ListEmptyComponent={ListEmpty}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={[BRAND_COLORS.primary.xanhReu]}
-              tintColor={BRAND_COLORS.primary.xanhReu}
-            />
-          }
-          onEndReached={(!error && products.length > 0) ? loadMore : null}
-          onEndReachedThreshold={LOAD_MORE_THRESHOLD}
-          showsVerticalScrollIndicator={false}
+  return (
+    <LinearGradient
+      colors={[
+        BRAND_COLORS.primary.xanhReu,
+        BRAND_COLORS.primary.xanhBo,
+        BRAND_COLORS.primary.beSua,
+        '#FFFFFF',
+      ]}
+      style={styles.container}
+    >
+      <BaseFullScreenLayout
+        backgroundColor="transparent"
+        safeAreaEdges={['top', 'left', 'right']}
+        renderHeader={renderHeader}
+      >
+        {isInitialLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
+            <Text style={styles.loadingText}>
+              {!cachedLocation ? 'Đang xác định vị trí...' : 'Đang tải menu...'}
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={products}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.productRow}
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={ListHeader}
+            ListFooterComponent={ListFooter}
+            ListEmptyComponent={ListEmpty}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={[BRAND_COLORS.primary.xanhReu]}
+                tintColor={BRAND_COLORS.primary.xanhReu}
+              />
+            }
+            onEndReached={(!error && products.length > 0) ? loadMore : null}
+            onEndReachedThreshold={LOAD_MORE_THRESHOLD}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+
+        {showMiniCart && <MiniCartButton onPress={() => setShowPreOrder(true)} />}
+
+        <PreOrderBottomSheet
+          visible={showPreOrder}
+          onClose={() => setShowPreOrder(false)}
+          onOrderSuccess={() => router.replace('../(tabs)/')}
         />
-      )}
-
-      {showMiniCart && <MiniCartButton onPress={() => setShowPreOrder(true)} />}
-
-      <PreOrderBottomSheet
-        visible={showPreOrder}
-        onClose={() => setShowPreOrder(false)}
-        onOrderSuccess={() => router.replace('../(tabs)/')}
-      />
+      </BaseFullScreenLayout>
     </LinearGradient>
   );
 }

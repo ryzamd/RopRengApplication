@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, StyleProp, View, ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND_COLORS } from '../theme/colors';
 import { BaseLayoutProps } from './BaseLayout';
@@ -66,11 +66,6 @@ export function BaseFullScreenLayout({
         flex: 1,
         backgroundColor: backgroundColor,
         paddingTop: headerMode === 'transparent' ? 0 : undefined,
-        ...Platform.select({
-            android: {
-                paddingTop: headerMode === 'transparent' ? 0 : (safeAreaEdges.includes('top') ? insets.top : 0)
-            }
-        })
     };
 
     const content = (
