@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OrderType, PaymentMethod, PreOrderState } from '../../../domain/shared';
 import { clearConfirmedOrder, SerializableConfirmOrderItem, submitOrder } from '../../../state/slices/confirmOrderSlice';
@@ -20,6 +20,7 @@ export default function ConfirmOrderScreen() {
     const insets = useSafeAreaInsets();
     const dispatch = useAppDispatch();
     const editProductModalRef = useRef<OrderProductEditRef>(null);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const { confirmedOrder, error } = useAppSelector((state) => state.confirmOrder);
     const deliveryAddress = useAppSelector(selectSelectedAddress);
@@ -208,8 +209,18 @@ export default function ConfirmOrderScreen() {
                         totalPrice={totals.finalAmount}
                         buttonText={CONFIRM_ORDER_TEXT.CONFIRM_BUTTON}
                         onButtonPress={handleConfirmOrder}
+                        disabled={isSubmitting}
                     />
                 </View>
+
+                <Modal visible={isSubmitting} transparent statusBarTranslucent animationType="fade">
+                    <View style={styles.overlayContainer}>
+                        <View style={styles.loadingBox}>
+                            <ActivityIndicator size="large" color={BRAND_COLORS.primary.xanhReu} />
+                            <Text style={styles.loadingText}>Đang gửi đơn hàng...</Text>
+                        </View>
+                    </View>
+                </Modal>
             </View>
 
             <OrderProductEditBottomSheet ref={editProductModalRef} />
@@ -319,5 +330,19 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
+    },
+    overlayContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingBox: {
+        backgroundColor: BRAND_COLORS.background.primary,
+        padding: 24,
+        borderRadius: 16,
+        alignItems: 'center',
+        gap: 16,
+        minWidth: 200,
     },
 });
