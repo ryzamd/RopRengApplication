@@ -1,4 +1,5 @@
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
+import { IS_IOS } from '../../../utils/platform';
 import { AppLifecycleEvent } from './appLifecycle.types';
 
 type LifecycleListener = (event: AppLifecycleEvent, prevEvent: AppLifecycleEvent) => void;
@@ -47,7 +48,7 @@ class AppLifecycleManager {
             case 'background':
                 return AppLifecycleEvent.BACKGROUND;
             case 'inactive':
-                return Platform.OS === 'ios' ? AppLifecycleEvent.INACTIVE : AppLifecycleEvent.FOREGROUND;
+                return IS_IOS ? AppLifecycleEvent.INACTIVE : AppLifecycleEvent.FOREGROUND;
             default:
                 return AppLifecycleEvent.FOREGROUND;
         }

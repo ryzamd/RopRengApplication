@@ -1,16 +1,40 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { IS_ANDROID, IS_IOS } from '../../../utils/platform';
 import { BRAND_COLORS } from '../../theme/colors';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { PopupContext } from './PopupContext';
 import { popupService } from './PopupService';
 
+const MODAL_ANIMATION_DURATION = 300;
+
 export function PopupRenderer() {
     const { state, dispatch } = useContext(PopupContext);
     const { current, isVisible, isAnimating } = state;
+    const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (isAnimating && !isVisible) {
+            if (animationTimeoutRef.current) {
+                clearTimeout(animationTimeoutRef.current);
+            }
+
+            if (IS_ANDROID) {
+                animationTimeoutRef.current = setTimeout(() => {
+                    dispatch({ type: 'ANIMATION_COMPLETE' });
+                }, MODAL_ANIMATION_DURATION);
+            }
+        }
+
+        return () => {
+            if (animationTimeoutRef.current) {
+                clearTimeout(animationTimeoutRef.current);
+            }
+        };
+    }, [isAnimating, isVisible, dispatch]);
 
     const handleAnimationComplete = () => {
-        if (isAnimating) {
+        if (isAnimating && IS_IOS) {
             dispatch({ type: 'ANIMATION_COMPLETE' });
         }
     };

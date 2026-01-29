@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { clearError, loginWithOtp, registerUser } from '../../../state/slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
+import { IS_IOS } from '../../../utils/platform';
 import { BRAND_COLORS } from '../../theme/colors';
 import { OtpVerificationBottomSheet, OtpVerificationRef } from '../otp-verification/OtpVerificationBottomSheet';
 import { RegisterPhoneInput } from './components/RegisterPhoneInput';
@@ -31,7 +32,6 @@ export default function RegisterScreen() {
     }
   };
 
-  // Handle error from Redux
   useEffect(() => {
     if (error) {
       if (RegisterUIService.isPhoneExistedError(error)) {
@@ -60,7 +60,6 @@ export default function RegisterScreen() {
     }
   }, [error, dispatch]);
 
-  // Handle OTP sent success
   useEffect(() => {
     if (otpSent && otpPhone === phoneNumber) {
       otpModalRef.current?.present();
@@ -79,16 +78,11 @@ export default function RegisterScreen() {
     router.replace('/(auth)/login');
   };
 
-  // Custom verify function for OTP - calls /auth/login after OTP verification
-  const handleVerifyOtp = async (
-    phone: string,
-    otp: string
-  ): Promise<boolean> => {
+  const handleVerifyOtp = async (phone: string, otp: string): Promise<boolean> => {
     const result = await dispatch(loginWithOtp({ phone, otp }));
     return !loginWithOtp.rejected.match(result);
   };
 
-  // Handle OTP verification success - navigate to home without pending intent
   const handleOtpSuccess = () => {
     router.dismissAll();
     router.replace('/(tabs)');
@@ -113,9 +107,10 @@ export default function RegisterScreen() {
           <View style={styles.headerRight} />
         </View>
 
+
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={IS_IOS ? 'padding' : 'height'}
         >
           <ScrollView
             style={styles.scrollView}
@@ -131,7 +126,6 @@ export default function RegisterScreen() {
               <Text style={styles.subtitle}>{REGISTER_TEXT.SUBTITLE}</Text>
             </View>
 
-            {/* Form Section */}
             <View style={styles.formContainer}>
               <RegisterPhoneInput
                 value={phoneNumber}
@@ -142,7 +136,6 @@ export default function RegisterScreen() {
                 autoFocusDelay={REGISTER_LAYOUT.KEYBOARD_FOCUS_DELAY}
               />
 
-              {/* Login Link */}
               <View style={styles.loginLinkContainer}>
                 <Text style={styles.hasAccountText}>
                   {REGISTER_TEXT.HAS_ACCOUNT}
