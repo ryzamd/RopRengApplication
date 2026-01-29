@@ -85,6 +85,7 @@ export interface OrderFooterProps {
     totalPrice: number;
     buttonText: string;
     onButtonPress: () => void;
+    disabled?: boolean;
 }
 
 export interface OrderTypeSelectorProps {

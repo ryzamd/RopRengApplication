@@ -11,6 +11,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { TamaguiProvider } from 'tamagui';
 import { DatabaseProvider } from '../src/infrastructure/db/sqlite/provider';
+import { NetworkGuard } from '../src/presentation/layouts/network/NetworkGuard';
 import { PopupProvider } from '../src/presentation/layouts/popup/PopupProvider';
 import { persistor, store } from '../src/state/store';
 import { useAppInitialization } from '../src/utils/hooks/useAppInitialization';
@@ -64,30 +65,32 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <TamaguiProvider config={config}>
-            <BottomSheetModalProvider>
-              <DatabaseProvider>
-                <PopupProvider>
-                  <AppInitializer fontsLoaded={fontsLoaded}>
-                    <StatusBar style={IS_IOS ? 'dark' : 'auto'} />
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="(tabs)" />
-                      <Stack.Screen
-                        name="address-management"
-                        options={{
-                          headerShown: false,
-                          presentation: 'fullScreenModal',
-                          animation: 'slide_from_bottom'
-                        }}
-                      />
-                    </Stack>
-                  </AppInitializer>
-                </PopupProvider>
-              </DatabaseProvider>
-            </BottomSheetModalProvider>
-          </TamaguiProvider>
+          <NetworkGuard>
+            <TamaguiProvider config={config}>
+              <BottomSheetModalProvider>
+                <DatabaseProvider>
+                  <PopupProvider>
+                    <AppInitializer fontsLoaded={fontsLoaded}>
+                      <StatusBar style={IS_IOS ? 'dark' : 'auto'} />
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen
+                          name="address-management"
+                          options={{
+                            headerShown: false,
+                            presentation: 'fullScreenModal',
+                            animation: 'slide_from_bottom'
+                          }}
+                        />
+                      </Stack>
+                    </AppInitializer>
+                  </PopupProvider>
+                </DatabaseProvider>
+              </BottomSheetModalProvider>
+            </TamaguiProvider>
+          </NetworkGuard>
         </PersistGate>
       </Provider>
     </GestureHandlerRootView>

@@ -7,7 +7,7 @@ import { ORDER_TYPE_LABELS } from './OrderConstants';
 import { OrderFooterProps } from './OrderInterfaces';
 import { OrderService } from './OrderService';
 
-export function OrderFooter({ orderType, totalItems, totalPrice, buttonText, onButtonPress }: OrderFooterProps) {
+export function OrderFooter({ orderType, totalItems, totalPrice, buttonText, onButtonPress, disabled }: OrderFooterProps) {
     const insets = useSafeAreaInsets();
     const orderTypeLabel = ORDER_TYPE_LABELS[orderType];
 
@@ -28,9 +28,10 @@ export function OrderFooter({ orderType, totalItems, totalPrice, buttonText, onB
             </View>
 
             <TouchableOpacity
-                style={styles.button}
+                style={[styles.button, disabled && styles.buttonDisabled]}
                 onPress={onButtonPress}
                 activeOpacity={0.8}
+                disabled={disabled}
             >
                 <Text style={styles.buttonText}>{buttonText}</Text>
             </TouchableOpacity>
@@ -87,5 +88,9 @@ const styles = StyleSheet.create({
         fontFamily: TYPOGRAPHY.fontFamily.bodyBold,
         color: BRAND_COLORS.text.inverse,
         letterSpacing: 1,
+    },
+    buttonDisabled: {
+        opacity: 0.6,
+        backgroundColor: '#CCCCCC',
     },
 });

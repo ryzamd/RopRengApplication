@@ -1,7 +1,7 @@
 import { useAddToCart } from '@/src/utils/hooks/useAddToCart';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_COMBOS } from '../../../data/mockCombos';
 import { clearPendingAction } from '../../../state/slices/authSlice';
@@ -10,6 +10,7 @@ import { addToCart } from '../../../state/slices/orderCartSlice';
 import { useAppDispatch, useAppSelector } from '../../../utils/hooks';
 import { MiniCartButton } from '../../components/shared/MiniCartButton';
 import { BaseFullScreenLayout } from '../../layouts/BaseFullScreenLayout';
+import { popupService } from '../../layouts/popup/PopupService';
 import { BRAND_COLORS } from '../../theme/colors';
 import PreOrderBottomSheet from '../preorder/PreOrderBottomSheet';
 import { OrderCategoryScroll } from './components/OrderCategoryScroll';
@@ -68,7 +69,7 @@ export default function OrderScreen() {
 
     if (!product) {
       console.error(`[OrderScreen] Product not found: ${pendingAction.context.productId}`);
-      Alert.alert('Lỗi', 'Sản phẩm trong yêu cầu không tồn tại');
+      popupService.alert('Sản phẩm trong yêu cầu không tồn tại', { title: 'Lỗi', type: 'error' });
       dispatch(clearPendingAction());
       processedActionRef.current = actionKey;
       return;
@@ -82,7 +83,7 @@ export default function OrderScreen() {
 
     processedActionRef.current = actionKey;
 
-    Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
+    popupService.alert(`Đã thêm ${product.name} vào giỏ hàng`, { title: 'Thành công', type: 'success' });
   }, [selectedStore, pendingAction, dispatch, products]);
 
   const handleMiniCartPress = useCallback(() => {

@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
         color: BRAND_COLORS.text.primary,
     },
     addButton: {
-        fontSize: TYPOGRAPHY.fontSize.base,
+        fontSize: TYPOGRAPHY.fontSize.md,
         fontFamily: TYPOGRAPHY.fontFamily.bodyMedium,
-        color: BRAND_COLORS.secondary.camNhat,
+        color: BRAND_COLORS.secondary.camDam,
     },
     emptyContainer: {
         paddingVertical: 40,
