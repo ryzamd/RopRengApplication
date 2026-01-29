@@ -1,7 +1,8 @@
 import { Camera } from "expo-camera";
 import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
-import { Linking, Platform } from "react-native";
+import { Linking } from "react-native";
+import { IS_IOS } from '../../utils/platform';
 
 export interface PermissionStatusResult {
   location: boolean;
@@ -12,7 +13,7 @@ export interface PermissionStatusResult {
 export class PermissionService {
   private static instance: PermissionService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): PermissionService {
     if (!PermissionService.instance) {
@@ -109,7 +110,8 @@ export class PermissionService {
 
   openSettings() {
     console.log("Opening App Settings...");
-    if (Platform.OS === "ios") {
+
+    if (IS_IOS) {
       Linking.openURL("app-settings:");
     } else {
       Linking.openSettings();

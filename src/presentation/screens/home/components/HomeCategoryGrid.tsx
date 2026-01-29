@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { IS_IOS } from '../../../../utils/platform';
 import { AppIcon } from '../../../components/shared/AppIcon';
 import { BRAND_COLORS } from '../../../theme/colors';
 import { CategoryItem } from '../../welcome/components/CategoryScroll';
@@ -42,7 +43,7 @@ export function HomeCategoryScroll({ categories }: HomeCategoryScrollProps) {
         bounces={false}
         contentContainerStyle={styles.scrollContent}
         overScrollMode="never"
-        decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.9}
+        decelerationRate={IS_IOS ? 'fast' : 0.9}
       >
         {chunkedCategories.map((chunk, chunkIndex) => (
           <View key={`chunk-${chunkIndex}`} style={styles.column}>

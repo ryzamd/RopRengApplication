@@ -1,10 +1,11 @@
+import { IS_IOS } from "@/src/utils/platform";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -68,7 +69,7 @@ export default function RootLayout() {
               <DatabaseProvider>
                 <PopupProvider>
                   <AppInitializer fontsLoaded={fontsLoaded}>
-                    <StatusBar style={Platform.OS === 'ios' ? 'dark' : 'auto'} />
+                    <StatusBar style={IS_IOS ? 'dark' : 'auto'} />
                     <Stack screenOptions={{ headerShown: false }}>
                       <Stack.Screen name="index" />
                       <Stack.Screen name="(auth)" />
